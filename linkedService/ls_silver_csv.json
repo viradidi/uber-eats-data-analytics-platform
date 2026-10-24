@@ -1,0 +1,17 @@
+{
+	"name": "ls_silver_csv",
+	"properties": {
+		"annotations": [],
+		"type": "AzureDatabricks",
+		"typeProperties": {
+			"domain": "https://adb-7405609939036313.13.azuredatabricks.net",
+			"authentication": "MSI",
+			"workspaceResourceId": "/subscriptions/3c895dcc-8ce9-4539-89c2-029fbf7ff343/resourceGroups/rg_ubereats/providers/Microsoft.Databricks/workspaces/ubereats-databricks",
+			"newClusterNodeType": "Standard_DS3_v2",
+			"newClusterNumOfWorker": "1",
+			"newClusterVersion": "12.2.x-scala2.12",
+			"clusterOption": "Fixed",
+			"newClusterInitScripts": []
+		}
+	}
+}

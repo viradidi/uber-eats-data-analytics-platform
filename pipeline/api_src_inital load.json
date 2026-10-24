@@ -1,0 +1,248 @@
+{
+	"name": "api_src_inital load",
+	"properties": {
+		"activities": [
+			{
+				"name": "lookup_api_control",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "SELECT *\nFROM dbo.api_pipeline_control\nWHERE is_active = 1;",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "ds_api_src_control",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "foreach_api_endpoint",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "lookup_api_control",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('lookup_api_control').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Api_migration",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "RestSource",
+									"httpRequestTimeout": "00:01:40",
+									"requestInterval": "00.00:00:00.010",
+									"requestMethod": "GET",
+									"paginationRules": {
+										"supportRFC5988": "true"
+									}
+								},
+								"sink": {
+									"type": "DelimitedTextSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "DelimitedTextWriteSettings",
+										"quoteAllText": true,
+										"fileExtension": ".txt"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "Ds_rest_src",
+									"type": "DatasetReference",
+									"parameters": {
+										"p_rel_url": {
+											"value": "@item().endpoint_name",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "ds_adls",
+									"type": "DatasetReference",
+									"parameters": {
+										"p_file_name": {
+											"value": "@concat(\n    item().endpoint_name,\n    '_',\n    formatDateTime(utcNow(),'yyyyMMdd_HHmmss'),\n    '.json'\n)",
+											"type": "Expression"
+										},
+										"p_folder_path": {
+											"value": "@item().target_folder",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "Web_Get_Api_Watermarks",
+							"type": "WebActivity",
+							"dependsOn": [
+								{
+									"activity": "get_keyvalut_api _key",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"method": "GET",
+								"headers": {
+									"X-API-Key": {
+										"value": "@activity('get_keyvalut_api _key').output.value",
+										"type": "Expression"
+									}
+								},
+								"url": "https://ubereats-mock-api.onrender.com/watermarks"
+							}
+						},
+						{
+							"name": "Script_update_api_control",
+							"type": "Script",
+							"dependsOn": [
+								{
+									"activity": "Web_Get_Api_Watermarks",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"linkedServiceName": {
+								"referenceName": "ls_sql_database",
+								"type": "LinkedServiceReference"
+							},
+							"typeProperties": {
+								"scripts": [
+									{
+										"type": "Query",
+										"text": {
+											"value": "@concat(\n    'UPDATE dbo.api_pipeline_control ',\n    'SET last_watermark_value = ''',\n    activity('Web_Get_API_Watermarks').output[item().endpoint_name],\n    ''', updated_at = GETDATE(), ',\n    'last_run_end = GETDATE(), ',\n    'last_run_status = ''SUCCESS'' ',\n    'WHERE control_id = ',\n    item().control_id\n)",
+											"type": "Expression"
+										}
+									}
+								],
+								"scriptBlockExecutionTimeout": "02:00:00"
+							}
+						},
+						{
+							"name": "get_keyvalut_api _key",
+							"type": "WebActivity",
+							"dependsOn": [
+								{
+									"activity": "Job_api",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"method": "GET",
+								"url": "https://ubereatskeyvalut.vault.azure.net/secrets/ubereatsapikey/254f4528ed8b49d7b0e9639dfbe5de82?api-version=7.4",
+								"authentication": {
+									"type": "MSI",
+									"resource": "https://vault.azure.net"
+								}
+							}
+						},
+						{
+							"name": "Job_api",
+							"type": "DatabricksJob",
+							"dependsOn": [
+								{
+									"activity": "Api_migration",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"jobId": "1006977938504729",
+								"jobParameters": {
+									"endpoint_name": {
+										"value": "@item().endpoint_name",
+										"type": "Expression"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "ls_api_adb",
+								"type": "LinkedServiceReference"
+							}
+						}
+					]
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2026-09-04T06:23:20Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

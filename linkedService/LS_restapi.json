@@ -1,0 +1,24 @@
+{
+	"name": "LS_restapi",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "RestService",
+		"typeProperties": {
+			"url": "https://ubereats-mock-api.onrender.com",
+			"enableServerCertificateValidation": true,
+			"authenticationType": "Anonymous",
+			"authHeaders": {
+				"X-API-Key": {
+					"type": "AzureKeyVaultSecret",
+					"store": {
+						"referenceName": "LS_AzureKeyVault",
+						"type": "LinkedServiceReference"
+					},
+					"secretName": "ubereatsapikey",
+					"secretVersion": "254f4528ed8b49d7b0e9639dfbe5de82"
+				}
+			}
+		}
+	}
+}

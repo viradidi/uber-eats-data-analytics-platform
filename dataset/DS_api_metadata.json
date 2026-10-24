@@ -1,0 +1,34 @@
+{
+	"name": "DS_api_metadata",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureDataLakeStorage1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "api_metadata_v2 (2).json",
+				"folderPath": "metadata",
+				"fileSystem": "bronze"
+			}
+		},
+		"schema": {
+			"type": "object",
+			"properties": {
+				"endpoint_name": {
+					"type": "string"
+				},
+				"relative_url": {
+					"type": "string"
+				},
+				"target_folder": {
+					"type": "string"
+				}
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

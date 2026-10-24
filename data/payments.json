@@ -1,0 +1,74 @@
+[
+  {
+    "payment_id": 9001,
+    "order_id": 5001,
+    "payment_method": "UPI",
+    "amount": 510.0,
+    "payment_status": "SUCCESS",
+    "payment_timestamp": "2026-08-28T12:16:00",
+    "updated_at": "2026-08-28T12:16:00"
+  },
+  {
+    "payment_id": 9002,
+    "order_id": 5002,
+    "payment_method": "CARD",
+    "amount": 315.0,
+    "payment_status": "SUCCESS",
+    "payment_timestamp": "2026-08-28T19:11:00",
+    "updated_at": "2026-08-28T19:11:00"
+  },
+  {
+    "payment_id": 9003,
+    "order_id": 5003,
+    "payment_method": "UPI",
+    "amount": 425.0,
+    "payment_status": "SUCCESS",
+    "payment_timestamp": "2026-08-29T13:01:00",
+    "updated_at": "2026-08-29T13:01:00"
+  },
+  {
+    "payment_id": 9004,
+    "order_id": 5004,
+    "payment_method": "CARD",
+    "amount": 150.0,
+    "payment_status": "FAILED",
+    "payment_timestamp": "2026-08-29T09:16:00",
+    "updated_at": "2026-08-29T09:16:00"
+  },
+  {
+    "payment_id": 9005,
+    "order_id": 5005,
+    "payment_method": "UPI",
+    "amount": 480.0,
+    "payment_status": "SUCCESS",
+    "payment_timestamp": "2026-08-30T20:06:00",
+    "updated_at": "2026-08-30T20:06:00"
+  },
+  {
+    "payment_id": 9006,
+    "order_id": 5006,
+    "payment_method": "WALLET",
+    "amount": 295.0,
+    "payment_status": "SUCCESS",
+    "payment_timestamp": "2026-08-31T12:41:00",
+    "updated_at": "2026-08-31T12:41:00"
+  },
+  {
+    "payment_id": 9007,
+    "order_id": 5007,
+    "payment_method": "UPI",
+    "amount": 300.0,
+    "payment_status": "SUCCESS",
+    "payment_timestamp": "2026-08-31T19:31:00",
+    "updated_at": "2026-08-31T19:31:00"
+  },
+  {
+    "payment_id": 9008,
+    "order_id": 5008,
+    "payment_method": "CARD",
+    "amount": 510.0,
+    "payment_status": "SUCCESS",
+    "payment_timestamp": "2026-09-01T09:31:30",
+    "updated_at": "2026-09-01T09:31:30"
+  }
+]

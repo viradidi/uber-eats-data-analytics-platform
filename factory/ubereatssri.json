@@ -1,0 +1,15 @@
+{
+	"name": "ubereatssri",
+	"properties": {
+		"trustModeClaimForMi": {
+			"value": "Disabled",
+			"editable": true
+		}
+	},
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "ae1b5589-9103-4c7b-9b9c-7aeb890ce355",
+		"tenantId": "abd0dac5-a717-461e-96d8-3a322139b3d1"
+	}
+}

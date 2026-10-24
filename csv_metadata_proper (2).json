@@ -1,0 +1,14 @@
+[
+  {
+    "file_name": "drivers.csv",
+    "target_folder": "csv/drivers"
+  },
+  {
+    "file_name": "promotions.csv",
+    "target_folder": "csv/promotions"
+  },
+  {
+    "file_name": "zones.csv",
+    "target_folder": "csv/zones"
+  }
+]

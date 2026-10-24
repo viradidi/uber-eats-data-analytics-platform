@@ -1,0 +1,11 @@
+{
+	"name": "LS_AzureKeyVault",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureKeyVault",
+		"typeProperties": {
+			"baseUrl": "https://ubereatskeyvalut.vault.azure.net/"
+		}
+	}
+}

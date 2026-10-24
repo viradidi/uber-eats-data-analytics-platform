@@ -1,0 +1,12 @@
+{
+	"name": "integrationRuntime2",
+	"properties": {
+		"type": "SelfHosted",
+		"typeProperties": {
+			"linkedInfo": {
+				"resourceId": "/subscriptions/3c895dcc-8ce9-4539-89c2-029fbf7ff343/resourcegroups/rg_ubereat/providers/Microsoft.DataFactory/factories/ubereatadf/integrationruntimes/integrationRuntime1",
+				"authorizationType": "Rbac"
+			}
+		}
+	}
+}

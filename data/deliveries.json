@@ -1,0 +1,74 @@
+[
+  {
+    "delivery_id": 10001,
+    "order_id": 5001,
+    "driver_id": 4001,
+    "pickup_time": "2026-08-28T12:30:00",
+    "delivery_time": "2026-08-28T13:20:00",
+    "delivery_status": "DELIVERED",
+    "updated_at": "2026-08-28T13:20:00"
+  },
+  {
+    "delivery_id": 10002,
+    "order_id": 5002,
+    "driver_id": 4002,
+    "pickup_time": "2026-08-28T19:30:00",
+    "delivery_time": "2026-08-28T20:05:00",
+    "delivery_status": "DELIVERED",
+    "updated_at": "2026-08-28T20:05:00"
+  },
+  {
+    "delivery_id": 10003,
+    "order_id": 5003,
+    "driver_id": 4003,
+    "pickup_time": "2026-08-29T13:20:00",
+    "delivery_time": "2026-08-29T14:00:00",
+    "delivery_status": "DELIVERED",
+    "updated_at": "2026-08-29T14:00:00"
+  },
+  {
+    "delivery_id": 10004,
+    "order_id": 5004,
+    "driver_id": 4004,
+    "pickup_time": null,
+    "delivery_time": null,
+    "delivery_status": "CANCELLED",
+    "updated_at": "2026-08-29T09:25:00"
+  },
+  {
+    "delivery_id": 10005,
+    "order_id": 5005,
+    "driver_id": 4006,
+    "pickup_time": "2026-08-30T20:25:00",
+    "delivery_time": "2026-08-30T21:10:00",
+    "delivery_status": "DELIVERED",
+    "updated_at": "2026-08-30T21:10:00"
+  },
+  {
+    "delivery_id": 10006,
+    "order_id": 5006,
+    "driver_id": 4007,
+    "pickup_time": null,
+    "delivery_time": null,
+    "delivery_status": "PREPARING",
+    "updated_at": "2026-08-31T12:50:00"
+  },
+  {
+    "delivery_id": 10007,
+    "order_id": 5007,
+    "driver_id": 4002,
+    "pickup_time": null,
+    "delivery_time": null,
+    "delivery_status": "ASSIGNED",
+    "updated_at": "2026-08-31T19:35:00"
+  },
+  {
+    "delivery_id": 10008,
+    "order_id": 5008,
+    "driver_id": 4001,
+    "pickup_time": null,
+    "delivery_time": null,
+    "delivery_status": "ASSIGNED",
+    "updated_at": "2026-09-01T09:32:00"
+  }
+]

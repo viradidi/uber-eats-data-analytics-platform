@@ -1,0 +1,22 @@
+[
+  {
+    "endpoint_name": "payments",
+    "relative_url": "payments",
+    "target_folder": "api/payments"
+  },
+  {
+    "endpoint_name": "deliveries",
+    "relative_url": "deliveries",
+    "target_folder": "api/deliveries"
+  },
+  {
+    "endpoint_name": "ratings",
+    "relative_url": "ratings",
+    "target_folder": "api/ratings"
+  },
+  {
+    "endpoint_name": "order-status",
+    "relative_url": "order-status",
+    "target_folder": "api/order_status"
+  }
+]
