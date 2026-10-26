@@ -135,6 +135,29 @@ class SnapshotReconciliationGuardTests(unittest.TestCase):
                 source_is_full_snapshot=False,
             )
 
+    def test_empty_business_keys_are_rejected_before_spark_access(self):
+        with self.assertRaisesRegex(ValueError, "at least one business key"):
+            reconcile_full_snapshot(
+                spark=None,
+                source_df=None,
+                target_table="silver.example",
+                dataset_name="example",
+                key_columns=[],
+                source_is_full_snapshot=True,
+            )
+
+    def test_unsupported_aggregate_is_rejected_before_spark_access(self):
+        with self.assertRaisesRegex(ValueError, "Unsupported aggregate specifications"):
+            reconcile_full_snapshot(
+                spark=None,
+                source_df=None,
+                target_table="silver.example",
+                dataset_name="example",
+                key_columns=["id"],
+                source_is_full_snapshot=True,
+                aggregate_specs={"amount": "median"},
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
