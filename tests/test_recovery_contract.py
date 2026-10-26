@@ -52,6 +52,15 @@ class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
         self.assertIn("activity('Get max watermark_copy1').output.firstRow.max_watermark", query)
         self.assertIn(" <= ", query)
 
+    def test_review_documents_null_watermark_and_late_update_limits(self):
+        review_path = ROOT / "docs" / "SQL_INCREMENTAL_LOAD_REVIEW.md"
+        review = review_path.read_text(encoding="utf-8")
+        self.assertIn("Null or uninitialized watermark", review)
+        self.assertIn("late-arriving updates", review)
+        self.assertIn("same watermark value", review)
+        self.assertIn("source-specific decision", review)
+        self.assertIn("not yet handled by the exported expressions", review)
+
     def test_silver_job_waits_for_copy_success(self):
         dependencies = _dependency_names(self.silver_job)
         self.assertIn("adls data migration_copy1", dependencies)
