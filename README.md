@@ -12,6 +12,30 @@ A multi-source data engineering platform for restaurant-delivery analytics, comb
 
 This repository preserves the project's source code, exported Azure Data Factory resources, API and file metadata, sample domain data, and Databricks notebook exports. The diagrams describe the solution represented by those artifacts; the live status of Azure resources depends on the deployment environment.
 
+## At a glance
+
+**Goal:** demonstrate a maintainable Azure-oriented data engineering workflow for restaurant-delivery data across REST API, CSV, and SQL source patterns.
+
+**Review this project in five minutes:**
+1. Start with the [architecture diagram](architecture/uber-eats-end-to-end-architecture.svg).
+2. Review the [ADF pipeline exports](pipeline/) and [Databricks notebook exports](notebooks/).
+3. Read the [incremental SQL source contract](docs/INCREMENTAL_SOURCE_CONTRACT.md).
+4. Review [operational monitoring and reliability](docs/OPERATIONS_AND_RELIABILITY.md) and the [recovery runbook](docs/RECOVERY_AND_RERUN_RUNBOOK.md).
+5. Check the [latest GitHub Actions run](https://github.com/viradidi/uber-eats-data-analytics-platform/actions) for the current automated validation result.
+
+### Verification status
+
+| Area | What is available | Verification boundary |
+|---|---|---|
+| Architecture | End-to-end architecture diagram and exported Azure resource definitions | Diagram describes intended design; it is not proof of deployed services |
+| Repository checks | Python unit tests and GitHub Actions validation workflow | Check the latest Actions run for current pass/fail status |
+| Data quality and reconciliation | Quality helpers, SQL audit queries, and reconciliation documentation | Artifacts are committed; validate them against real runtime data before claiming operational success |
+| Monitoring and recovery | Operational reports, incident/quality trend queries, and rerun runbook | Runtime alerts, failure recovery, and checkpoint behavior still require environment-based acceptance |
+| Azure / Databricks execution | ADF and Databricks artifacts are available to review | Live cloud acceptance is pending; no live deployment is claimed here |
+
+**Honest status:** this repository includes implementation artifacts and automated repository-level checks. The latest CI run has reported test failures, so treat the suite as **not passing until a newer run is green**. Azure Data Factory and Databricks runtime acceptance also remain pending. See the [release gate](docs/PROJECT_RELEASE_GATE.md) for the exact outstanding evidence.
+
+
 ## Overview
 
 Data platforms must combine information from multiple sources while preserving data quality, supporting repeatable ingestion, and making data available for downstream processing.
