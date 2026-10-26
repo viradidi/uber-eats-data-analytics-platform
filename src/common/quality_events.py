@@ -10,10 +10,19 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 
-def log_pipeline_failure(spark, dataset_name: str, stage: str, error: Exception) -> None:
-    """Append a structured failure event without masking the original error."""
+def log_pipeline_failure(
+    spark,
+    dataset_name: str,
+    stage: str,
+    error: Exception,
+    run_id: str | None = None,
+) -> None:
+    """Append a structured failure event without masking the original error.
+
+    Supply the pipeline run ID when available to correlate failure and audit rows.
+    """
     record = [{
-        "run_id": str(uuid4()),
+        "run_id": run_id or str(uuid4()),
         "dataset_name": dataset_name,
         "stage": stage,
         "error_type": type(error).__name__,
@@ -131,7 +140,7 @@ def reconcile_merge_target(
             f"{dataset_name} reconciliation failed: {missing_target_keys} missing target keys, "
             f"{mismatched_rows} rows with field mismatches"
         )
-        log_pipeline_failure(spark, dataset_name, "silver_reconciliation", error)
+        log_pipeline_failure(spark, dataset_name, "silver_reconciliation", error, run_id=run_id)
         raise error
     return record[0]
 
@@ -244,7 +253,9 @@ def reconcile_full_snapshot(
             f"source_duplicate_groups={source_duplicate_groups}, "
             f"target_duplicate_groups={target_duplicate_groups}"
         )
-        log_pipeline_failure(spark, dataset_name, "snapshot_reconciliation_precondition", error)
+        log_pipeline_failure(
+            spark, dataset_name, "snapshot_reconciliation_precondition", error, run_id=run_id
+        )
         raise error
 
     source_keys = source_df.select(*key_columns)
@@ -327,7 +338,9 @@ def reconcile_full_snapshot(
             f"{dataset_name} full-snapshot reconciliation failed checks: "
             + ", ".join(failed_checks)
         )
-        log_pipeline_failure(spark, dataset_name, "full_snapshot_reconciliation", error)
+        log_pipeline_failure(
+            spark, dataset_name, "full_snapshot_reconciliation", error, run_id=run_id
+        )
         raise error
 
     return {
