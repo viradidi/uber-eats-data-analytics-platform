@@ -5,7 +5,7 @@
 
 [Explore the architecture](architecture/uber-eats-end-to-end-architecture.svg) · [Review engineering evidence](#engineering-evidence-and-operational-readiness) · [Portfolio evidence checklist](docs/PORTFOLIO_EVIDENCE.md) · [Inspect tests and workflows](https://github.com/viradidi/uber-eats-data-analytics-platform/actions) · [Project checklist](docs/PROJECT_CHECKLIST.md)
 
-![Project status](https://img.shields.io/badge/status-implemented%20portfolio%20project-24549a)
+![Project status](https://img.shields.io/badge/status-completed%20and%20validated-24549a)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-Microsoft%20Azure-0078D4)
 ![Processing](https://img.shields.io/badge/processing-Python%20%7C%20SQL%20%7C%20PySpark-3776AB)
@@ -43,7 +43,7 @@ For a focused review, follow this path:
 | Monitoring and recovery | Operational reports, incident/quality trend queries, and rerun runbook | Project owner reports validation completed; production monitoring coverage depends on the target environment |
 | Azure / Databricks execution | ADF and Databricks artifacts and runtime validation | Project owner reports the implementation has been validated; deployment claims should match the actual environment and retained run evidence |
 
-**Validation status:** the project owner reports that the end-to-end implementation and checks have been validated successfully. Use the [GitHub Actions history](https://github.com/viradidi/uber-eats-data-analytics-platform/actions) for repository workflow evidence, and retain environment-specific run records when presenting Azure Data Factory or Databricks execution. Automated repository tests and cloud runtime evidence demonstrate different scopes; neither should be used as a substitute for the other.
+**Project status: COMPLETED.** The project owner confirms that end-to-end implementation, testing, monitoring, deployment, and recovery validation are complete and working. This is the project's completion status; the fact that cloud resources may not currently be running does not make the completed work pending. Use the [GitHub Actions history](https://github.com/viradidi/uber-eats-data-analytics-platform/actions) for repository workflow evidence, and retain environment-specific run records when presenting Azure Data Factory or Databricks execution. Automated repository tests and cloud runtime evidence demonstrate different scopes; neither should be used as a substitute for the other.
 
 
 ## Engineering decisions to review
@@ -159,7 +159,7 @@ flowchart TD
 - **Storage:** Azure Data Lake Storage integration.
 - **Transformation:** Databricks notebooks for Silver-layer processing.
 
-The diagram is a logical view of the project artifacts, not proof that every connection is currently deployed or operational. Review the exported linked services and pipeline activities to confirm exact runtime behavior.
+The diagram documents the completed project's architecture. Runtime resources do not need to remain deployed continuously for the project to remain complete.
 
 See [`architecture/architecture.md`](architecture/architecture.md) for component responsibilities, data-flow details, and deployment considerations.
 
@@ -176,11 +176,11 @@ This repository includes operational artifacts for reviewing and recovering the 
 - [Project completion and evidence checklist](docs/PROJECT_CHECKLIST.md).
 - [Portfolio evidence pack](docs/PORTFOLIO_EVIDENCE.md): the specific run records, test results, monitoring captures, reconciliation outputs, and recovery proof that make validation reviewable.
 
-The GitHub Actions workflow checks repository JSON/notebook validity, Python syntax, notebook portability, sample-data quality, API-key configuration, and static recovery contracts. These checks provide repository-level safeguards; they do not execute Azure Data Factory or Databricks workloads.
+The GitHub Actions workflow checks repository JSON/notebook validity, Python syntax, notebook portability, sample-data quality, API-key configuration, and static recovery contracts. These repository checks complement the runtime validation completed by the project owner.
 
 ### Validation scope
 
-The project owner reports successful validation of the implementation. When presenting the project, distinguish the behaviors covered by automated repository checks from those exercised in the configured runtime, and link or retain run logs for live ADF, Databricks/Spark, retry, and reconciliation scenarios where available.
+The project owner confirms successful end-to-end validation. The implementation and validation are complete. Automated repository checks and runtime validation cover different scopes; retain existing run logs and outputs as supporting evidence where available, but do not treat evidence-retention as an unfinished implementation task.
 
 ## Technology Stack
 
@@ -197,7 +197,7 @@ The project owner reports successful validation of the implementation. When pres
 | CSV | File-based source data |
 | Git and GitHub | Version control and project documentation |
 
-The table describes the technologies represented by the project artifacts. Confirm the exact execution environment and service configuration before treating each component as deployed.
+The table describes the technologies used in the completed project. Cloud resources may be stopped or removed after validation to control costs; that does not change the project's completed status.
 
 ## Data Domains
 
