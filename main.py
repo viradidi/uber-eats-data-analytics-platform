@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 import json
 import os
 import random
+import tempfile
 
 
 # =========================================================
@@ -471,6 +472,47 @@ def get_watermarks(
     }
 
 
+def _next_payment_number(records):
+    """Return a numeric suffix above every existing P-prefixed payment ID."""
+    highest = 1000
+    for record in records:
+        payment_id = str(record.get("payment_id", ""))
+        if len(payment_id) < 2 or payment_id[0].upper() != "P":
+            continue
+        suffix = payment_id[1:]
+        if suffix.isdigit():
+            highest = max(highest, int(suffix))
+    return highest + 1
+
+
+def _write_json_atomically(file_path, data):
+    """Write JSON to a sibling temporary file before replacing the target."""
+    directory = os.path.dirname(os.path.abspath(file_path))
+    temporary_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=directory,
+            prefix=".payments-",
+            suffix=".tmp",
+            delete=False,
+        ) as file:
+            temporary_path = file.name
+            json.dump(data, file, indent=2)
+            file.write("\\n")
+            file.flush()
+            os.fsync(file.fileno())
+        os.replace(temporary_path, file_path)
+    except OSError:
+        if temporary_path and os.path.exists(temporary_path):
+            try:
+                os.remove(temporary_path)
+            except OSError:
+                pass
+        raise
+
+
 # =========================================================
 # TEST DATA GENERATOR
 # =========================================================
@@ -495,7 +537,7 @@ def generate_payment_test_data(
 
     data = load_json_file("payments.json")
 
-    next_number = 1001 + len(data)
+    next_number = _next_payment_number(data)
 
     new_payment = {
         "payment_id": f"P{next_number}",
@@ -523,17 +565,7 @@ def generate_payment_test_data(
     )
 
     try:
-        with open(
-            file_path,
-            "w",
-            encoding="utf-8"
-        ) as file:
-
-            json.dump(
-                data,
-                file,
-                indent=2
-            )
+        _write_json_atomically(file_path, data)
 
     except OSError as exc:
         raise HTTPException(
