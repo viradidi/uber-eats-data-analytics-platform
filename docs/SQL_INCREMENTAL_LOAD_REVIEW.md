@@ -27,7 +27,7 @@ The configured success dependency is:
 
 This prevents the control watermark from advancing merely because extraction started or the copy completed while the required Silver job subsequently fails.
 
-## Known correctness limits requiring a source-specific decision
+Before enabling a source table, complete [the Incremental Source Contract](INCREMENTAL_SOURCE_CONTRACT.md) for its watermark, key, late-arrival, delete, replay, and reconciliation semantics.\n\n## Known correctness limits requiring a source-specific decision
 
 The exported expressions do **not** yet handle these cases explicitly. Do not describe the pipeline as safe for these conditions until they are resolved and tested.
 
