@@ -2,6 +2,7 @@
 from pyspark.sql.functions import *
 from pyspark.sql.types  import *
 from src.common.spark_utils import standardize_columns
+from src.common.quality_events import log_pipeline_failure
 
 
 # COMMAND ----------
@@ -9,6 +10,12 @@ from src.common.spark_utils import standardize_columns
 # Environment-specific storage configuration (override the widget per workspace/job).
 dbutils.widgets.text("bronze_root", "abfss://bronze@ubereaststorage.dfs.core.windows.net", "Bronze storage root")
 BRONZE_ROOT = dbutils.widgets.get("bronze_root").rstrip("/")
+
+def fail_validation(message, stage="silver_validation"):
+    error = ValueError(message)
+    log_pipeline_failure(spark, "ratings", stage, error)
+    raise error
+
 
 
 
@@ -29,12 +36,12 @@ df_ratings_table= df_ratings.select(explode("data").alias("ratings")).select("ra
 df_ratings_table_row_count = df_ratings_table.count()
 print("ratings.source_rows=" + str(df_ratings_table_row_count))
 if df_ratings_table_row_count == 0:
-    raise ValueError("API Silver input is empty; refusing to overwrite the existing target table")
+    fail_validation("API Silver input is empty; refusing to overwrite the existing target table")
 # Fail before publishing if the API payload has schema, required-field, or key-quality defects.
 required_columns = ["rating_id","order_id","customer_id","restaurant_id","rating","created_at"]
 missing_columns = sorted(set(required_columns) - set(df_ratings_table.columns))
 if missing_columns:
-    raise ValueError(f"ratings API payload is missing required columns: {missing_columns}")
+    fail_validation(f"ratings API payload is missing required columns: {missing_columns}")
 
 required_null_conditions = [col(name).isNull() for name in required_columns]
 required_null_condition = required_null_conditions[0]
@@ -42,16 +49,16 @@ for condition in required_null_conditions[1:]:
     required_null_condition = required_null_condition | condition
 required_null_count = df_ratings_table.filter(required_null_condition).count()
 if required_null_count:
-    raise ValueError(f"ratings API payload has {required_null_count} rows with null required fields: {required_columns}")
+    fail_validation(f"ratings API payload has {required_null_count} rows with null required fields: {required_columns}")
 
 key_columns = ["rating_id"]
 duplicate_key_count = df_ratings_table.groupBy(*key_columns).count().filter(col("count") > 1).count()
 if duplicate_key_count:
-    raise ValueError(f"ratings API payload has {duplicate_key_count} duplicate business keys: {key_columns}")
+    fail_validation(f"ratings API payload has {duplicate_key_count} duplicate business keys: {key_columns}")
 
 invalid_rating_count = df_ratings_table.filter(col("rating").cast("double").isNull() | (col("rating").cast("double") < 1) | (col("rating").cast("double") > 5)).count()
 if invalid_rating_count:
-    raise ValueError(f"ratings contains {invalid_rating_count} rows with null, nonnumeric, or out-of-range rating")
+    fail_validation(f"ratings contains {invalid_rating_count} rows with null, nonnumeric, or out-of-range rating")
 
 
 
@@ -185,4 +192,6 @@ quality_record = [{
 spark.createDataFrame(quality_record).write.format("delta").mode("append").saveAsTable(quality_table)
 print("ratings.quality.persisted_run_id=" + quality_record[0]["run_id"])
 if not reconciliation_passed:
-    raise RuntimeError("ratings row-count reconciliation failed: prepared_rows=" + str(prepared_rows) + ", target_rows_after=" + str(target_rows_after))
+    error = RuntimeError("ratings row-count reconciliation failed: prepared_rows=" + str(prepared_rows) + ", target_rows_after=" + str(target_rows_after)))
+    log_pipeline_failure(spark, "ratings", "silver_reconciliation", error)
+    raise error
