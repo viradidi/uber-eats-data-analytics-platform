@@ -53,7 +53,7 @@ The pipeline concatenates `table_name` and `watermark_column` from `pipeline_con
 
 ### Landing-file replay and idempotency
 
-The landing file name includes the current UTC timestamp. A retry can therefore create a second file for the same logical source range. The checkpoint dependency protects against advancing too early, but does not prevent duplicate landing files or guarantee idempotent Silver processing. Define a run/range identifier, replay policy, and downstream deduplication/merge contract before claiming end-to-end idempotency.
+The landing filename is now derived from the control ID and lower/upper watermark values, so the same logical interval has a deterministic batch identity rather than a fresh timestamp on every attempt. This reduces the risk of retries creating differently named files for the same interval, but does not by itself prove that the ADLS sink safely overwrites an existing file or guarantee idempotent Silver processing. Validate sink overwrite behavior and define downstream deduplication/merge semantics before claiming end-to-end idempotency.
 
 ## Recovery implications
 
