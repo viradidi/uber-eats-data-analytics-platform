@@ -370,20 +370,17 @@ This is an implemented portfolio project with API application code, source data,
 
 The repository contains exported cloud configuration, which is distinct from a currently running Azure deployment. Runtime behavior depends on valid linked services, integration runtimes, secrets, resource names, and workspace-specific paths. Describe deployment and execution evidence separately from source-code availability; do not infer live cloud status from checked-in JSON alone.
 
-## Engineering Roadmap
+## Remaining Engineering Work
 
-The next improvements that would strengthen this platform further include:
+The repository already contains sample-data quality tests, static recovery-contract tests, source-to-target reconciliation utilities, durable quality/failure records, operational SQL reports, a recovery runbook, and GitHub Actions validation. The remaining work is deliberately narrower:
 
-- Automated data-quality and schema validation tests.
-- Explicit watermark and checkpoint recovery tests.
-- Source-to-target reconciliation reports.
-- Centralized logging and pipeline observability.
-- Automated deployment validation through CI/CD.
-- Validate the configurable Bronze root and shared helper imports in a live Databricks workspace.
-- Extend environment-specific configuration to catalog/schema names and orchestration parameters.
-- Documented runbooks and recovery procedures.
+- [ ] Resolve source-specific initial watermark, equal-boundary, late-arrival, and delete semantics before enabling each SQL source.
+- [ ] Run controlled ADF copy/Silver-failure/retry scenarios when an Azure environment is available.
+- [ ] Execute the Silver notebooks and operational SQL against a compatible Databricks workspace.
+- [ ] Capture run evidence for successful processing, failed processing, replay, and reconciliation.
+- [ ] Complete final README link/render review and add the project to the portfolio site.
 
-These are suggested enhancements, not claims about existing functionality.
+The repository checks validate committed artifacts and static contracts; they do not claim live Azure or Databricks execution. See the [project checklist](docs/PROJECT_CHECKLIST.md) for the release-readiness view.
 
 ## Author
 
