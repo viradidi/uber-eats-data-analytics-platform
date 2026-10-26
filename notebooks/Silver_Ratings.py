@@ -25,12 +25,16 @@ def fail_validation(message, stage="silver_validation"):
 # COMMAND ----------
 
 
-df_ratings = (
-    spark.read
-    .format("json")
-    .load(f"{BRONZE_ROOT}/api/ratings/")
-)
-df_ratings_table= df_ratings.select(explode("data").alias("ratings")).select("ratings.*")
+try:
+    df_ratings = (
+        spark.read
+        .format("json")
+        .load(f"{BRONZE_ROOT}/api/ratings/")
+    )
+    df_ratings_table= df_ratings.select(explode("data").alias("ratings")).select("ratings.*")
+except Exception as exc:
+    log_pipeline_failure(spark, "ratings", "source_read", exc)
+    raise
 
 # Guard against an empty API response replacing a previously populated Silver table.
 df_ratings_table_row_count = df_ratings_table.count()
