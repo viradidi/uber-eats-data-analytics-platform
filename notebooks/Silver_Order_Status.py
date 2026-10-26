@@ -65,6 +65,9 @@ if required_null_count:
 key_columns = ["order_id","status_timestamp"]
 duplicate_key_count = df_order_status_table.groupBy(*key_columns).count().filter(col("count") > 1).count()
 if duplicate_key_count:
+    duplicate_keys = df_order_status_table.groupBy(*key_columns).count().filter(col("count") > 1).select(*key_columns)
+    duplicate_rows = df_order_status_table.join(duplicate_keys, on=key_columns, how="inner")
+    quarantine_rejected_rows(spark, duplicate_rows, "order_status", "duplicate business keys")
     fail_validation(f"order_status API payload has {duplicate_key_count} duplicate business keys: {key_columns}")
 
 
