@@ -60,6 +60,21 @@ class ApiTimestampContractTests(unittest.TestCase):
             )
         self.assertEqual([3], [row["id"] for row in result["data"]])
 
+    def test_watermark_returns_none_when_no_valid_timestamps_exist(self):
+        records = [
+            {"updated_at": "not-a-timestamp"},
+            {"updated_at": None},
+            {},
+        ]
+        with patch.object(api, "load_json_file", return_value=records):
+            watermark = api.get_max_timestamp("unused.json", "updated_at")
+        self.assertIsNone(watermark)
+
+    def test_watermark_is_none_for_an_empty_source(self):
+        with patch.object(api, "load_json_file", return_value=[]):
+            watermark = api.get_max_timestamp("unused.json", "updated_at")
+        self.assertIsNone(watermark)
+
     def test_watermark_uses_latest_parseable_timestamp_normalized_to_utc(self):
         records = [
             {"updated_at": "2026-10-01T12:00:00Z"},
