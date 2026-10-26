@@ -383,17 +383,19 @@ This is an implemented portfolio project with API application code, source data,
 
 The repository contains exported cloud configuration, which is distinct from a currently running Azure deployment. Runtime behavior depends on valid linked services, integration runtimes, secrets, resource names, and workspace-specific paths. Describe deployment and execution evidence separately from source-code availability; do not infer live cloud status from checked-in JSON alone.
 
-## Remaining Engineering Work
+## Project Handoff and Completion Status
 
-The repository already contains sample-data quality tests, static recovery-contract tests, source-to-target reconciliation utilities, durable quality/failure records, operational SQL reports, a recovery runbook, and GitHub Actions validation. The remaining work is deliberately narrower:
+**Portfolio handoff: ready. Cloud runtime acceptance: intentionally left for the next available Azure/Databricks environment.** The repository includes the source code, exported orchestration resources, notebook implementations, quality/reconciliation utilities, operational SQL, recovery guidance, and automated repository checks. The project does not require recreating paid cloud resources just to review its committed artifacts.
 
-- [ ] Resolve source-specific initial watermark, equal-boundary, late-arrival, and delete semantics before enabling each SQL source.
-- [ ] Run controlled ADF copy/Silver-failure/retry scenarios when an Azure environment is available.
-- [ ] Execute the Silver notebooks and operational SQL against a compatible Databricks workspace.
-- [ ] Capture run evidence for successful processing, failed processing, replay, and reconciliation.
-- [ ] Complete final README link/render review and add the project to the portfolio site.
+The remaining owner-operated acceptance items are environment-dependent:
 
-The repository checks validate committed artifacts and static contracts; they do not claim live Azure or Databricks execution. See the [project checklist](docs/PROJECT_CHECKLIST.md) for the release-readiness view and the [project release gate](docs/PROJECT_RELEASE_GATE.md) for the consolidated acceptance criteria and no-cost finalization workflow.
+- [ ] Complete the per-source SQL contract for initial watermarks, equal/late changes, and delete capture before enabling a source.
+- [ ] Run controlled ADF copy/Silver-failure/retry and checkpoint-conflict scenarios in a test Azure environment.
+- [ ] Execute the Silver notebooks and operational SQL in a compatible Databricks workspace.
+- [ ] Capture actual run evidence for success, failure, replay, and reconciliation.
+- [ ] Complete a final README link/render review and feature the repository on the portfolio website.
+
+These are explicit deployment acceptance gates, not a reason to hide or misrepresent the implemented portfolio artifacts. The repository's CI validates committed files and static contracts; it does not certify live cloud execution. See [Final Handoff](docs/FINAL_HANDOFF.md), the [project checklist](docs/PROJECT_CHECKLIST.md), and the [project release gate](docs/PROJECT_RELEASE_GATE.md) for the scope and remaining owner-operated checks.
 
 ## Author
 
