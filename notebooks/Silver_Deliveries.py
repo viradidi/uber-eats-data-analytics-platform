@@ -2,6 +2,7 @@
 from pyspark.sql.functions import *
 from pyspark.sql.types  import *
 from src.common.spark_utils import standardize_columns
+from src.common.quality_events import log_pipeline_failure
 
 
 # COMMAND ----------
@@ -9,6 +10,12 @@ from src.common.spark_utils import standardize_columns
 # Environment-specific storage configuration (override the widget per workspace/job).
 dbutils.widgets.text("bronze_root", "abfss://bronze@ubereaststorage.dfs.core.windows.net", "Bronze storage root")
 BRONZE_ROOT = dbutils.widgets.get("bronze_root").rstrip("/")
+
+def fail_validation(message, stage="silver_validation"):
+    error = ValueError(message)
+    log_pipeline_failure(spark, "deliveries", stage, error)
+    raise error
+
 
 
 
@@ -36,12 +43,12 @@ display(df_deliveries_table)
 df_deliveries_table_row_count = df_deliveries_table.count()
 print("deliveries.source_rows=" + str(df_deliveries_table_row_count))
 if df_deliveries_table_row_count == 0:
-    raise ValueError("API Silver input is empty; refusing to overwrite the existing target table")
+    fail_validation("API Silver input is empty; refusing to overwrite the existing target table")
 # Fail before publishing if the API payload has schema, required-field, or key-quality defects.
 required_columns = ["delivery_id","order_id","delivery_status","updated_at"]
 missing_columns = sorted(set(required_columns) - set(df_deliveries_table.columns))
 if missing_columns:
-    raise ValueError(f"deliveries API payload is missing required columns: {missing_columns}")
+    fail_validation(f"deliveries API payload is missing required columns: {missing_columns}")
 
 required_null_conditions = [col(name).isNull() for name in required_columns]
 required_null_condition = required_null_conditions[0]
@@ -49,12 +56,12 @@ for condition in required_null_conditions[1:]:
     required_null_condition = required_null_condition | condition
 required_null_count = df_deliveries_table.filter(required_null_condition).count()
 if required_null_count:
-    raise ValueError(f"deliveries API payload has {required_null_count} rows with null required fields: {required_columns}")
+    fail_validation(f"deliveries API payload has {required_null_count} rows with null required fields: {required_columns}")
 
 key_columns = ["delivery_id"]
 duplicate_key_count = df_deliveries_table.groupBy(*key_columns).count().filter(col("count") > 1).count()
 if duplicate_key_count:
-    raise ValueError(f"deliveries API payload has {duplicate_key_count} duplicate business keys: {key_columns}")
+    fail_validation(f"deliveries API payload has {duplicate_key_count} duplicate business keys: {key_columns}")
 
 
 
@@ -188,4 +195,6 @@ quality_record = [{
 spark.createDataFrame(quality_record).write.format("delta").mode("append").saveAsTable(quality_table)
 print("deliveries.quality.persisted_run_id=" + quality_record[0]["run_id"])
 if not reconciliation_passed:
-    raise RuntimeError("deliveries row-count reconciliation failed: prepared_rows=" + str(prepared_rows) + ", target_rows_after=" + str(target_rows_after))
+    error = RuntimeError("deliveries row-count reconciliation failed: prepared_rows=" + str(prepared_rows) + ", target_rows_after=" + str(target_rows_after)))
+    log_pipeline_failure(spark, "deliveries", "silver_reconciliation", error)
+    raise error
