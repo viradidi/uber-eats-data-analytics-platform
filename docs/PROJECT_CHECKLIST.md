@@ -104,6 +104,7 @@ Drivers, Promotions, and Zones now identify duplicate business-key groups, persi
 - [x] Mock API timestamp, pagination, incremental-filter, and API-key behavior tests added; CI installs the declared API dependencies before running tests
 - [x] Mock payment generator uses the highest existing numeric payment-ID suffix and atomic JSON replacement; tests cover replacement failure preserving the original file
 - [x] Mock API source fixtures resolve relative to the application module rather than the server process's working directory; path-resolution tests added
+- [x] README documents the local repository test command and clarifies that the file-backed test-data generator is demo-only, not a concurrent production write service
 - [x] Operational health, trend, and reconciliation SQL reports committed
 - [x] Silver validation, quarantine, quality-event, and reconciliation implementation artifacts committed
 
