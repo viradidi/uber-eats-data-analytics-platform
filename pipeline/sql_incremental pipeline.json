@@ -116,7 +116,11 @@
 											"source": {
 												"type": "AzureSqlSource",
 												"queryTimeout": "02:00:00",
-												"partitionOption": "None"
+												"partitionOption": "None",
+												"sqlReaderQuery": {
+													"value": "@concat(\n    'SELECT * FROM dbo.',\n    item().table_name,\n    ' WHERE ',\n    item().watermark_column,\n    ' > ''',\n    item().last_watermark_value,\n    ''''\n)",
+													"type": "Expression"
+												}
 											},
 											"sink": {
 												"type": "DelimitedTextSink",
@@ -191,7 +195,7 @@
 											"source": {
 												"type": "AzureSqlSource",
 												"sqlReaderQuery": {
-													"value": "@concat('SELECT MAX(updated_at) as max_watermark from dbo.',item().table_name)",
+													"value": "@concat('SELECT MAX(', item().watermark_column, ') AS max_watermark FROM dbo.', item().table_name)",
 													"type": "Expression"
 												},
 												"queryTimeout": "02:00:00",
@@ -231,7 +235,7 @@
 												{
 													"type": "Query",
 													"text": {
-														"value": "@concat(\n    'UPDATE dbo.pipeline_control SET last_watermark_value = ''',\n    activity('Get max watermark_copy1').output.firstRow.max_watermark,\n    '''WHERE control_id = ',\n    item().control_id\n)\n",
+														"value": "@concat(\n    'UPDATE dbo.pipeline_control SET last_watermark_value = ''',\n    activity('Get max watermark_copy1').output.firstRow.max_watermark,\n    ''' WHERE control_id = ',\n    item().control_id\n)",
 														"type": "Expression"
 													}
 												}
