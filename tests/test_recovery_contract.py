@@ -61,6 +61,21 @@ class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
         self.assertIn("source-specific decision", review)
         self.assertIn("not yet handled by the exported expressions", review)
 
+    def test_source_contract_covers_incremental_edge_cases(self):
+        contract_path = ROOT / "docs" / "INCREMENTAL_SOURCE_CONTRACT.md"
+        self.assertTrue(contract_path.is_file())
+        contract = contract_path.read_text(encoding="utf-8")
+        for requirement in (
+            "Initial-load behavior",
+            "Stable business key",
+            "Late-arriving rows",
+            "Delete capture",
+            "Replay behavior",
+            "Invalid table/column metadata",
+            "checkpoint must remain unchanged",
+        ):
+            self.assertIn(requirement, contract)
+
     def test_silver_job_waits_for_copy_success(self):
         dependencies = _dependency_names(self.silver_job)
         self.assertIn("adls data migration_copy1", dependencies)
