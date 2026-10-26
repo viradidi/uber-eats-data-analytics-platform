@@ -74,19 +74,34 @@ def load_json_file(file_name):
             "r",
             encoding="utf-8"
         ) as file:
-            return json.load(file)
+            data = json.load(file)
 
     except FileNotFoundError:
+        # Do not disclose server-side paths in API error responses.
         raise HTTPException(
             status_code=500,
-            detail=f"File not found: {file_path}"
+            detail="Source data file is unavailable."
         )
 
     except json.JSONDecodeError:
         raise HTTPException(
             status_code=500,
-            detail=f"Invalid JSON file: {file_path}"
+            detail="Source data file contains invalid JSON."
         )
+
+    if not isinstance(data, list):
+        raise HTTPException(
+            status_code=500,
+            detail="Source data file must contain a JSON array of records."
+        )
+
+    if any(not isinstance(record, dict) for record in data):
+        raise HTTPException(
+            status_code=500,
+            detail="Source data file contains a record that is not a JSON object."
+        )
+
+    return data
 
 
 # =========================================================
