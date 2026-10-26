@@ -125,7 +125,25 @@ if df_order_status_table_row_count == 0:
 
 # COMMAND ----------
 
-df_order_status_table.write.format("delta").mode("overwrite").saveAsTable("ubereats_databricks1.silver.silver_order_status")
+try:
+    df_order_status_table.write.format("delta").mode("overwrite").saveAsTable("ubereats_databricks1.silver.silver_order_status")
+except Exception as exc:
+    # Record publish failures without replacing the original exception.
+    failure_record = [{
+        "run_id": str(__import__("uuid").uuid4()),
+        "dataset_name": "order_status",
+        "stage": "silver_publish",
+        "error_type": type(exc).__name__,
+        "error_message": str(exc)[:2000],
+        "recorded_at_utc": str(spark.sql("SELECT current_timestamp() AS ts").first()["ts"]),
+    }]
+    try:
+        spark.createDataFrame(failure_record).write.format("delta").mode("append").saveAsTable(
+            "ubereats_databricks1.silver.pipeline_failure_events"
+        )
+    except Exception as log_exc:
+        print("order_status.failure_log_error=" + str(log_exc)[:500])
+    raise
 
 # Persist a quality record and reconcile the full-refresh row count.
 table_name = "ubereats_databricks1.silver.silver_order_status"
