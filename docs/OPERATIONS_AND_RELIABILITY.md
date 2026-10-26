@@ -94,3 +94,12 @@ A record can be updated after the pipeline has passed its original timestamp bou
 The appropriate strategy depends on source guarantees, timestamp precision, update behavior, and the cost of reprocessing.
 
 **Project-specific note:** The mock API filters using `updated_after`. That is a useful incremental
+
+## 9. Notification Endpoint Security
+
+The SQL incremental pipeline export intentionally does not contain a live Logic App callback URL. Configure notifications during deployment using a secret-backed design, such as retrieving the callback URL from Azure Key Vault with an appropriately authorized managed identity. Do not commit callback signatures, SAS tokens, API keys, or other credentials to source control.
+
+A callback URL that was previously committed must be treated as exposed. Rotate or regenerate the Logic App trigger URL/signature in Azure; removing it from the current file does not erase it from Git history or invalidate the old token. Re-enable the notification activity only after the replacement endpoint is stored and referenced securely.
+
+Because the Azure subscription may be disabled, perform the rotation and deployment configuration when access is available. The core SQL ingestion pipeline remains separate from the notification integration.
+
