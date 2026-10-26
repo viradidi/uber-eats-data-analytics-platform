@@ -159,8 +159,6 @@ def reconcile_full_snapshot(
             "Pass source_is_full_snapshot=True only for a confirmed full snapshot; "
             "incremental batches should use reconcile_merge_target()"
         )
-    from pyspark.sql import functions as F
-
     if not key_columns:
         raise ValueError("key_columns must contain at least one business key")
 
@@ -172,6 +170,8 @@ def reconcile_full_snapshot(
     }
     if invalid_specs:
         raise ValueError(f"Unsupported aggregate specifications: {invalid_specs}")
+
+    from pyspark.sql import functions as F
 
     required_columns = set(key_columns) | set(aggregate_specs)
     missing_source = sorted(required_columns - set(source_df.columns))
