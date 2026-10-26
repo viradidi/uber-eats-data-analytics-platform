@@ -90,7 +90,7 @@ jobs:
               if path.suffix.lower() == ".ipynb":
                   try:
                       notebook = json.loads(source)
-                      source = "\\n".join(
+                      source = "\n".join(
                           "".join(cell.get("source", []))
                           for cell in notebook.get("cells", [])
                       )
@@ -101,14 +101,14 @@ jobs:
                   failures.append(f"{path}: personal workspace path must not be committed")
               if "abfss://bronze@ubereaststorage.dfs.core.windows.net/" in source and "BRONZE_ROOT" not in source:
                   failures.append(f"{path}: Bronze path must use configurable BRONZE_ROOT")
-              if ".load(f\\"{BRONZE_ROOT}/" not in source:
+              if '.load(f"{BRONZE_ROOT}/' not in source:
                   failures.append(f"{path}: expected a load path built from BRONZE_ROOT")
-              if "dbutils.widgets.text(\\"bronze_root\\"" not in source:
+              if 'dbutils.widgets.text("bronze_root"' not in source:
                   failures.append(f"{path}: missing bronze_root widget")
           if not Path("src/common/spark_utils.py").is_file():
               failures.append("src/common/spark_utils.py: shared helper is missing")
           if failures:
-              print("\\n".join(failures))
+              print("\n".join(failures))
               raise SystemExit(1)
           print(f"Portability checks passed for {len(files)} Silver notebook exports.")
           PY
