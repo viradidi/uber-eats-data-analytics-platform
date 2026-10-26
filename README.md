@@ -318,7 +318,20 @@ uvicorn main:app --host 127.0.0.1 --port 10000
 
 For cloud deployment, use Azure Key Vault or an approved secret-management mechanism and configure the application environment securely. Never commit the real key. Configure other resource names and connection details for your environment.
 
-### 4. Inspect the Azure Data Factory resources
+### 4. Run repository-level validation
+
+From the repository root, install the declared Python dependencies and run the committed standard-library test suite:
+
+```bash
+python -m pip install -r requirements.txt
+python -m unittest discover -s tests -v
+```
+
+The suite checks committed CSV fixtures, API timestamp and pagination behavior, API-key fail-closed behavior, payment-ID generation, atomic file replacement, path resolution, README link contracts, and static recovery contracts. It does not execute Azure Data Factory, Spark/Delta notebooks, or a deployed API service.
+
+The API's `POST /payments/generate-test-data` endpoint is a demonstration utility that mutates the local `data/payments.json` fixture. Atomic replacement protects against partial-file writes, but the file-backed generator is not a concurrent, multi-worker production write service and local container filesystems may be ephemeral. Keep it restricted to controlled demos; use a durable transactional store and explicit concurrency control for a real service.
+
+### 5. Inspect the Azure Data Factory resources
 
 Review the JSON files in:
 
@@ -331,7 +344,7 @@ Review the JSON files in:
 
 These files represent exported resource definitions. Validate linked services, integration runtimes, dataset references, parameters, and dependencies before importing or publishing them to an Azure environment.
 
-### 5. Inspect Databricks notebooks
+### 6. Inspect Databricks notebooks
 
 Open the notebook exports in `notebooks/` and review their source configuration, transformation logic, dependencies, and target locations before execution.
 
