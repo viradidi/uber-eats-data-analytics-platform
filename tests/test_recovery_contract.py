@@ -191,6 +191,10 @@ class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
             "GROUP BY control_id",
             "GROUP BY table_name, watermark_column",
             "NOT an authorization boundary",
+            "FROM sys.tables AS t",
+            "ON c.object_id = t.object_id",
+            "watermark_data_type",
+            "object exists; verify watermark type and source semantics",
         ):
             self.assertIn(expected, preflight)
 
