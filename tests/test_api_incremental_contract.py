@@ -76,6 +76,39 @@ class ApiTimestampContractTests(unittest.TestCase):
         self.assertEqual(7, result["pagination"]["total_records"])
         self.assertEqual(3, result["pagination"]["total_pages"])
 
+    def test_every_data_endpoint_declares_api_key_dependency(self):
+        from fastapi.routing import APIRoute
+
+        protected_paths = {
+            "/payments", "/deliveries", "/ratings", "/order-status",
+            "/watermarks", "/payments/generate-test-data",
+        }
+        routes = {
+            route.path: route
+            for route in api.app.routes
+            if isinstance(route, APIRoute)
+        }
+        self.assertTrue(protected_paths.issubset(routes))
+        for path in protected_paths:
+            with self.subTest(path=path):
+                dependency_calls = {
+                    dependency.call
+                    for dependency in routes[path].dependant.dependencies
+                }
+                self.assertIn(api.verify_api_key, dependency_calls)
+
+    def test_root_discovery_endpoint_is_public_by_design(self):
+        from fastapi.routing import APIRoute
+
+        root = next(
+            route for route in api.app.routes
+            if isinstance(route, APIRoute) and route.path == "/"
+        )
+        dependency_calls = {
+            dependency.call for dependency in root.dependant.dependencies
+        }
+        self.assertNotIn(api.verify_api_key, dependency_calls)
+
     def test_missing_api_key_configuration_fails_closed(self):
         with patch.object(api, "API_KEY", None):
             with self.assertRaises(HTTPException) as raised:
