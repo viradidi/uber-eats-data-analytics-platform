@@ -134,3 +134,182 @@ def reconcile_merge_target(
         log_pipeline_failure(spark, dataset_name, "silver_reconciliation", error)
         raise error
     return record[0]
+
+def reconcile_full_snapshot(
+    spark,
+    source_df,
+    target_table: str,
+    dataset_name: str,
+    key_columns: list[str],
+    *,
+    source_is_full_snapshot: bool,
+    aggregate_specs: dict[str, str] | None = None,
+    numeric_tolerance: float = 1e-9,
+) -> dict:
+    """Audit a confirmed full snapshot without deleting or modifying target data.
+
+    Explicit full-snapshot confirmation is required because target-only keys are
+    expected for incremental batches. Records are appended to a separate detail
+    table so the existing reconciliation table schema remains unchanged.
+    """
+    from math import isclose
+    from pyspark.sql import functions as F
+
+    if source_is_full_snapshot is not True:
+        raise ValueError(
+            "Pass source_is_full_snapshot=True only for a confirmed full snapshot; "
+            "incremental batches should use reconcile_merge_target()"
+        )
+    if not key_columns:
+        raise ValueError("key_columns must contain at least one business key")
+
+    aggregate_specs = aggregate_specs or {}
+    allowed_aggregates = {"sum", "min", "max", "avg", "count"}
+    invalid_specs = {
+        name: operation for name, operation in aggregate_specs.items()
+        if operation not in allowed_aggregates
+    }
+    if invalid_specs:
+        raise ValueError(f"Unsupported aggregate specifications: {invalid_specs}")
+
+    required_columns = set(key_columns) | set(aggregate_specs)
+    missing_source = sorted(required_columns - set(source_df.columns))
+    if missing_source:
+        raise ValueError(f"{dataset_name} snapshot source is missing columns: {missing_source}")
+
+    run_id = str(uuid4())
+    target_df = spark.table(target_table)
+    missing_target = sorted(required_columns - set(target_df.columns))
+    if missing_target:
+        raise ValueError(f"{dataset_name} snapshot target is missing columns: {missing_target}")
+
+    def duplicate_key_groups(frame):
+        return (
+            frame.groupBy(*key_columns)
+            .count()
+            .filter(F.col("count") > 1)
+            .count()
+        )
+
+    source_duplicate_groups = duplicate_key_groups(source_df)
+    target_duplicate_groups = duplicate_key_groups(target_df)
+    if source_duplicate_groups or target_duplicate_groups:
+        error = ValueError(
+            f"{dataset_name} snapshot reconciliation requires unique keys; "
+            f"source_duplicate_groups={source_duplicate_groups}, "
+            f"target_duplicate_groups={target_duplicate_groups}"
+        )
+        log_pipeline_failure(spark, dataset_name, "snapshot_reconciliation_precondition", error)
+        raise error
+
+    source_keys = source_df.select(*key_columns)
+    target_keys = target_df.select(*key_columns)
+    source_only_keys = source_keys.join(target_keys, on=key_columns, how="left_anti").count()
+    target_only_keys = target_keys.join(source_keys, on=key_columns, how="left_anti").count()
+
+    def aggregate_values(frame):
+        expressions = [F.count(F.lit(1)).alias("__row_count")]
+        for column_name, operation in aggregate_specs.items():
+            expressions.append(
+                getattr(F, operation)(F.col(column_name)).alias(f"__aggregate_{column_name}")
+            )
+        return frame.agg(*expressions).first().asDict()
+
+    source_values = aggregate_values(source_df)
+    target_values = aggregate_values(target_df)
+    checks = [
+        ("key_coverage", "source_only_key_count", source_only_keys, 0),
+        ("key_coverage", "target_only_key_count", 0, target_only_keys),
+        ("row_count", "row_count", source_values["__row_count"], target_values["__row_count"]),
+    ]
+    for column_name, operation in aggregate_specs.items():
+        checks.append((
+            "business_aggregate",
+            f"{operation}:{column_name}",
+            source_values[f"__aggregate_{column_name}"],
+            target_values[f"__aggregate_{column_name}"],
+        ))
+
+    def values_match(expected, actual):
+        if expected is None or actual is None:
+            return expected is actual
+        if isinstance(expected, (int, float)) and isinstance(actual, (int, float)):
+            return isclose(
+                float(expected), float(actual),
+                rel_tol=numeric_tolerance, abs_tol=numeric_tolerance,
+            )
+        try:
+            from decimal import Decimal
+            return Decimal(str(expected)) == Decimal(str(actual))
+        except Exception:
+            return expected == actual
+
+    failed_checks = []
+    records = []
+    recorded_at = datetime.now(timezone.utc).isoformat()
+    for check_type, metric_name, expected, actual in checks:
+        passed = values_match(expected, actual)
+        if not passed:
+            failed_checks.append(metric_name)
+        difference = None
+        if expected is not None and actual is not None:
+            try:
+                difference = str(actual - expected)
+            except TypeError:
+                difference = "not_numeric"
+        records.append({
+            "run_id": run_id,
+            "dataset_name": dataset_name,
+            "target_table": target_table,
+            "check_type": check_type,
+            "metric_name": metric_name,
+            "source_value": None if expected is None else str(expected),
+            "target_value": None if actual is None else str(actual),
+            "difference": difference,
+            "status": "SUCCEEDED" if passed else "FAILED_RECONCILIATION",
+            "recorded_at_utc": recorded_at,
+        })
+
+    from pyspark.sql.types import StringType, StructField, StructType
+    detail_schema = StructType([
+        StructField("run_id", StringType(), False),
+        StructField("dataset_name", StringType(), False),
+        StructField("target_table", StringType(), False),
+        StructField("check_type", StringType(), False),
+        StructField("metric_name", StringType(), False),
+        StructField("source_value", StringType(), True),
+        StructField("target_value", StringType(), True),
+        StructField("difference", StringType(), True),
+        StructField("status", StringType(), False),
+        StructField("recorded_at_utc", StringType(), False),
+    ])
+    (
+        spark.createDataFrame(records, schema=detail_schema)
+        .write.format("delta")
+        .mode("append")
+        .saveAsTable("ubereats_databricks1.silver.pipeline_reconciliation_details")
+    )
+
+    status = "SUCCEEDED" if not failed_checks else "FAILED_RECONCILIATION"
+    print(
+        f"{dataset_name}.full_snapshot_reconciliation.status={status}; "
+        f"source_only_keys={source_only_keys}; target_only_keys={target_only_keys}; "
+        f"failed_checks={failed_checks}; run_id={run_id}"
+    )
+    if failed_checks:
+        error = RuntimeError(
+            f"{dataset_name} full-snapshot reconciliation failed checks: "
+            + ", ".join(failed_checks)
+        )
+        log_pipeline_failure(spark, dataset_name, "full_snapshot_reconciliation", error)
+        raise error
+
+    return {
+        "run_id": run_id,
+        "dataset_name": dataset_name,
+        "target_table": target_table,
+        "source_only_keys": source_only_keys,
+        "target_only_keys": target_only_keys,
+        "status": status,
+        "failed_checks": failed_checks,
+    }
