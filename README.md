@@ -1,11 +1,16 @@
 
-# Uber Eats — End-to-End Azure Data Engineering Platform
+# Uber Eats — Metadata-Driven Azure Data Platform
 
-An end-to-end data engineering project demonstrating API ingestion, file-based ingestion, SQL incremental loading, Azure Data Factory orchestration, Azure Data Lake Storage integration, and Databricks Silver-layer transformations.
+A multi-source data engineering platform for restaurant-delivery analytics, combining REST API ingestion, CSV ingestion, SQL incremental extraction, Azure Data Factory orchestration, Azure Data Lake Storage, and Databricks transformations.
 
-> **Project type:** Portfolio / learning project  
-> **Platform:** Microsoft Azure  
-> **Repository owner:** Isaiah Nyakundi
+![Project status](https://img.shields.io/badge/status-implemented%20portfolio%20project-24549a)
+![Platform](https://img.shields.io/badge/platform-Microsoft%20Azure-0078D4)
+![Processing](https://img.shields.io/badge/processing-Python%20%7C%20SQL%20%7C%20PySpark-3776AB)
+
+> **Project focus:** Multi-source ingestion, metadata-driven configuration, incremental loading, and cloud data-platform design.  
+> **Owner:** Isaiah Nyakundi · [GitHub](https://github.com/viradidi) · [Portfolio](https://viradidi.github.io/)
+
+This repository preserves the project's source code, exported Azure Data Factory resources, API and file metadata, sample domain data, and Databricks notebook exports. The diagrams describe the solution represented by those artifacts; the live status of Azure resources depends on the deployment environment.
 
 ## Overview
 
@@ -33,7 +38,15 @@ This project demonstrates technical patterns relevant to those challenges.
 
 ## Architecture
 
-The architecture below represents the major components evidenced by the repository. Exact runtime connectivity, storage paths, and deployed Azure resources depend on the corresponding configurations and environment.
+### End-to-end platform overview
+
+![Uber Eats end-to-end Azure data platform architecture](architecture/uber-eats-end-to-end-architecture.svg)
+
+The overview shows the three source patterns—REST API, CSV, and SQL—feeding Azure Data Factory orchestration and Azure Data Lake Storage, followed by Databricks Silver transformations and analytics-ready outputs. Metadata, control state, and secret management are supporting concerns rather than business-data layers.
+
+### Logical component flow
+
+The Mermaid view below complements the visual with repository-level component names. Exact runtime connectivity and deployed Azure resources depend on environment configuration.
 
 ```mermaid
 flowchart TD
@@ -99,7 +112,7 @@ flowchart TD
 
 The diagram is a logical view of the project artifacts, not proof that every connection is currently deployed or operational. Review the exported linked services and pipeline activities to confirm exact runtime behavior.
 
-See [`architecture/architecture.md`](architecture/architecture.md) for the detailed architecture document.
+See [`architecture/architecture.md`](architecture/architecture.md) for component responsibilities, data-flow details, and deployment considerations.
 
 ## Technology Stack
 
@@ -317,25 +330,15 @@ Before treating this workflow as production-ready, validate:
 
 These are important validation areas; this README does not claim that every item is already implemented or tested.
 
-## Current Scope and Limitations
+## Implementation Status and Scope
 
-This repository documents the available Azure data engineering artifacts and transformation notebooks.
+This is an implemented portfolio project with API application code, source data, metadata and exported Azure Data Factory resources, SQL incremental-ingestion configuration, and Databricks Silver notebook artifacts. The repository is designed to demonstrate the architecture and implementation patterns across these components.
 
-The presence of exported configurations alone does not establish that the entire workflow has been deployed successfully, that all services are connected, or that the pipeline has passed production acceptance tests.
+The repository contains exported cloud configuration, which is distinct from a currently running Azure deployment. Runtime behavior depends on valid linked services, integration runtimes, secrets, resource names, and workspace-specific paths. Describe deployment and execution evidence separately from source-code availability; do not infer live cloud status from checked-in JSON alone.
 
-Before extending the project, document:
+## Engineering Roadmap
 
-1. Which Azure resources have been deployed.
-2. Which ingestion and transformation pipelines have been executed successfully.
-3. Which data-quality and reconciliation tests have passed.
-4. Which downstream analytics products are included.
-5. Which components remain environment-dependent or incomplete.
-
-No production-readiness, business-impact, or performance claims should be made without supporting evidence.
-
-## Future Improvements
-
-Potential engineering extensions include:
+The next improvements that would strengthen this platform further include:
 
 - Automated data-quality and schema validation tests.
 - Explicit watermark and checkpoint recovery tests.
@@ -359,4 +362,4 @@ Portfolio: [viradidi.github.io](https://viradidi.github.io/)
 
 ---
 
-*This is a portfolio project intended to demonstrate data engineering patterns using Azure-oriented tools and sample domain data.*
+*This is a portfolio data platform built around Azure-oriented services and restaurant-delivery sample data. The repository documents the implementation artifacts; live deployment status is environment-dependent.*
