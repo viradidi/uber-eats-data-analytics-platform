@@ -3,7 +3,7 @@
 
 **An end-to-end, metadata-driven Azure data platform for restaurant-delivery analytics.** This project brings together REST API, CSV, and SQL ingestion patterns; Azure Data Factory orchestration; Azure Data Lake Storage Gen2; Databricks/Spark transformations; and engineering controls for data quality, reconciliation, incremental correctness, and recovery.
 
-[Explore the architecture](architecture/uber-eats-end-to-end-architecture.svg) · [Review engineering evidence](#engineering-evidence-and-operational-readiness) · [Inspect tests and workflows](https://github.com/viradidi/uber-eats-data-analytics-platform/actions) · [Project checklist](docs/PROJECT_CHECKLIST.md)
+[Explore the architecture](architecture/uber-eats-end-to-end-architecture.svg) · [Review engineering evidence](#engineering-evidence-and-operational-readiness) · [Portfolio evidence checklist](docs/PORTFOLIO_EVIDENCE.md) · [Inspect tests and workflows](https://github.com/viradidi/uber-eats-data-analytics-platform/actions) · [Project checklist](docs/PROJECT_CHECKLIST.md)
 
 ![Project status](https://img.shields.io/badge/status-implemented%20portfolio%20project-24549a)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen)
@@ -174,6 +174,7 @@ This repository includes operational artifacts for reviewing and recovering the 
 - [Operations and reliability guide](docs/OPERATIONS_AND_RELIABILITY.md): operational reports, audit records, and recovery practices.
 - [Operational health SQL](docs/OPERATIONAL_HEALTH_REPORT.sql), [quality trends SQL](docs/DATA_QUALITY_TRENDS_AND_INCIDENTS.sql), and [reconciliation audit SQL](docs/RECONCILIATION_AUDIT_QUERIES.sql).
 - [Project completion and evidence checklist](docs/PROJECT_CHECKLIST.md).
+- [Portfolio evidence pack](docs/PORTFOLIO_EVIDENCE.md): the specific run records, test results, monitoring captures, reconciliation outputs, and recovery proof that make validation reviewable.
 
 The GitHub Actions workflow checks repository JSON/notebook validity, Python syntax, notebook portability, sample-data quality, API-key configuration, and static recovery contracts. These checks provide repository-level safeguards; they do not execute Azure Data Factory or Databricks workloads.
 
