@@ -66,6 +66,7 @@ SELECT
 FROM ubereats_databricks1.silver.pipeline_failure_events f
 LEFT JOIN ubereats_databricks1.silver.pipeline_reconciliation_details d
     ON f.run_id = d.run_id
+   AND f.dataset_name = d.dataset_name
 WHERE f.stage IN (
     'silver_reconciliation',
     'snapshot_reconciliation_precondition',
