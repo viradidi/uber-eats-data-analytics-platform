@@ -28,7 +28,9 @@ Use this checklist to distinguish available artifacts from verified implementati
 - [ ] Add equivalent schema and required-field checks to the executed API Silver transformations
 - [x] Add null-key and duplicate-key checks to the Zones merge input
 - [x] Add latitude/longitude validity checks and fail-fast guardrails to Zones
-- [ ] Persist quality metrics and rejected-row details with a run identifier
+- [x] Persist successful-run quality metrics with run ID, dataset, source/prepared/target counts, status, and timestamp for Drivers, Promotions, and Zones
+- [ ] Add failed-run records and rejected-row details with a run identifier
+- [ ] Extend durable quality metrics to API-backed Silver datasets
 - [ ] Add source-to-target reconciliation
 
 ## Security
