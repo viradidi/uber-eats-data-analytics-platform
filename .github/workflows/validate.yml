@@ -72,6 +72,9 @@ jobs:
           print(f"Syntax-checked {len(paths)} Python files.")
           PY
 
+      - name: Test committed CSV source fixtures
+        run: python -m unittest discover -s tests -v
+
       - name: Check API security configuration
         run: |
           python - <<'PY'
