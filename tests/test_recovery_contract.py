@@ -118,6 +118,35 @@ class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
         self.assertIn("change-presence check only", review)
         self.assertIn("not a completeness guarantee", review)
 
+    def test_dynamic_sql_identifiers_are_flagged_as_a_deployment_gate(self):
+        check = _find_activity(self.foreach_activities, "Check any new data")
+        check_query = check["typeProperties"]["source"]["sqlReaderQuery"]["value"]
+        copy_query = self.copy["typeProperties"]["source"]["sqlReaderQuery"]["value"]
+        max_query = self.max_watermark["typeProperties"]["source"]["sqlReaderQuery"]["value"]
+
+        # These are interpolated SQL identifiers, not parameterized values.
+        self.assertIn("item().table_name", check_query)
+        self.assertIn("item().watermark_column", check_query)
+        self.assertIn("item().table_name", copy_query)
+        self.assertIn("item().watermark_column", copy_query)
+        self.assertIn("item().table_name", max_query)
+        self.assertIn("item().watermark_column", max_query)
+
+        review_path = ROOT / "docs" / "SQL_INCREMENTAL_LOAD_REVIEW.md"
+        review = review_path.read_text(encoding="utf-8")
+        self.assertIn("does not show an allowlist guard", review)
+        self.assertIn("Do not populate these fields from untrusted input", review)
+
+    def test_timestamped_landing_files_are_not_misrepresented_as_idempotent(self):
+        output_parameters = self.copy["outputs"][0]["parameters"]
+        file_name = output_parameters["p_file_name"]["value"]
+        self.assertIn("formatDateTime(utcNow()", file_name)
+
+        review_path = ROOT / "docs" / "SQL_INCREMENTAL_LOAD_REVIEW.md"
+        review = review_path.read_text(encoding="utf-8")
+        self.assertIn("A retry can therefore create a second file", review)
+        self.assertIn("does not guarantee idempotent Silver processing", review)
+
     def test_control_table_metadata_is_treated_as_privileged_configuration(self):
         contract_path = ROOT / "docs" / "INCREMENTAL_SOURCE_CONTRACT.md"
         contract = contract_path.read_text(encoding="utf-8")
