@@ -64,7 +64,7 @@ SELECT
     d.difference,
     d.status AS reconciliation_status
 FROM ubereats_databricks1.silver.pipeline_failure_events f
-LEFT JOIN ubereats_datacrunch.silver.pipeline_reconciliation_details d
+LEFT JOIN ubereats_databricks1.silver.pipeline_reconciliation_details d
     ON f.run_id = d.run_id
 WHERE f.stage IN (
     'silver_reconciliation',
