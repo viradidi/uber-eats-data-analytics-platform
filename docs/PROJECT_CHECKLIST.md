@@ -25,7 +25,8 @@ Use this checklist to distinguish available artifacts from verified implementati
 - [x] Add CI tests for required columns, nonblank keys, key uniqueness, allowed CSV domain values, promotion dates/discounts, and zone coordinate ranges in committed sample fixtures
 - [x] Add pre-cleaning quality metrics and prepared merge-key checks to Drivers and Promotions Silver notebooks
 - [ ] Add equivalent schema and required-field checks to the executed API Silver transformations
-- [ ] Add null-key and duplicate-key checks to the Zones merge input
+- [x] Add null-key and duplicate-key checks to the Zones merge input
+- [x] Add latitude/longitude validity checks and fail-fast guardrails to Zones
 - [ ] Persist quality metrics and rejected-row details with a run identifier
 - [ ] Add source-to-target reconciliation
 
