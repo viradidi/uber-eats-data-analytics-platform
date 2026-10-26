@@ -88,27 +88,45 @@ print(f"drivers.quality.prepared_duplicate_driver_id_keys={prepared_duplicate_ke
 
 # COMMAND ----------
 
-table_name = "ubereats_databricks1.silver.drivers"
-
-if not spark.catalog.tableExists(table_name):
-    (
-        df_drivers.write
-        .format("delta")
-        .mode("overwrite")
-        .saveAsTable(table_name)
-    )
-else:
-    target = DeltaTable.forName(spark, table_name)
-    (
-        target.alias("t")
-        .merge(
-            df_drivers.alias("s"),
-            "t.driver_id = s.driver_id"
+try:
+    table_name = "ubereats_databricks1.silver.drivers"
+    
+    if not spark.catalog.tableExists(table_name):
+        (
+            df_drivers.write
+            .format("delta")
+            .mode("overwrite")
+            .saveAsTable(table_name)
         )
-        .whenMatchedUpdateAll()
-        .whenNotMatchedInsertAll()
-        .execute()
-    )
+    else:
+        target = DeltaTable.forName(spark, table_name)
+        (
+            target.alias("t")
+            .merge(
+                df_drivers.alias("s"),
+                "t.driver_id = s.driver_id"
+            )
+            .whenMatchedUpdateAll()
+            .whenNotMatchedInsertAll()
+            .execute()
+        )
+except Exception as exc:
+    # Log publish failures separately without hiding the original exception.
+    failure_record = [{
+        "run_id": str(__import__("uuid").uuid4()),
+        "dataset_name": "drivers",
+        "stage": "silver_publish",
+        "error_type": type(exc).__name__,
+        "error_message": str(exc)[:2000],
+        "recorded_at_utc": str(spark.sql("SELECT current_timestamp() AS ts").first()["ts"]),
+    }]
+    try:
+        spark.createDataFrame(failure_record).write.format("delta").mode("append").saveAsTable(
+            "ubereats_databricks1.silver.pipeline_failure_events"
+        )
+    except Exception as log_exc:
+        print("drivers.failure_log_error=" + str(log_exc)[:500])
+    raise
 
 # Persist a compact successful-run quality record for later monitoring.
 quality_table = "ubereats_databricks1.silver.pipeline_quality_results"
