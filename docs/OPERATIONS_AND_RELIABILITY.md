@@ -116,7 +116,11 @@ Interpretation safeguards:
 3. Quarantine counts are rejected-record events; they are not necessarily counts of distinct source entities.
 4. A report's SQL and repository references have been reviewed, but live Databricks execution is pending an available workspace. Treat the output as an operational query pack, not evidence that the current cloud environment is running.
 
-## 10. Notification Endpoint Security
+## 10. Recovery and Rerun Procedure
+
+Use the [Recovery and Rerun Runbook](RECOVERY_AND_RERUN_RUNBOOK.md) when a pipeline or Silver notebook fails. Preserve the original run ID, failure stage, checkpoint before recovery, and audit records; determine whether the failed attempt partially wrote data before rerunning. Do not advance a watermark until the required downstream work and reconciliation have succeeded. The runbook distinguishes SQL incremental ingestion from merge-based and overwrite-based Silver transformations and explicitly avoids claiming automatic rollback or exactly-once behavior. These are documented operating steps; the full Azure recovery path has not been live-tested.
+
+## 11. Notification Endpoint Security
 
 The SQL incremental pipeline export intentionally does not contain a live Logic App callback URL. Configure notifications during deployment using a secret-backed design, such as retrieving the callback URL from Azure Key Vault with an appropriately authorized managed identity. Do not commit callback signatures, SAS tokens, API keys, or other credentials to source control.
 
