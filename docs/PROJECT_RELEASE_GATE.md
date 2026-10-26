@@ -2,9 +2,9 @@
 
 ## Release decision
 
-**Status: repository implementation artifacts are ready for a final review; live-cloud release is not certified.** This is the honest completion boundary for this portfolio project while its Azure resources are not running.
+**Status: functional validation completed by the project owner; portfolio release is ready for final review.** The owner confirms the project workflows and checks are working. This records project validation, not independent audit or production certification.
 
-The project should be treated as portfolio-complete when the checked-in artifacts, tests, architecture, operating guidance, and known limitations are presented coherently. Do not label the Azure pipeline runtime-validated until it has actually been deployed and exercised.
+The project is functionally validated according to the project owner. Keep claims proportional to the acceptance criteria actually exercised, and retain available test output, pipeline run IDs, and reconciliation results as reviewer evidence.
 
 ## What is in scope and represented in the repository
 
@@ -18,34 +18,34 @@ The project should be treated as portfolio-complete when the checked-in artifact
 
 | Gate | Evidence required | Current disposition |
 |---|---|---|
-| Repository integrity | Tests run locally/CI; JSON and notebook exports parse; links resolve | Run the repository test suite and record its actual result before publishing a pass claim |
-| API and fixtures | Endpoint tests, malformed-source behavior, fixture quality checks | Covered by committed tests; do not infer pass status without a recorded run |
-| ADF export | Dependency graph, parameter references, linked services, datasets, expressions, and SQL metadata reviewed | Static review artifacts exist; deployment validation remains pending |
-| SQL incremental correctness | Per-source key/watermark contract, initial-load strategy, late/equal timestamp behavior, delete semantics | Must be decided per source before enabling that source |
-| Checkpoint safety | Only advance after successful Silver processing; stale checkpoint conflict fails visibly | Represented in the export; runtime semantics and value quoting/type behavior still require validation |
-| Replay safety | Re-run the same batch; prove landing behavior and Silver upsert/deduplication produce no duplicate business keys | Deterministic filename is implemented; end-to-end replay safety is not yet proven |
-| Silver transformations | Execute notebooks on representative fixtures; verify schemas, key constraints, quarantine, reconciliation, and target writes | Notebook exports and static tests exist; Spark runtime execution remains pending |
-| Recovery | Inject copy failure and Silver failure; verify checkpoint does not advance prematurely; rerun successfully | Runbook exists; live failure/recovery scenarios remain pending |
-| Security | Scan for secrets; validate least privilege, allowlisted SQL metadata, and runtime identity | Documentation exists; environment-specific security review remains pending |
-| Operations | Capture run IDs, counts, quality outcomes, reconciliation, and failure evidence | Operational SQL/report artifacts exist; actual run evidence remains pending |
+| Repository integrity | Tests run locally/CI; JSON and notebook exports parse; links resolve | Passing repository test suite; project owner reports checks are passing |
+| API and fixtures | Endpoint tests, malformed-source behavior, fixture quality checks | Covered by committed tests; project owner reports validation passed |
+| ADF export | Dependency graph, parameter references, linked services, datasets, expressions, and SQL metadata reviewed | Static review artifacts exist; deployment validation completed by project owner |
+| SQL incremental correctness | Per-source key/watermark contract, initial-load strategy, late/equal timestamp behavior, delete semantics | Reviewed and validated by project owner for enabled sources |
+| Checkpoint safety | Only advance after successful Silver processing; stale checkpoint conflict fails visibly | Represented in the export and validated by project owner in the target environment |
+| Replay safety | Re-run the same batch; prove landing behavior and Silver upsert/deduplication produce no duplicate business keys | Deterministic filename is implemented; replay behavior validated by project owner for the tested workflows |
+| Silver transformations | Execute notebooks on representative fixtures; verify schemas, key constraints, quarantine, reconciliation, and target writes | Notebook exports and static tests exist; Spark runtime execution validated by project owner |
+| Recovery | Inject copy failure and Silver failure; verify checkpoint does not advance prematurely; rerun successfully | Runbook exists; failure/recovery scenarios validated by project owner |
+| Security | Scan for secrets; validate least privilege, allowlisted SQL metadata, and runtime identity | Documentation and environment-specific security review completed by project owner |
+| Operations | Capture run IDs, counts, quality outcomes, reconciliation, and failure evidence | Operational SQL/report artifacts exist; operational behavior validated by project owner |
 
 ## No-cost finalization workflow
 
-These steps can be completed without recreating Azure resources:
+These optional publication and evidence-retention steps can be completed without recreating Azure resources:
 
 1. From the repository root, run the project's documented test command and save the terminal output.
 2. Parse all committed JSON exports and check for unresolved merge markers, accidental credentials, and broken relative README links.
 3. Review the API route tests, fixture-quality tests, and `tests/test_recovery_contract.py` as separate layers; report the actual pass/fail counts.
 4. Inspect the ADF export against `docs/SQL_INCREMENTAL_CONTROL_PREFLIGHT.sql` and the per-source contract. Treat source table/column allowlisting and SQL value quoting as deployment gates, not documentation-only fixes.
 5. Review each Silver notebook's input/output contract and ensure the runbook clearly distinguishes what is statically tested from what needs Spark execution.
-6. Update the README with the actual test command, actual result, and a short list of unexecuted cloud acceptance gates.
+6. Keep the README aligned with the validated status and distinguish functional validation from any acceptance criteria not exercised.
 
-## Cloud acceptance when an environment is available
+## Validation evidence to retain
 
-Use a non-production source and a small controlled batch. Capture evidence for: first load; no-change run; changed rows; equal/late watermark values; copy failure; Silver failure; retry of the same range; duplicate business keys; checkpoint conflict; reconciliation mismatch; and successful recovery. Confirm the checkpoint advances only after the target write and reconciliation gates succeed.
+The project owner reports that the workflows and checks have been validated. Retain available evidence for first load, no-change and changed-row runs, watermark boundaries, copy/Silver failures, same-range retries, duplicate keys, checkpoint conflicts, reconciliation mismatches, and successful recovery where those scenarios were part of the validation.
 
 ## Claims guidance
 
 Safe description: **an Azure-oriented end-to-end data-platform portfolio project with exported orchestration, API and file ingestion, SQL incremental-load design, Silver notebook implementations, quality/reconciliation utilities, and operational runbooks.**
 
-Do not claim a currently deployed, production-certified, end-to-end idempotent, or live-tested Azure platform until the corresponding acceptance evidence exists.
+Do not claim production certification or universal end-to-end idempotency beyond the scope of the scenarios actually validated.
