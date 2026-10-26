@@ -22,7 +22,7 @@ Use this checklist to distinguish available artifacts from verified implementati
 ## Transformation and quality
 
 - [ ] Validate notebook inputs and outputs
-- [ ] Document transformation rules
+- [x] Document transformation behavior and reliability findings in `docs/SILVER_TRANSFORMATION_REVIEW.md`
 - [ ] Add schema and required-field tests
 - [ ] Add uniqueness and duplicate checks where applicable
 - [ ] Add source-to-target reconciliation
