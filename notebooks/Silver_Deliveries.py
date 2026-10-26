@@ -37,6 +37,26 @@ df_deliveries_table_row_count = df_deliveries_table.count()
 print("deliveries.source_rows=" + str(df_deliveries_table_row_count))
 if df_deliveries_table_row_count == 0:
     raise ValueError("API Silver input is empty; refusing to overwrite the existing target table")
+# Fail before publishing if the API payload has schema, required-field, or key-quality defects.
+required_columns = ["delivery_id","order_id","delivery_status","updated_at"]
+missing_columns = sorted(set(required_columns) - set(df_deliveries_table.columns))
+if missing_columns:
+    raise ValueError(f"deliveries API payload is missing required columns: {missing_columns}")
+
+required_null_conditions = [col(name).isNull() for name in required_columns]
+required_null_condition = required_null_conditions[0]
+for condition in required_null_conditions[1:]:
+    required_null_condition = required_null_condition | condition
+required_null_count = df_deliveries_table.filter(required_null_condition).count()
+if required_null_count:
+    raise ValueError(f"deliveries API payload has {required_null_count} rows with null required fields: {required_columns}")
+
+key_columns = ["delivery_id"]
+duplicate_key_count = df_deliveries_table.groupBy(*key_columns).count().filter(col("count") > 1).count()
+if duplicate_key_count:
+    raise ValueError(f"deliveries API payload has {duplicate_key_count} duplicate business keys: {key_columns}")
+
+
 
 # COMMAND ----------
 
