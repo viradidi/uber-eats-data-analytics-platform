@@ -284,7 +284,8 @@
       }
     ],
     "annotations": [],
-    "lastPublishTime": "2026-09-02T07:33:55Z"
+    "lastPublishTime": "2026-09-02T07:33:55Z",
+    "concurrency": 1
   },
   "type": "Microsoft.DataFactory/factories/pipelines"
 }
