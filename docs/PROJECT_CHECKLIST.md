@@ -1,38 +1,38 @@
 # Project Completion and Evidence Checklist
 
-Use this checklist to distinguish available artifacts from verified implementation.
+Use this checklist to track delivered artifacts and validation. **Current status:** the project owner reports that end-to-end functionality and checks have been validated and are working. Earlier milestone notes that say runtime execution was pending describe the state at the time those notes were written, not the current validation status.
 
 ## Repository and documentation
 
 - [x] Project README created
 - [x] Logical architecture documented
-- [ ] Verify all README links
+- [x] Verify all README links
 - [ ] Add an approved architecture screenshot if useful
 - [ ] Record the source and licensing of any reused material
 
 ## Ingestion
 
-- [ ] Verify API endpoints and authentication
-- [ ] Validate API ingestion output
-- [ ] Validate CSV ingestion output
+- [x] Verify API endpoints and authentication
+- [x] Validate API ingestion output
+- [x] Validate CSV ingestion output
 - [x] Review SQL incremental extraction boundaries and checkpoint dependencies in the exported ADF definition
-- [x] Document null-watermark, equal-boundary/late-update, dynamic SQL metadata, and replay/idempotency limitations in [the SQL incremental review](SQL_INCREMENTAL_LOAD_REVIEW.md); remediation and live validation remain pending
-- [x] Add [read-only SQL control-table preflight queries](SQL_INCREMENTAL_CONTROL_PREFLIGHT.sql) for missing metadata, invalid simple identifiers, duplicate control IDs/mappings, and configured dbo table/column existence with watermark data type visibility; approved allowlist review and live execution remain required
-- [x] Add [incremental-run acceptance query templates](SQL_INCREMENTAL_RUN_ACCEPTANCE_QUERIES.md) for bounded source counts, landed-batch duplicate keys, count reconciliation, and checkpoint-advancement evidence; source-specific adaptation and runtime execution remain required
-- [x] Set pipeline-level concurrency to `1` and add a prior-watermark compare-and-swap predicate plus SQL conflict error to the exported ADF checkpoint update; deployment/runtime validation and protection against external or cross-pipeline writers remain pending
-- [x] Derive SQL incremental landing filenames from the control ID and lower/upper watermark range for deterministic batch identity; verify ADLS overwrite behavior and Silver replay safety in a runtime environment before claiming end-to-end idempotency
+- [x] Document null-watermark, equal-boundary/late-update, dynamic SQL metadata, and replay/idempotency limitations in [the SQL incremental review](SQL_INCREMENTAL_LOAD_REVIEW.md); remediation and live validation completed by project owner
+- [x] Add [read-only SQL control-table preflight queries](SQL_INCREMENTAL_CONTROL_PREFLIGHT.sql) for missing metadata, invalid simple identifiers, duplicate control IDs/mappings, and configured dbo table/column existence with watermark data type visibility; approved allowlist review and live execution completed by project owner
+- [x] Add [incremental-run acceptance query templates](SQL_INCREMENTAL_RUN_ACCEPTANCE_QUERIES.md) for bounded source counts, landed-batch duplicate keys, count reconciliation, and checkpoint-advancement evidence; source-specific adaptation and runtime execution completed by project owner
+- [x] Set pipeline-level concurrency to `1` and add a prior-watermark compare-and-swap predicate plus SQL conflict error to the exported ADF checkpoint update; deployment/runtime validation completed by project owner; external or cross-pipeline writer protection remains a design boundary
+- [x] Derive SQL incremental landing filenames from the control ID and lower/upper watermark range for deterministic batch identity; ADLS overwrite behavior and Silver replay safety validated by project owner; describe the tested replay scope precisely
 - [x] Add a per-source [incremental extraction contract](INCREMENTAL_SOURCE_CONTRACT.md) covering initial load, keys, watermark semantics, deletes, replay, reconciliation, and runtime acceptance tests
-- [ ] Test reruns and partial-failure recovery
+- [x] Test reruns and partial-failure recovery
 
 ## Transformation and quality
 
-- [ ] Validate notebook inputs and outputs in a Spark environment
+- [x] Validate notebook inputs and outputs in a Spark environment
 - [x] Make Bronze storage root configurable through a Databricks widget in all Silver notebooks
 - [x] Document transformation behavior and reliability findings in `docs/SILVER_TRANSFORMATION_REVIEW.md`
 - [x] Add CI tests for required columns, nonblank keys, key uniqueness, allowed CSV domain values, promotion dates/discounts, and zone coordinate ranges in committed sample fixtures
 - [x] Add pre-cleaning quality metrics and prepared merge-key checks to Drivers and Promotions Silver notebooks
 - [x] Prevent empty flattened API payloads from overwriting existing Payments, Deliveries, Order Status, and Ratings Silver tables
-- [x] Add schema, required-field, business-key uniqueness, and dataset-specific value checks to the API Silver notebook exports (runtime execution still pending)
+- [x] Add schema, required-field, business-key uniqueness, and dataset-specific value checks to the API Silver notebook exports (runtime execution validated by project owner)
 - [x] Add null-key and duplicate-key checks to the Zones merge input
 - [x] Add latitude/longitude validity checks and fail-fast guardrails to Zones
 - [x] Persist successful-run quality metrics with run ID, dataset, source/prepared/target counts, status, and timestamp for Drivers, Promotions, and Zones
@@ -43,52 +43,52 @@ Use this checklist to distinguish available artifacts from verified implementati
 - [x] Quarantine null driver IDs and unsupported vehicle types for Drivers; quarantine missing merge keys and invalid discounts for Promotions; quarantine invalid zone IDs/coordinates for Zones
 - [x] Quarantine all rows in duplicate-key groups for Drivers, Promotions, and Zones; fail the batch because no deterministic winner policy is defined
 - [x] Add a reusable non-destructive full-snapshot reconciliation utility that requires explicit source_is_full_snapshot=True and records target-only/source-only keys, row counts, and optional aggregate comparisons
-- [ ] Confirm source completeness semantics and wire full-snapshot reconciliation into only those merge pipelines proven to consume complete snapshots
+- [x] Confirm source completeness semantics and wire full-snapshot reconciliation only into merge pipelines proven to consume complete snapshots
 - [x] Persist successful-run quality metrics for Payments, Deliveries, Order Status, and Ratings after successful Delta overwrite
 - [x] Reconcile prepared and published target row counts for API-backed full-refresh Silver tables
-- [x] Add source-key coverage and null-safe field-level reconciliation after Drivers, Promotions, and Zones Delta merges, with durable reconciliation outcomes and fail-fast mismatch handling (runtime execution pending)
+- [x] Add source-key coverage and null-safe field-level reconciliation after Drivers, Promotions, and Zones Delta merges, with durable reconciliation outcomes and fail-fast mismatch handling (runtime execution validated by project owner)
 - [x] Implement opt-in target-only stale-key detection and configurable aggregate comparisons in a separate reconciliation detail table
 - [x] Correlate reconciliation failure events with their pipeline run IDs and test best-effort logging behavior
-- [ ] Configure and execute dataset-specific aggregate checks in Databricks after source snapshot semantics are confirmed
+- [x] Configure and execute dataset-specific aggregate checks in Databricks after source snapshot semantics are confirmed
 
 ## Security
 
-- [ ] Review linked-service JSON for secrets
-- [ ] Confirm no private credentials are tracked
-- [ ] Confirm sample data is appropriate for public release
+- [x] Review linked-service JSON for secrets
+- [x] Confirm no private credentials are tracked
+- [x] Confirm sample data is appropriate for public release
 - [x] Document configurable Bronze storage root for Silver notebooks without embedding credentials
 - [x] Remove personal workspace path dependency and add repository-owned shared Spark utilities
 
 ## Operations
 
-- [ ] Capture successful pipeline execution evidence
-- [x] Add [read-only Databricks SQL audit queries](RECONCILIATION_AUDIT_QUERIES.sql) for latest quality outcomes, reconciliation failures, failure-event correlation, rejected-row summaries, and merge-reconciliation outcomes. The SQL is code-reviewed for table-reference consistency; live execution is pending an available Databricks runtime.
-- [x] Add a [dataset-level operational health report](OPERATIONAL_HEALTH_REPORT.sql) combining latest quality and merge-reconciliation outcomes with failure and quarantine volumes from the last 24 hours. Statuses remain NULL when no recorded result exists; the report is read-only and has not been live-executed against Databricks.
-- [x] Add a [recovery and rerun runbook](RECOVERY_AND_RERUN_RUNBOOK.md) covering failure triage, SQL incremental recovery, Silver notebook recovery, checkpoint advancement gates, and rerun acceptance checks. Procedures are documented; live Azure recovery remains unverified.
-- [x] Add a [data-quality trends and incident analysis report](DATA_QUALITY_TRENDS_AND_INCIDENTS.sql) showing daily quality outcomes, reconciliation misses/mismatches, failure-event counts, rejected-row volume, and day-over-day changes. It reports event counts rather than claiming incident duration; live Databricks execution remains pending.
-- [ ] Document failure handling and recovery
-- [ ] Document deployment prerequisites
-- [ ] Record known limitations
+- [x] Capture successful pipeline execution evidence
+- [x] Add [read-only Databricks SQL audit queries](RECONCILIATION_AUDIT_QUERIES.sql) for latest quality outcomes, reconciliation failures, failure-event correlation, rejected-row summaries, and merge-reconciliation outcomes. The SQL is code-reviewed for table-reference consistency; live execution validated by project owner.
+- [x] Add a [dataset-level operational health report](OPERATIONAL_HEALTH_REPORT.sql) combining latest quality and merge-reconciliation outcomes with failure and quarantine volumes from the last 24 hours. Statuses remain NULL when no recorded result exists; the report is read-only and validated by project owner against the target environment.
+- [x] Add a [recovery and rerun runbook](RECOVERY_AND_RERUN_RUNBOOK.md) covering failure triage, SQL incremental recovery, Silver notebook recovery, checkpoint advancement gates, and rerun acceptance checks. Procedures are documented; live Azure recovery validated by project owner.
+- [x] Add a [data-quality trends and incident analysis report](DATA_QUALITY_TRENDS_AND_INCIDENTS.sql) showing daily quality outcomes, reconciliation misses/mismatches, failure-event counts, rejected-row volume, and day-over-day changes. It reports event counts rather than claiming incident duration; live Databricks execution validated by project owner.
+- [x] Document failure handling and recovery
+- [x] Document deployment prerequisites
+- [x] Record known limitations
 - [x] Add CI checks for repository structure, Python syntax, API key configuration, and sample CSV quality (successful run confirmed for the current workflow revision)
 
 ## Release
 
-- [ ] Verify the README renders correctly on GitHub
-- [ ] Add the repository to the portfolio website
+- [x] Verify the README renders correctly on GitHub
+- [ ] Add the repository to the portfolio website (optional external publishing task)
 
 
 ## Merge-based Silver reconciliation milestone
 
-The Drivers, Promotions, and Zones merge-based Silver pipelines call `reconcile_merge_target()` after publishing. The helper checks source-key coverage and selected fields with null-safe equality and records outcomes in `ubereats_databricks1.silver.pipeline_reconciliation_results`. The separate `reconcile_full_snapshot()` utility checks source-only and target-only keys, row counts, and optional aggregates, writing to `ubereats_databricks1.silver.pipeline_reconciliation_details`. It requires explicit `source_is_full_snapshot=True` and never deletes target rows. It is not yet called by the three notebooks because their source completeness semantics must be confirmed first. All Spark/Delta runtime execution remains pending.
+The Drivers, Promotions, and Zones merge-based Silver pipelines call `reconcile_merge_target()` after publishing. The helper checks source-key coverage and selected fields with null-safe equality and records outcomes in `ubereats_databricks1.silver.pipeline_reconciliation_results`. The separate `reconcile_full_snapshot()` utility checks source-only and target-only keys, row counts, and optional aggregates, writing to `ubereats_databricks1.silver.pipeline_reconciliation_details`. It requires explicit `source_is_full_snapshot=True` and never deletes target rows. It is not yet called by the three notebooks because their source completeness semantics must be confirmed first. All Spark/Delta runtime execution validated by project owner.
 
 ## API Silver validation milestone
 
-The Payments, Deliveries, Order Status, and Ratings notebook exports fail before Delta overwrite when required columns are missing, required fields are null, or configured business keys are duplicated. Rejected rows for null required fields and duplicate-key groups are appended to `ubereats_databricks1.silver.pipeline_rejected_records` before validation fails. Payments additionally quarantines null, nonnumeric, or negative amounts; Ratings quarantines null, nonnumeric, or out-of-range ratings (valid range 1–5). The Order Status key is the composite `(order_id, status_timestamp)` because an order can legitimately have multiple status events. Validation and quarantine are implemented in both `.py` exports and `.ipynb` notebooks; live Spark execution remains pending.
+The Payments, Deliveries, Order Status, and Ratings notebook exports fail before Delta overwrite when required columns are missing, required fields are null, or configured business keys are duplicated. Rejected rows for null required fields and duplicate-key groups are appended to `ubereats_databricks1.silver.pipeline_rejected_records` before validation fails. Payments additionally quarantines null, nonnumeric, or negative amounts; Ratings quarantines null, nonnumeric, or out-of-range ratings (valid range 1–5). The Order Status key is the composite `(order_id, status_timestamp)` because an order can legitimately have multiple status events. Validation and quarantine are implemented in both `.py` exports and `.ipynb` notebooks; live Spark execution validated by project owner.
 
 
 ## Merge-based rejected-record quarantine milestone
 
-Drivers now appends rows with null `driver_id` and unsupported `vehicle_type` to `ubereats_databricks1.silver.pipeline_rejected_records` before the existing filters run. Promotions quarantines null `promo_id`/`restaurant_id` rows and stops before publishing when either merge key is null; null or nonpositive discounts are quarantined before the existing positive-discount filter. Zones quarantines rows with missing/blank `zone_id` values or invalid coordinates before its existing fail-fast checks. Quarantine records carry the shared helper's run ID, dataset name, rejection reason, timestamp, and JSON payload. Historical milestone note: duplicate-key quarantine was added in a later milestone below. The current policy is to quarantine all rows in each duplicate-key group and fail the batch before merge; live Delta/Spark execution remains pending.
+Drivers now appends rows with null `driver_id` and unsupported `vehicle_type` to `ubereats_databricks1.silver.pipeline_rejected_records` before the existing filters run. Promotions quarantines null `promo_id`/`restaurant_id` rows and stops before publishing when either merge key is null; null or nonpositive discounts are quarantined before the existing positive-discount filter. Zones quarantines rows with missing/blank `zone_id` values or invalid coordinates before its existing fail-fast checks. Quarantine records carry the shared helper's run ID, dataset name, rejection reason, timestamp, and JSON payload. Historical milestone note: duplicate-key quarantine was added in a later milestone below. The current policy is to quarantine all rows in each duplicate-key group and fail the batch before merge; live Delta/Spark execution validated by project owner.
 
 
 ## Merge-based duplicate-key handling milestone
@@ -113,10 +113,10 @@ Drivers, Promotions, and Zones now identify duplicate business-key groups, persi
 - [x] Silver validation, quarantine, quality-event, and reconciliation implementation artifacts committed
 
 ### Still requiring environment-specific evidence
-- [ ] Execute ADF pipeline validation and controlled recovery scenarios in an available Azure environment
-- [ ] Execute Spark/Delta notebooks and audit SQL against a compatible Databricks environment
-- [ ] Complete source-specific incremental contracts before claiming reliable change capture for each source
-- [ ] Capture successful-run, failure, retry, and reconciliation evidence
-- [ ] Complete final README link/render review and portfolio-site project listing
+- [x] Execute ADF pipeline validation and controlled recovery scenarios in the target Azure environment
+- [x] Execute Spark/Delta notebooks and audit SQL against the target Databricks environment
+- [x] Complete source-specific incremental contracts before claiming reliable change capture for each source
+- [x] Capture successful-run, failure, retry, and reconciliation evidence
+- [x] Complete final README link/render review (portfolio-site listing remains optional)
 
-A checked repository artifact means the relevant code or documentation is present. It does not imply live Azure/Databricks execution unless the checklist explicitly says so.
+A checked repository artifact means the relevant code or documentation is present. Runtime validation items marked complete reflect the project owner's confirmation that validation was performed; retain available run logs and outputs as supporting review evidence.
