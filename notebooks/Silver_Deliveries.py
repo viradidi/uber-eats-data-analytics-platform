@@ -66,6 +66,9 @@ if required_null_count:
 key_columns = ["delivery_id"]
 duplicate_key_count = df_deliveries_table.groupBy(*key_columns).count().filter(col("count") > 1).count()
 if duplicate_key_count:
+    duplicate_keys = df_deliveries_table.groupBy(*key_columns).count().filter(col("count") > 1).select(*key_columns)
+    duplicate_rows = df_deliveries_table.join(duplicate_keys, on=key_columns, how="inner")
+    quarantine_rejected_rows(spark, duplicate_rows, "deliveries", "duplicate business keys")
     fail_validation(f"deliveries API payload has {duplicate_key_count} duplicate business keys: {key_columns}")
 
 
