@@ -2,7 +2,7 @@
 from pyspark.sql.functions import *
 from pyspark.sql.types  import *
 from src.common.spark_utils import standardize_columns
-from src.common.quality_events import log_pipeline_failure
+from src.common.quality_events import log_pipeline_failure, quarantine_rejected_rows
 
 
 # COMMAND ----------
@@ -54,6 +54,7 @@ for condition in required_null_conditions[1:]:
     required_null_condition = required_null_condition | condition
 required_null_count = df_payments_table.filter(required_null_condition).count()
 if required_null_count:
+    quarantine_rejected_rows(spark, df_payments_table.filter(required_null_condition), "payments", "null required fields")
     fail_validation(f"payments API payload has {required_null_count} rows with null required fields: {required_columns}")
 
 key_columns = ["payment_id"]
@@ -63,6 +64,7 @@ if duplicate_key_count:
 
 invalid_amount_count = df_payments_table.filter(col("amount").cast("double").isNull() | (col("amount").cast("double") < 0)).count()
 if invalid_amount_count:
+    quarantine_rejected_rows(spark, df_payments_table.filter(col("amount").cast("double").isNull() | (col("amount").cast("double") < 0)), "payments", "null, nonnumeric, or negative amount")
     fail_validation(f"payments contains {invalid_amount_count} rows with null, nonnumeric, or negative amount")
 
 
