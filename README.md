@@ -114,6 +114,24 @@ The diagram is a logical view of the project artifacts, not proof that every con
 
 See [`architecture/architecture.md`](architecture/architecture.md) for component responsibilities, data-flow details, and deployment considerations.
 
+
+## Engineering Evidence and Operational Readiness
+
+This repository includes operational artifacts for reviewing and recovering the pipeline—not only ingestion and transformation code:
+
+- [Incremental source contract](docs/INCREMENTAL_SOURCE_CONTRACT.md): per-table requirements for keys, watermarks, late-arriving changes, deletes, replay, and reconciliation.
+- [SQL incremental-load review](docs/SQL_INCREMENTAL_LOAD_REVIEW.md): bounded extraction behavior, checkpoint ordering, and known correctness limitations.
+- [Recovery and rerun runbook](docs/RECOVERY_AND_RERUN_RUNBOOK.md): failure triage, safe reruns, and checkpoint advancement gates.
+- [Operations and reliability guide](docs/OPERATIONS_AND_RELIABILITY.md): operational reports, audit records, and recovery practices.
+- [Operational health SQL](docs/OPERATIONAL_HEALTH_REPORT.sql), [quality trends SQL](docs/DATA_QUALITY_TRENDS_AND_INCIDENTS.sql), and [reconciliation audit SQL](docs/RECONCILIATION_AUDIT_QUERIES.sql).
+- [Project completion and evidence checklist](docs/PROJECT_CHECKLIST.md).
+
+The GitHub Actions workflow checks repository JSON/notebook validity, Python syntax, notebook portability, sample-data quality, API-key configuration, and static recovery contracts. These checks provide repository-level safeguards; they do not execute Azure Data Factory or Databricks workloads.
+
+### Current validation boundary
+
+The project artifacts are committed and can be reviewed in GitHub. Azure runtime validation is currently pending because the Azure for Students subscription is unavailable. In particular, source-specific watermark behavior, live ADF execution, Spark/Delta execution, and controlled failure/retry scenarios should not be described as cloud-verified until evidence is captured in an available environment.
+
 ## Technology Stack
 
 | Technology | Role |
