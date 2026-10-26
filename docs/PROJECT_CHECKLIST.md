@@ -42,6 +42,7 @@ Use this checklist to distinguish available artifacts from verified implementati
 - [x] Reconcile prepared and published target row counts for API-backed full-refresh Silver tables
 - [x] Add source-key coverage and null-safe field-level reconciliation after Drivers, Promotions, and Zones Delta merges, with durable reconciliation outcomes and fail-fast mismatch handling (runtime execution pending)
 - [x] Implement opt-in target-only stale-key detection and configurable aggregate comparisons in a separate reconciliation detail table
+- [x] Correlate reconciliation failure events with their pipeline run IDs and test best-effort logging behavior
 - [ ] Configure and execute dataset-specific aggregate checks in Databricks after source snapshot semantics are confirmed
 
 ## Security
