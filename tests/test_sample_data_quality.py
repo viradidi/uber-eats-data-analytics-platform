@@ -8,6 +8,8 @@ import unittest
 from datetime import date
 from pathlib import Path
 
+from src.common.quality_events import reconcile_full_snapshot
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -119,6 +121,19 @@ class SourceFixtureQualityTests(unittest.TestCase):
             self.assertLessEqual(latitude, 90, f"{filename}:{line_number}: invalid latitude")
             self.assertGreaterEqual(longitude, -180, f"{filename}:{line_number}: invalid longitude")
             self.assertLessEqual(longitude, 180, f"{filename}:{line_number}: invalid longitude")
+
+
+class SnapshotReconciliationGuardTests(unittest.TestCase):
+    def test_incremental_source_is_rejected_before_spark_access(self):
+        with self.assertRaisesRegex(ValueError, "source_is_full_snapshot=True"):
+            reconcile_full_snapshot(
+                spark=None,
+                source_df=None,
+                target_table="silver.example",
+                dataset_name="example",
+                key_columns=["id"],
+                source_is_full_snapshot=False,
+            )
 
 
 if __name__ == "__main__":
