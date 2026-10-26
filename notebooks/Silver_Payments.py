@@ -5,11 +5,6 @@ import sys
 sys.path.append("/Workspace/Users/sivana9908_gmail.com#ext#@sivana9908gmail.onmicrosoft.com/Uber-Eats-End-to-End-_Azure-Data-Engineering-Project")
 from src.common.spark_utils import standardize_columns
 
-# Guard against an empty API response replacing a previously populated Silver table.
-df_payments_table_row_count = df_payments_table.count()
-print("payments.source_rows=" + str(df_payments_table_row_count))
-if df_payments_table_row_count == 0:
-    raise ValueError("API Silver input is empty; refusing to overwrite the existing target table")
 
 # COMMAND ----------
 
@@ -28,6 +23,12 @@ df_payments = (
 df_payments_table= df_payments.select(explode("data").alias("payments")).select("payments.*")
 
 
+
+# Guard against an empty API response replacing a previously populated Silver table.
+df_payments_table_row_count = df_payments_table.count()
+print("payments.source_rows=" + str(df_payments_table_row_count))
+if df_payments_table_row_count == 0:
+    raise ValueError("API Silver input is empty; refusing to overwrite the existing target table")
 
 # COMMAND ----------
 
