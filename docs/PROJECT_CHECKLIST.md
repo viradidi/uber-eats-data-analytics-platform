@@ -100,6 +100,7 @@ Drivers, Promotions, and Zones now identify duplicate business-key groups, persi
 - [x] SQL incremental pipeline reviewed for dependency ordering and watermark boundary limitations
 - [x] Per-source incremental contract and recovery runbook documented
 - [x] Standard-library repository validation workflow and static recovery contract tests committed
+- [x] README local-link and roadmap consistency checks added to the standard-library test suite
 - [x] Operational health, trend, and reconciliation SQL reports committed
 - [x] Silver validation, quarantine, quality-event, and reconciliation implementation artifacts committed
 
