@@ -44,6 +44,33 @@ class ApiTimestampContractTests(unittest.TestCase):
         self.assertEqual([2, 3], [row["id"] for row in result["data"]])
         self.assertEqual(2, result["pagination"]["total_records"])
 
+    def test_equal_timestamp_records_are_excluded_by_current_cursor_contract(self):
+        # This is an intentional characterization of the API's current strict
+        # greater-than cursor. Sources with tied timestamps need a composite
+        # cursor, overlap window, or CDC contract to avoid missing tied rows.
+        records = [
+            {"id": 1, "updated_at": "2026-10-01T12:00:00Z"},
+            {"id": 2, "updated_at": "2026-10-01T12:00:00+00:00"},
+            {"id": 3, "updated_at": "2026-10-01T12:00:01Z"},
+        ]
+        with patch.object(api, "load_json_file", return_value=records):
+            result = api.process_data(
+                "unused.json", "updated_at", page=1, page_size=10,
+                updated_after="2026-10-01T12:00:00Z",
+            )
+        self.assertEqual([3], [row["id"] for row in result["data"]])
+
+    def test_watermark_uses_latest_parseable_timestamp_normalized_to_utc(self):
+        records = [
+            {"updated_at": "2026-10-01T12:00:00Z"},
+            {"updated_at": "2026-10-01T15:30:00+02:00"},
+            {"updated_at": "invalid"},
+            {},
+        ]
+        with patch.object(api, "load_json_file", return_value=records):
+            watermark = api.get_max_timestamp("unused.json", "updated_at")
+        self.assertEqual("2026-10-01T13:30:00Z", watermark)
+
     def test_incremental_filter_skips_missing_or_unparseable_source_timestamps(self):
         records = [
             {"id": 1, "updated_at": "2026-10-01T12:01:00Z"},
