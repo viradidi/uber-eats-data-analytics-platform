@@ -25,15 +25,17 @@ def fail_validation(message, stage="silver_validation"):
 # COMMAND ----------
 
 
-df_payments = (
-    spark.read
-    .format("json")
-    .option("multiLine","true")
-    .load(f"{BRONZE_ROOT}/api/payments/")
-)
-df_payments_table= df_payments.select(explode("data").alias("payments")).select("payments.*")
-
-
+try:
+    df_payments = (
+        spark.read
+        .format("json")
+        .option("multiLine","true")
+        .load(f"{BRONZE_ROOT}/api/payments/")
+    )
+    df_payments_table= df_payments.select(explode("data").alias("payments")).select("payments.*")
+except Exception as exc:
+    log_pipeline_failure(spark, "payments", "source_read", exc)
+    raise
 
 # Guard against an empty API response replacing a previously populated Silver table.
 df_payments_table_row_count = df_payments_table.count()
