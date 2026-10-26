@@ -2,7 +2,7 @@
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
 from src.common.spark_utils import standardize_columns
-from src.common.quality_events import log_pipeline_failure
+from src.common.quality_events import log_pipeline_failure, reconcile_merge_target
 from delta.tables import DeltaTable
 
 # COMMAND ----------
@@ -135,6 +135,16 @@ except Exception as exc:
     except Exception as log_exc:
         print("drivers.failure_log_error=" + str(log_exc)[:500])
     raise
+
+# Reconcile the published Delta target before marking this run successful.
+reconcile_merge_target(
+    spark=spark,
+    source_df=df_drivers,
+    target_table=table_name,
+    dataset_name="drivers",
+    key_columns=["driver_id"],
+    compare_columns=["vehicle_type","status","city","join_date"],
+)
 
 # Persist a compact successful-run quality record for later monitoring.
 quality_table = "ubereats_databricks1.silver.pipeline_quality_results"
