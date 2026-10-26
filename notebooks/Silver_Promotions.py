@@ -18,7 +18,8 @@ df_promotions_raw = (
     .load("abfss://bronze@ubereaststorage.dfs.core.windows.net/csv/promotions/")
 )
 
-print(f"promotions.source_rows={df_promotions_raw.count()}")
+source_rows = df_promotions_raw.count()
+print(f"promotions.source_rows={source_rows}")
 display(df_promotions_raw)
 df_promotions_raw.printSchema()
 
