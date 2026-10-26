@@ -8,10 +8,10 @@ This review covers the committed Databricks notebook exports in `notebooks/`. It
 
 | Dataset | Write strategy | Operational implication |
 |---|---|---|
-| Payments | Delta `overwrite` | Safe only when Bronze input is the complete intended dataset for the target table; an incremental-only input could replace prior Silver rows |
-| Deliveries | Delta `overwrite` | Same full-refresh versus incremental-input consideration |
-| Order status | Delta `overwrite` | Same full-refresh versus incremental-input consideration |
-| Ratings | Delta `overwrite` | Same full-refresh versus incremental-input consideration |
+| Payments | Delta `overwrite` | Empty flattened API responses now fail before overwrite; non-empty full-refresh semantics and row-level quality rules still need confirmation |
+| Deliveries | Delta `overwrite` | Empty flattened API responses now fail before overwrite; non-empty full-refresh semantics and row-level quality rules still need confirmation |
+| Order status | Delta `overwrite` | Empty flattened API responses now fail before overwrite; non-empty full-refresh semantics and row-level quality rules still need confirmation |
+| Ratings | Delta `overwrite` | Empty flattened API responses now fail before overwrite; non-empty full-refresh semantics and row-level quality rules still need confirmation |
 | Drivers | Delta `MERGE` on `driver_id` | Source duplicate-key metrics are now captured before deduplication; prepared merge input is checked for duplicate keys |
 | Promotions | Delta `MERGE` on `promo_id` and `restaurant_id` | Source composite-key and discount metrics are now captured before deduplication/filtering; prepared merge input is checked for duplicate composite keys |
 | Zones | Delta `MERGE` on `zone_id` | Now measures null/blank keys, duplicate keys, missing city/name, and invalid coordinates; blocks publishing when keys or coordinates are invalid |
@@ -38,7 +38,7 @@ These are notebook logging/guardrails, not a persisted observability system. Met
 
 ### API datasets
 
-The Payments, Deliveries, Order Status, and Ratings notebooks flatten the API `data` array and write to Silver. Many sample sections for type casting, column standardization, null handling, deduplication, and validation remain commented out. Their output validation and source-to-target reconciliation remain open.
+The Payments, Deliveries, Order Status, and Ratings notebooks flatten the API `data` array and now report the flattened row count and fail before the existing Delta overwrite if the payload is empty. This prevents a transient empty API response from silently replacing a previously populated Silver table. Many sample sections for type casting, column standardization, null handling, deduplication, and validation remain commented out. Non-empty payload schema/business validation and source-to-target reconciliation remain open.
 
 ### Zones
 
@@ -64,6 +64,6 @@ CSV notebooks use `inferSchema=true`. This is convenient for exploration, but in
 
 ## Status
 
-Implemented in repository: pre-cleaning quality metrics and prepared merge-key checks for Drivers and Promotions; Zones now reports key/coordinate quality and fails before publishing on invalid keys or coordinates; CI checks committed sample CSV fixtures.
+Implemented in repository: pre-cleaning quality metrics and prepared merge-key checks for Drivers and Promotions; Zones reports key/coordinate quality and fails before publishing on invalid keys or coordinates; Payments, Deliveries, Order Status, and Ratings fail before overwrite on empty flattened API payloads; CI checks committed sample CSV fixtures.
 
 Not yet runtime-verified: Databricks notebook execution, Delta writes/merges, source-to-target reconciliation, durable quality metrics, and end-to-end Azure orchestration.
