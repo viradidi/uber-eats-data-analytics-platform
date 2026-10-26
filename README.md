@@ -282,9 +282,23 @@ The current `requirements.txt` contains FastAPI and Uvicorn. Additional dependen
 
 Do not commit credentials, tokens, passwords, storage account keys, or private connection strings.
 
-Use environment variables, Azure Key Vault, or the relevant platform's secret-management mechanism. Configure resource names and connection details for your own environment.
+The FastAPI mock source requires an `API_KEY` environment variable; the application intentionally has no built-in default key.
 
-The actual required environment variables must be confirmed from the application and pipeline definitions before running the project.
+Windows CMD (for the current terminal session):
+
+```bat
+set API_KEY=replace-with-a-long-random-secret
+uvicorn main:app --host 127.0.0.1 --port 10000
+```
+
+PowerShell:
+
+```powershell
+$env:API_KEY = "replace-with-a-long-random-secret"
+uvicorn main:app --host 127.0.0.1 --port 10000
+```
+
+For cloud deployment, use Azure Key Vault or an approved secret-management mechanism and configure the application environment securely. Never commit the real key. Configure other resource names and connection details for your environment.
 
 ### 4. Inspect the Azure Data Factory resources
 
