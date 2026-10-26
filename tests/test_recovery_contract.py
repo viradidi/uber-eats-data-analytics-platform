@@ -220,6 +220,21 @@ class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
         ):
             self.assertIn(expected, queries)
 
+    def test_checkpoint_concurrency_contract_covers_stale_writers(self):
+        contract_path = ROOT / "docs" / "CHECKPOINT_CONCURRENCY_CONTRACT.md"
+        self.assertTrue(contract_path.is_file())
+        contract = contract_path.read_text(encoding="utf-8")
+        for expected in (
+            "control row by `control_id` alone",
+            "previous checkpoint this run observed",
+            "compare-and-swap",
+            "@previous_watermark",
+            "@@ROWCOUNT <> 1",
+            "per-source lease/lock",
+            "has not been changed to implement this contract",
+        ):
+            self.assertIn(expected, contract)
+
 
 if __name__ == "__main__":
     unittest.main()
