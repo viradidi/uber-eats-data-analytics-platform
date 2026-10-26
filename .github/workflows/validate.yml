@@ -72,6 +72,47 @@ jobs:
           print(f"Syntax-checked {len(paths)} Python files.")
           PY
 
+
+      - name: Check Silver notebook portability
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          notebook_dir = Path("notebooks")
+          files = sorted(
+              p for p in notebook_dir.iterdir()
+              if p.suffix.lower() in {".py", ".ipynb"}
+          )
+          failures = []
+          for path in files:
+              source = path.read_text(encoding="utf-8")
+              if path.suffix.lower() == ".ipynb":
+                  try:
+                      notebook = json.loads(source)
+                      source = "\\n".join(
+                          "".join(cell.get("source", []))
+                          for cell in notebook.get("cells", [])
+                      )
+                  except Exception as exc:
+                      failures.append(f"{path}: invalid notebook JSON: {exc}")
+                      continue
+              if "/Workspace/Users/" in source:
+                  failures.append(f"{path}: personal workspace path must not be committed")
+              if "abfss://bronze@ubereaststorage.dfs.core.windows.net/" in source and "BRONZE_ROOT" not in source:
+                  failures.append(f"{path}: Bronze path must use configurable BRONZE_ROOT")
+              if ".load(f\\"{BRONZE_ROOT}/" not in source:
+                  failures.append(f"{path}: expected a load path built from BRONZE_ROOT")
+              if "dbutils.widgets.text(\\"bronze_root\\"" not in source:
+                  failures.append(f"{path}: missing bronze_root widget")
+          if not Path("src/common/spark_utils.py").is_file():
+              failures.append("src/common/spark_utils.py: shared helper is missing")
+          if failures:
+              print("\\n".join(failures))
+              raise SystemExit(1)
+          print(f"Portability checks passed for {len(files)} Silver notebook exports.")
+          PY
+
       - name: Test committed CSV source fixtures
         run: python -m unittest discover -s tests -v
 
