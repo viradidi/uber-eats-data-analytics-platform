@@ -56,7 +56,7 @@ Use this checklist to distinguish available artifacts from verified implementati
 ## Operations
 
 - [ ] Capture successful pipeline execution evidence
-- [x] Add read-only Databricks SQL audit queries for latest quality outcomes, reconciliation failures, failure-event correlation, and rejected-row summaries
+- [x] Add [read-only Databricks SQL audit queries](RECONCILIATION_AUDIT_QUERIES.sql) for latest quality outcomes, reconciliation failures, failure-event correlation, rejected-row summaries, and merge-reconciliation outcomes. The SQL is code-reviewed for table-reference consistency; live execution is pending an available Databricks runtime.
 - [ ] Document failure handling and recovery
 - [ ] Document deployment prerequisites
 - [ ] Record known limitations
