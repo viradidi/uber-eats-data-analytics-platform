@@ -3,7 +3,10 @@
 These tests exercise Python API helpers with in-memory records. They do not require
 Azure or an HTTP server and do not claim to validate deployed infrastructure.
 """
+import json
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from fastapi import HTTPException
@@ -84,6 +87,40 @@ class ApiTimestampContractTests(unittest.TestCase):
             with self.assertRaises(HTTPException) as raised:
                 api.verify_api_key("wrong-key")
         self.assertEqual(401, raised.exception.status_code)
+
+    def test_payment_id_uses_highest_existing_numeric_suffix(self):
+        records = [
+            {"payment_id": "P1001"},
+            {"payment_id": "P1008"},
+            {"payment_id": "P1003"},
+            {"payment_id": "legacy-id"},
+            {"payment_id": "Pbad"},
+        ]
+        self.assertEqual(1009, api._next_payment_number(records))
+
+    def test_atomic_json_write_replaces_file_with_valid_json(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "payments.json"
+            path.write_text('[{"payment_id": "P1001"}]', encoding="utf-8")
+            payload = [{"payment_id": "P1002", "amount": 25.5}]
+
+            api._write_json_atomically(str(path), payload)
+
+            self.assertEqual(payload, json.loads(path.read_text(encoding="utf-8")))
+            self.assertEqual(["payments.json"], sorted(item.name for item in Path(directory).iterdir()))
+
+    def test_atomic_json_replace_failure_preserves_original_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "payments.json"
+            original = '[{"payment_id": "P1001"}]'
+            path.write_text(original, encoding="utf-8")
+
+            with patch.object(api.os, "replace", side_effect=OSError("simulated replace failure")):
+                with self.assertRaises(OSError):
+                    api._write_json_atomically(str(path), [{"payment_id": "P1002"}])
+
+            self.assertEqual(original, path.read_text(encoding="utf-8"))
+            self.assertEqual(["payments.json"], sorted(item.name for item in Path(directory).iterdir()))
 
 
 if __name__ == "__main__":
