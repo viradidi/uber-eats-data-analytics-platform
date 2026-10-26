@@ -31,9 +31,10 @@ Use this checklist to distinguish available artifacts from verified implementati
 - [x] Add latitude/longitude validity checks and fail-fast guardrails to Zones
 - [x] Persist successful-run quality metrics with run ID, dataset, source/prepared/target counts, status, and timestamp for Drivers, Promotions, and Zones
 - [x] Log Silver write/merge failures to `pipeline_failure_events` with run ID, dataset, exception type/message, stage, and timestamp
-- [x] Extend API Silver failure logging to source-read, validation, reconciliation, and publish failures
+- [x] Extend Silver failure logging to source-read failures for Drivers, Promotions, and Zones, and retain API Silver validation, reconciliation, and publish failure logging
 - [x] Add JSON-based rejected-row quarantine for API Silver required-field failures and Payments/Ratings domain-rule failures, with run IDs and rejection reasons
-- [ ] Extend quarantine to duplicate-key groups and other validation rules
+- [x] Quarantine duplicate-key groups for Payments, Deliveries, Order Status, and Ratings before failing validation
+- [ ] Extend quarantine to other validation rules and merge-based Silver datasets
 - [x] Persist successful-run quality metrics for Payments, Deliveries, Order Status, and Ratings after successful Delta overwrite
 - [x] Reconcile prepared and published target row counts for API-backed full-refresh Silver tables
 - [ ] Add field-level reconciliation and source-to-target reconciliation for merge-based Silver tables
