@@ -55,3 +55,33 @@ HAVING COUNT(*) > 1;
 SELECT control_id, table_name, watermark_column
 FROM dbo.pipeline_control
 ORDER BY control_id;
+
+
+-- 5. Confirm each configured dbo source table and watermark column exists.
+-- This is a catalog check, not an allowlist: an existing object may still be
+-- outside the set of sources approved for this pipeline.
+SELECT
+    pc.control_id,
+    pc.table_name,
+    pc.watermark_column,
+    CASE
+        WHEN t.object_id IS NULL THEN 'source table not found in dbo'
+        WHEN c.column_id IS NULL THEN 'watermark column not found on source table'
+        ELSE 'object exists; verify watermark type and source semantics'
+    END AS catalog_check,
+    ty.name AS watermark_data_type
+FROM dbo.pipeline_control AS pc
+LEFT JOIN sys.schemas AS s
+    ON s.name = 'dbo'
+LEFT JOIN sys.tables AS t
+    ON t.schema_id = s.schema_id
+   AND t.name = pc.table_name
+LEFT JOIN sys.columns AS c
+    ON c.object_id = t.object_id
+   AND c.name = pc.watermark_column
+LEFT JOIN sys.types AS ty
+    ON ty.user_type_id = c.user_type_id
+WHERE t.object_id IS NULL
+   OR c.column_id IS NULL
+   OR c.column_id IS NOT NULL
+ORDER BY pc.control_id;
