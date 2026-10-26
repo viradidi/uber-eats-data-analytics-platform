@@ -2,7 +2,7 @@
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
 from src.common.spark_utils import standardize_columns
-from src.common.quality_events import log_pipeline_failure, reconcile_merge_target
+from src.common.quality_events import log_pipeline_failure, quarantine_rejected_rows, reconcile_merge_target
 from delta.tables import DeltaTable
 
 # COMMAND ----------
@@ -61,6 +61,26 @@ print(f"promotions.quality.null_restaurant_id_rows={null_restaurant_ids}")
 print(f"promotions.quality.duplicate_composite_keys={duplicate_promotion_keys}")
 print(f"promotions.quality.invalid_discount_rows={invalid_discount_values}")
 print(f"promotions.quality.missing_promo_code_rows={missing_promo_codes}")
+
+# Quarantine invalid records before applying the existing positive-discount filter.
+quarantine_run_id = str(__import__("uuid").uuid4())
+invalid_business_keys = df_promotions.filter(
+    col("promo_id").isNull() | col("restaurant_id").isNull()
+)
+quarantine_rejected_rows(
+    spark, invalid_business_keys, "promotions",
+    "missing_promo_id_or_restaurant_id", run_id=quarantine_run_id,
+)
+if null_promo_ids or null_restaurant_ids:
+    raise ValueError(
+        "Promotions Silver input contains rows with null merge keys; "
+        "records were quarantined and publishing was stopped"
+    )
+quarantine_rejected_rows(
+    spark,
+    df_promotions.filter(col("discount_value").isNull() | (col("discount_value") <= 0)),
+    "promotions", "discount_value_null_or_nonpositive", run_id=quarantine_run_id,
+)
 
 # Preserve the current behavior while exposing what is removed. The composite
 # key matches the existing Delta MERGE condition.
