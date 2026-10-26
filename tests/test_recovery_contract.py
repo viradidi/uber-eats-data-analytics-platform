@@ -205,6 +205,21 @@ class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
         self.assertIn("Restrict write access to the control table", contract)
         self.assertIn("Invalid table/column metadata is rejected", contract)
 
+    def test_incremental_run_acceptance_queries_cover_reconciliation_and_checkpoint_gate(self):
+        query_path = ROOT / "docs" / "SQL_INCREMENTAL_RUN_ACCEPTANCE_QUERIES.md"
+        self.assertTrue(query_path.is_file())
+        queries = query_path.read_text(encoding="utf-8")
+        for expected in (
+            "expected_source_rows",
+            "distinct_business_keys",
+            "duplicate business keys",
+            "landed_rows",
+            "checkpoint unchanged",
+            "successfully processed upper bound",
+            "do not create transactionality",
+        ):
+            self.assertIn(expected, queries)
+
 
 if __name__ == "__main__":
     unittest.main()
