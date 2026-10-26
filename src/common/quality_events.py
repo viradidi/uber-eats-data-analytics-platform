@@ -135,6 +135,52 @@ def reconcile_merge_target(
         raise error
     return record[0]
 
+def _snapshot_values_match(expected, actual, numeric_tolerance: float = 1e-9) -> bool:
+    """Compare snapshot metrics with tolerance for numeric values."""
+    from math import isclose
+    from decimal import Decimal
+
+    if expected is None or actual is None:
+        return expected is actual
+    if isinstance(expected, (int, float)) and isinstance(actual, (int, float)):
+        return isclose(
+            float(expected), float(actual),
+            rel_tol=numeric_tolerance, abs_tol=numeric_tolerance,
+        )
+    try:
+        return Decimal(str(expected)) == Decimal(str(actual))
+    except Exception:
+        return expected == actual
+
+
+def _build_snapshot_checks(
+    source_only_keys: int,
+    target_only_keys: int,
+    source_values: dict,
+    target_values: dict,
+    aggregate_specs: dict[str, str],
+    numeric_tolerance: float = 1e-9,
+) -> list[tuple[str, str, object, object, bool]]:
+    """Build testable, pure reconciliation checks from computed Spark metrics."""
+    checks = [
+        ("key_coverage", "source_only_key_count", source_only_keys, 0),
+        ("key_coverage", "target_only_key_count", 0, target_only_keys),
+        ("row_count", "row_count", source_values["__row_count"], target_values["__row_count"]),
+    ]
+    for column_name, operation in aggregate_specs.items():
+        checks.append((
+            "business_aggregate",
+            f"{operation}:{column_name}",
+            source_values[f"__aggregate_{column_name}"],
+            target_values[f"__aggregate_{column_name}"],
+        ))
+    return [
+        (kind, name, expected, actual,
+         _snapshot_values_match(expected, actual, numeric_tolerance))
+        for kind, name, expected, actual in checks
+    ]
+
+
 def reconcile_full_snapshot(
     spark,
     source_df,
@@ -152,8 +198,6 @@ def reconcile_full_snapshot(
     expected for incremental batches. Records are appended to a separate detail
     table so the existing reconciliation table schema remains unchanged.
     """
-    from math import isclose
-
     if source_is_full_snapshot is not True:
         raise ValueError(
             "Pass source_is_full_snapshot=True only for a confirmed full snapshot; "
@@ -218,38 +262,19 @@ def reconcile_full_snapshot(
 
     source_values = aggregate_values(source_df)
     target_values = aggregate_values(target_df)
-    checks = [
-        ("key_coverage", "source_only_key_count", source_only_keys, 0),
-        ("key_coverage", "target_only_key_count", 0, target_only_keys),
-        ("row_count", "row_count", source_values["__row_count"], target_values["__row_count"]),
-    ]
-    for column_name, operation in aggregate_specs.items():
-        checks.append((
-            "business_aggregate",
-            f"{operation}:{column_name}",
-            source_values[f"__aggregate_{column_name}"],
-            target_values[f"__aggregate_{column_name}"],
-        ))
-
-    def values_match(expected, actual):
-        if expected is None or actual is None:
-            return expected is actual
-        if isinstance(expected, (int, float)) and isinstance(actual, (int, float)):
-            return isclose(
-                float(expected), float(actual),
-                rel_tol=numeric_tolerance, abs_tol=numeric_tolerance,
-            )
-        try:
-            from decimal import Decimal
-            return Decimal(str(expected)) == Decimal(str(actual))
-        except Exception:
-            return expected == actual
+    checks = _build_snapshot_checks(
+        source_only_keys,
+        target_only_keys,
+        source_values,
+        target_values,
+        aggregate_specs,
+        numeric_tolerance,
+    )
 
     failed_checks = []
     records = []
     recorded_at = datetime.now(timezone.utc).isoformat()
-    for check_type, metric_name, expected, actual in checks:
-        passed = values_match(expected, actual)
+    for check_type, metric_name, expected, actual, passed in checks:
         if not passed:
             failed_checks.append(metric_name)
         difference = None
