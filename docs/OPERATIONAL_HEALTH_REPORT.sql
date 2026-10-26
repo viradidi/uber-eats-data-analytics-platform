@@ -70,18 +70,18 @@ failure_24h AS (
     SELECT
         dataset_name,
         COUNT(*) AS failures_last_24h,
-        MAX(recorded_at_utc) AS latest_failure_at_utc
+        MAX(TRY_CAST(recorded_at_utc AS TIMESTAMP)) AS latest_failure_at_utc
     FROM ubereats_databricks1.silver.pipeline_failure_events
-    WHERE recorded_at_utc >= current_timestamp() - INTERVAL 24 HOURS
+    WHERE TRY_CAST(recorded_at_utc AS TIMESTAMP) >= current_timestamp() - INTERVAL 24 HOURS
     GROUP BY dataset_name
 ),
 rejected_24h AS (
     SELECT
         dataset_name,
         COUNT(*) AS rejected_rows_last_24h,
-        MAX(quarantined_at_utc) AS latest_rejection_at_utc
+        MAX(TRY_CAST(quarantined_at_utc AS TIMESTAMP)) AS latest_rejection_at_utc
     FROM ubereats_databricks1.silver.pipeline_rejected_records
-    WHERE quarantined_at_utc >= current_timestamp() - INTERVAL 24 HOURS
+    WHERE TRY_CAST(quarantined_at_utc AS TIMESTAMP) >= current_timestamp() - INTERVAL 24 HOURS
     GROUP BY dataset_name
 ),
 dataset_inventory AS (
@@ -120,6 +120,8 @@ SELECT
         WHEN q.latest_quality_status IS NULL
           AND r.latest_merge_reconciliation_status IS NULL
             THEN 'NO_SUCCESS_OR_RECONCILIATION_RECORD'
+        WHEN COALESCE(x.rejected_rows_last_24h, 0) > 0
+            THEN 'REVIEW_REJECTIONS'
         WHEN q.latest_quality_status = 'SUCCEEDED'
           AND (
               r.latest_merge_reconciliation_status IS NULL
@@ -144,6 +146,7 @@ ORDER BY
           OR COALESCE(f.failures_last_24h, 0) > 0 THEN 0
         WHEN q.latest_quality_status IS NULL
           AND r.latest_merge_reconciliation_status IS NULL THEN 1
-        ELSE 2
+        WHEN COALESCE(x.rejected_rows_last_24h, 0) > 0 THEN 2
+        ELSE 3
     END,
     i.dataset_name;
