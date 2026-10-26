@@ -27,7 +27,13 @@ The configured success dependency is:
 
 This prevents the control watermark from advancing merely because extraction started or the copy completed while the required Silver job subsequently fails.
 
-Before enabling a source table, complete [the Incremental Source Contract](INCREMENTAL_SOURCE_CONTRACT.md) for its watermark, key, late-arrival, delete, replay, and reconciliation semantics.\n\n## Known correctness limits requiring a source-specific decision
+Before enabling a source table, complete [the Incremental Source Contract](INCREMENTAL_SOURCE_CONTRACT.md) for its watermark, key, late-arrival, delete, replay, and reconciliation semantics.
+
+## Additional extraction-boundary finding
+
+The exported `Check any new data` lookup uses a separate `watermark_column > last_watermark_value` predicate before the bounded copy. It does not capture an upper boundary itself, and it relies on a populated, correctly typed lower watermark. The later max-watermark lookup bounds the copy, but it does not repair null-watermark behavior or source changes that become visible behind the checkpoint. Treat this lookup as a change-presence check only, not as a completeness guarantee.
+
+## Known correctness limits requiring a source-specific decision
 
 The exported expressions do **not** yet handle these cases explicitly. Do not describe the pipeline as safe for these conditions until they are resolved and tested.
 
@@ -71,3 +77,8 @@ Before describing this path as runtime-verified, validate in an available Azure 
 - Source/landing/Silver counts and key-level reconciliation match expected rules.
 
 The user's Azure for Students subscription is currently disabled, so these runtime checks may need to wait until an appropriate environment is available. Repository-level configuration can still be reviewed and maintained in GitHub.
+
+
+## Deployment decision
+
+Do not enable a new source table solely because the pipeline JSON parses. Require a completed [Incremental Source Contract](INCREMENTAL_SOURCE_CONTRACT.md), an approved initial-load decision, privileged control-table access, a replay-safe downstream write strategy, and recorded acceptance-test evidence. Until those gates are met, the exported pipeline is a reviewed design artifact—not a guarantee of complete change capture.
