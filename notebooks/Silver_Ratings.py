@@ -5,6 +5,12 @@ import sys
 sys.path.append("/Workspace/Users/sivana9908_gmail.com#ext#@sivana9908gmail.onmicrosoft.com/Uber-Eats-End-to-End-_Azure-Data-Engineering-Project")
 from src.common.spark_utils import standardize_columns
 
+# Guard against an empty API response replacing a previously populated Silver table.
+df_ratings_table_row_count = df_ratings_table.count()
+print("ratings.source_rows=" + str(df_ratings_table_row_count))
+if df_ratings_table_row_count == 0:
+    raise ValueError("API Silver input is empty; refusing to overwrite the existing target table")
+
 # COMMAND ----------
 
 # MAGIC %md
