@@ -21,6 +21,7 @@ Use this checklist to distinguish available artifacts from verified implementati
 ## Transformation and quality
 
 - [ ] Validate notebook inputs and outputs in a Spark environment
+- [x] Make Bronze storage root configurable through a Databricks widget in all Silver notebooks
 - [x] Document transformation behavior and reliability findings in `docs/SILVER_TRANSFORMATION_REVIEW.md`
 - [x] Add CI tests for required columns, nonblank keys, key uniqueness, allowed CSV domain values, promotion dates/discounts, and zone coordinate ranges in committed sample fixtures
 - [x] Add pre-cleaning quality metrics and prepared merge-key checks to Drivers and Promotions Silver notebooks
@@ -41,7 +42,8 @@ Use this checklist to distinguish available artifacts from verified implementati
 - [ ] Review linked-service JSON for secrets
 - [ ] Confirm no private credentials are tracked
 - [ ] Confirm sample data is appropriate for public release
-- [ ] Document environment configuration without secrets
+- [x] Document configurable Bronze storage root for Silver notebooks without embedding credentials
+- [x] Remove personal workspace path dependency and add repository-owned shared Spark utilities
 
 ## Operations
 
