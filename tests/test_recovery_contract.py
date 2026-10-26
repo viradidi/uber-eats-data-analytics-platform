@@ -181,15 +181,14 @@ class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
         self.assertIn("does not show an allowlist guard", review)
         self.assertIn("Do not populate these fields from untrusted input", review)
 
-    def test_timestamped_landing_files_are_not_misrepresented_as_idempotent(self):
+    def test_landing_filename_is_deterministic_for_the_same_watermark_range(self):
         output_parameters = self.copy["outputs"][0]["parameters"]
         file_name = output_parameters["p_file_name"]["value"]
-        self.assertIn("formatDateTime(utcNow()", file_name)
-
-        review_path = ROOT / "docs" / "SQL_INCREMENTAL_LOAD_REVIEW.md"
-        review = review_path.read_text(encoding="utf-8")
-        self.assertIn("A retry can therefore create a second file", review)
-        self.assertIn("does not guarantee idempotent Silver processing", review)
+        self.assertIn("item().control_id", file_name)
+        self.assertIn("item().last_watermark_value", file_name)
+        self.assertIn("activity('Get max watermark_copy1').output.firstRow.max_watermark", file_name)
+        self.assertNotIn("utcNow()", file_name)
+        self.assertIn("does not guarantee idempotent Silver processing", self.review)
 
     def test_sql_control_preflight_checks_metadata_and_duplicate_mappings(self):
         preflight_path = ROOT / "docs" / "SQL_INCREMENTAL_CONTROL_PREFLIGHT.sql"
