@@ -84,7 +84,7 @@ The Payments, Deliveries, Order Status, and Ratings notebook exports fail before
 
 ## Merge-based rejected-record quarantine milestone
 
-Drivers now appends rows with null `driver_id` and unsupported `vehicle_type` to `ubereats_databricks1.silver.pipeline_rejected_records` before the existing filters run. Promotions quarantines null `promo_id`/`restaurant_id` rows and stops before publishing when either merge key is null; null or nonpositive discounts are quarantined before the existing positive-discount filter. Zones quarantines rows with missing/blank `zone_id` values or invalid coordinates before its existing fail-fast checks. Quarantine records carry the shared helper's run ID, dataset name, rejection reason, timestamp, and JSON payload. Existing merge keys and valid-row transformation rules are retained. Duplicate-key groups are not yet quarantined for these merge-based datasets because selecting a deterministic winner or rejecting the entire batch requires an explicit business rule. These changes are committed code-level updates; live Delta/Spark execution remains pending.
+Drivers now appends rows with null `driver_id` and unsupported `vehicle_type` to `ubereats_databricks1.silver.pipeline_rejected_records` before the existing filters run. Promotions quarantines null `promo_id`/`restaurant_id` rows and stops before publishing when either merge key is null; null or nonpositive discounts are quarantined before the existing positive-discount filter. Zones quarantines rows with missing/blank `zone_id` values or invalid coordinates before its existing fail-fast checks. Quarantine records carry the shared helper's run ID, dataset name, rejection reason, timestamp, and JSON payload. Historical milestone note: duplicate-key quarantine was added in a later milestone below. The current policy is to quarantine all rows in each duplicate-key group and fail the batch before merge; live Delta/Spark execution remains pending.
 
 
 ## Merge-based duplicate-key handling milestone
@@ -92,3 +92,22 @@ Drivers now appends rows with null `driver_id` and unsupported `vehicle_type` to
 Drivers, Promotions, and Zones now identify duplicate business-key groups, persist every row in those groups to `ubereats_databricks1.silver.pipeline_rejected_records`, and fail the batch before the Delta merge. No winner is chosen nondeterministically. Drivers use `driver_id`, Promotions use `(promo_id, restaurant_id)`, and Zones use `zone_id`. This is a deliberate fail-fast policy until a source-specific winner rule (for example, latest source update timestamp with a stable tie-breaker) is established. Live Spark/Delta execution remains pending.
 - [x] Add static recovery contract tests in `tests/test_recovery_contract.py` for ADF copy/job/watermark dependency gates, checkpoint safety language, operational report links, and explicit documentation of watermark edge cases. These tests run in the existing standard-library unittest CI step; they do not execute Azure services.
 - [x] Document the boundary between repository-level recovery contract tests and live Azure validation in the recovery runbook.
+
+
+## Consolidated release-readiness view
+
+### Repository artifacts available
+- [x] SQL incremental pipeline reviewed for dependency ordering and watermark boundary limitations
+- [x] Per-source incremental contract and recovery runbook documented
+- [x] Standard-library repository validation workflow and static recovery contract tests committed
+- [x] Operational health, trend, and reconciliation SQL reports committed
+- [x] Silver validation, quarantine, quality-event, and reconciliation implementation artifacts committed
+
+### Still requiring environment-specific evidence
+- [ ] Execute ADF pipeline validation and controlled recovery scenarios in an available Azure environment
+- [ ] Execute Spark/Delta notebooks and audit SQL against a compatible Databricks environment
+- [ ] Complete source-specific incremental contracts before claiming reliable change capture for each source
+- [ ] Capture successful-run, failure, retry, and reconciliation evidence
+- [ ] Complete final README link/render review and portfolio-site project listing
+
+A checked repository artifact means the relevant code or documentation is present. It does not imply live Azure/Databricks execution unless the checklist explicitly says so.
