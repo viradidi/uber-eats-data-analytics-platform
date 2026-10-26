@@ -37,7 +37,8 @@ Use this checklist to distinguish available artifacts from verified implementati
 - [ ] Extend quarantine to other validation rules and merge-based Silver datasets
 - [x] Persist successful-run quality metrics for Payments, Deliveries, Order Status, and Ratings after successful Delta overwrite
 - [x] Reconcile prepared and published target row counts for API-backed full-refresh Silver tables
-- [ ] Add field-level reconciliation and source-to-target reconciliation for merge-based Silver tables
+- [x] Add source-key coverage and null-safe field-level reconciliation after Drivers, Promotions, and Zones Delta merges, with durable reconciliation outcomes and fail-fast mismatch handling (runtime execution pending)
+- [ ] Extend reconciliation to target-only stale keys and aggregate business-level totals
 
 ## Security
 
@@ -60,6 +61,10 @@ Use this checklist to distinguish available artifacts from verified implementati
 - [ ] Verify the README renders correctly on GitHub
 - [ ] Add the repository to the portfolio website
 
+
+## Merge-based Silver reconciliation milestone
+
+The Drivers, Promotions, and Zones merge-based Silver pipelines now call `reconcile_merge_target()` after publishing. The helper checks that every prepared source key exists in the target and compares selected fields with null-safe equality. It records source count, missing target-key count, mismatch count, status, run ID, target table, and timestamp in `ubereats_databricks1.silver.pipeline_reconciliation_results`. A mismatch records a failure event and raises before the notebook writes a successful-run quality record. This is committed code-level coverage; live Databricks execution remains pending.
 
 ## API Silver validation milestone
 
