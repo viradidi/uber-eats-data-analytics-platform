@@ -97,3 +97,15 @@ Before closing a recovery, verify:
 The repository includes quality-result, failure-event, rejected-record, merge-reconciliation, and full-snapshot reconciliation utilities, plus read-only SQL audit reports. The full-snapshot helper must only be used when the source contract confirms a complete snapshot; incremental batches must not be interpreted as proof that absent target keys are stale.
 
 This runbook does not claim automated rollback, automatic checkpoint restoration, exactly-once processing, or live Azure recovery unless those capabilities are independently demonstrated in the deployed environment.
+
+## 8. Automated repository-level safeguards
+
+The repository's GitHub Actions workflow runs the standard-library test suite with `python -m unittest discover -s tests -v`. The `tests/test_recovery_contract.py` tests assert that the committed ADF JSON keeps the intended dependency gates:
+
+- The bounded max-watermark lookup succeeds before the copy activity.
+- The Silver Databricks job succeeds after the copy activity.
+- The control watermark update depends on successful completion of the Silver job.
+- The recovery documentation continues to require checkpoint protection and disclose that live Azure behavior is unverified.
+- The operational SQL report files remain present and linked from the operations guide.
+
+These are static contract tests. They can catch accidental changes to the exported JSON or recovery safeguards, but they do not execute ADF expressions, contact Azure, validate credentials, or prove that deployed resources match the export. A green CI run is not a substitute for a controlled runtime recovery test.
