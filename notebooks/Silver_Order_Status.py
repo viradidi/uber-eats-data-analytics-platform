@@ -25,19 +25,22 @@ def fail_validation(message, stage="silver_validation"):
 # COMMAND ----------
 
 
-df_order_status = (
-    spark.read
-    .format("json")
-    .load(f"{BRONZE_ROOT}/api/order_status/")
-)
-df_order_status_table = (
-    df_order_status
-    .select(explode(col("data")).alias("status_data"))
-    .select("status_data.*")
-)
-
-display(df_order_status_table)
-
+try:
+    df_order_status = (
+        spark.read
+        .format("json")
+        .load(f"{BRONZE_ROOT}/api/order_status/")
+    )
+    df_order_status_table = (
+        df_order_status
+        .select(explode(col("data")).alias("status_data"))
+        .select("status_data.*")
+    )
+    
+    display(df_order_status_table)
+except Exception as exc:
+    log_pipeline_failure(spark, "order_status", "source_read", exc)
+    raise
 
 # Guard against an empty API response replacing a previously populated Silver table.
 df_order_status_table_row_count = df_order_status_table.count()
