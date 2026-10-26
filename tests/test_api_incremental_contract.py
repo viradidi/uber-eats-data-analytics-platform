@@ -211,6 +211,46 @@ class ApiTimestampContractTests(unittest.TestCase):
             with patch.object(api, "DATA_DIR", str(data_dir)):
                 self.assertEqual(expected, api.load_json_file("payments.json"))
 
+    def test_load_json_file_rejects_non_array_json(self):
+        with tempfile.TemporaryDirectory() as directory:
+            data_dir = Path(directory)
+            (data_dir / "payments.json").write_text('{"payment_id": "P1"}', encoding="utf-8")
+            with patch.object(api, "DATA_DIR", str(data_dir)):
+                with self.assertRaises(HTTPException) as raised:
+                    api.load_json_file("payments.json")
+        self.assertEqual(500, raised.exception.status_code)
+        self.assertIn("JSON array", raised.exception.detail)
+
+    def test_load_json_file_rejects_non_object_records(self):
+        with tempfile.TemporaryDirectory() as directory:
+            data_dir = Path(directory)
+            (data_dir / "payments.json").write_text('[{"payment_id": "P1"}, 42]', encoding="utf-8")
+            with patch.object(api, "DATA_DIR", str(data_dir)):
+                with self.assertRaises(HTTPException) as raised:
+                    api.load_json_file("payments.json")
+        self.assertEqual(500, raised.exception.status_code)
+        self.assertIn("not a JSON object", raised.exception.detail)
+
+    def test_load_json_file_sanitizes_missing_file_error(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.object(api, "DATA_DIR", str(directory)):
+                with self.assertRaises(HTTPException) as raised:
+                    api.load_json_file("missing.json")
+        self.assertEqual(500, raised.exception.status_code)
+        self.assertNotIn(directory, raised.exception.detail)
+        self.assertIn("unavailable", raised.exception.detail)
+
+    def test_load_json_file_sanitizes_invalid_json_error(self):
+        with tempfile.TemporaryDirectory() as directory:
+            data_dir = Path(directory)
+            (data_dir / "payments.json").write_text("{invalid", encoding="utf-8")
+            with patch.object(api, "DATA_DIR", str(data_dir)):
+                with self.assertRaises(HTTPException) as raised:
+                    api.load_json_file("payments.json")
+        self.assertEqual(500, raised.exception.status_code)
+        self.assertNotIn(directory, raised.exception.detail)
+        self.assertIn("invalid JSON", raised.exception.detail)
+
 
 if __name__ == "__main__":
     unittest.main()
