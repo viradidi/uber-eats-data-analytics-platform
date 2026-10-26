@@ -2,7 +2,7 @@
 from pyspark.sql.functions import *
 from pyspark.sql.types  import *
 from src.common.spark_utils import standardize_columns
-from src.common.quality_events import log_pipeline_failure
+from src.common.quality_events import log_pipeline_failure, quarantine_rejected_rows
 
 
 # COMMAND ----------
@@ -59,6 +59,7 @@ for condition in required_null_conditions[1:]:
     required_null_condition = required_null_condition | condition
 required_null_count = df_order_status_table.filter(required_null_condition).count()
 if required_null_count:
+    quarantine_rejected_rows(spark, df_order_status_table.filter(required_null_condition), "order_status", "null required fields")
     fail_validation(f"order_status API payload has {required_null_count} rows with null required fields: {required_columns}")
 
 key_columns = ["order_id","status_timestamp"]
