@@ -143,6 +143,21 @@ The exact watermark mechanism and recovery semantics must be confirmed from the 
 
 Do not assume that every notebook implements all five steps until its source has been reviewed.
 
+
+## 4.1 Reliability and control flow
+
+The intended processing path is not complete merely because data has landed in storage. Review the repository's incremental-load and recovery contracts alongside the diagram:
+
+1. **Extract:** API, CSV, and SQL source patterns feed the configured ingestion pipelines.
+2. **Land:** Azure Data Factory writes to the configured lake destination. Confirm actual paths and activity dependencies in the exported resources.
+3. **Transform and validate:** Silver notebook logic applies dataset-specific preparation and quality rules. Duplicate-key handling, rejected records, and validation outcomes should remain inspectable.
+4. **Reconcile:** compare the processed source scope with its target using the appropriate merge or full-snapshot reconciliation contract.
+5. **Commit progress:** the SQL incremental pipeline's checkpoint/watermark should advance only after required downstream work succeeds. Static contract tests protect the exported dependency ordering; they do not execute ADF.
+6. **Recover:** use the runbook to preserve run IDs, checkpoint state, audit records, and partial-write evidence before a rerun.
+
+The monitoring and control elements in the SVG represent engineering responsibilities and repository artifacts. They do not imply that cloud alerts, dashboards, or runtime recovery have been exercised in a live Azure environment.
+
+
 ## 5. Security Boundaries
 
 Recommended controls include:
