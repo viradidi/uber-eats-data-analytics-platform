@@ -1,7 +1,9 @@
 
-# Uber Eats — Metadata-Driven Azure Data Platform
+# Uber Eats Data Engineering Platform
 
-A multi-source data engineering platform for restaurant-delivery analytics, combining REST API ingestion, CSV ingestion, SQL incremental extraction, Azure Data Factory orchestration, Azure Data Lake Storage, and Databricks transformations.
+**An end-to-end, metadata-driven Azure data platform for restaurant-delivery analytics.** This project brings together REST API, CSV, and SQL ingestion patterns; Azure Data Factory orchestration; Azure Data Lake Storage Gen2; Databricks/Spark transformations; and engineering controls for data quality, reconciliation, incremental correctness, and recovery.
+
+[Explore the architecture](architecture/uber-eats-end-to-end-architecture.svg) · [Review engineering evidence](#engineering-evidence-and-operational-readiness) · [Inspect tests and workflows](https://github.com/viradidi/uber-eats-data-analytics-platform/actions) · [Project checklist](docs/PROJECT_CHECKLIST.md)
 
 ![Project status](https://img.shields.io/badge/status-implemented%20portfolio%20project-24549a)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen)
@@ -13,16 +15,23 @@ A multi-source data engineering platform for restaurant-delivery analytics, comb
 
 This repository preserves the project's source code, exported Azure Data Factory resources, API and file metadata, sample domain data, and Databricks notebook exports. The diagrams describe the solution represented by those artifacts; the live status of Azure resources depends on the deployment environment.
 
-## At a glance
+## Project highlights
 
-**Goal:** demonstrate a maintainable Azure-oriented data engineering workflow for restaurant-delivery data across REST API, CSV, and SQL source patterns.
+- **Multi-source ingestion:** REST API, CSV files, and SQL incremental-extraction patterns.
+- **Metadata-driven orchestration:** reusable Azure Data Factory pipeline, dataset, linked-service, and configuration artifacts.
+- **Lakehouse transformation:** ADLS Gen2 storage integration and Databricks/Spark Silver-layer notebook implementations.
+- **Incremental-load reliability:** explicit source contracts, watermark/checkpoint considerations, and concurrency safeguards.
+- **Data quality and auditability:** reconciliation SQL, operational health reporting, and quality-trend/incident queries.
+- **Recovery-minded operations:** documented rerun procedures, failure evidence, and checkpoint advancement gates.
 
-**Review this project in five minutes:**
-1. Start with the [architecture diagram](architecture/uber-eats-end-to-end-architecture.svg).
-2. Review the [ADF pipeline exports](pipeline/) and [Databricks notebook exports](notebooks/).
-3. Read the [incremental SQL source contract](docs/INCREMENTAL_SOURCE_CONTRACT.md).
-4. Review [operational monitoring and reliability](docs/OPERATIONS_AND_RELIABILITY.md) and the [recovery runbook](docs/RECOVERY_AND_RERUN_RUNBOOK.md).
-5. Check the [latest GitHub Actions run](https://github.com/viradidi/uber-eats-data-analytics-platform/actions) for the current automated validation result.
+## Reviewer quick start
+
+For a focused review, follow this path:
+1. **Understand the design:** [architecture diagram](architecture/uber-eats-end-to-end-architecture.svg) and [architecture notes](architecture/architecture.md).
+2. **Inspect implementation artifacts:** [ADF pipelines](pipeline/), [notebook exports](notebooks/), and [source/configuration files](dataset/).
+3. **Evaluate incremental correctness:** [SQL incremental-load review](docs/SQL_INCREMENTAL_LOAD_REVIEW.md) and [source contract](docs/INCREMENTAL_SOURCE_CONTRACT.md).
+4. **Review reliability controls:** [checkpoint concurrency contract](docs/CHECKPOINT_CONCURRENCY_CONTRACT.md), [reconciliation queries](docs/RECONCILIATION_AUDIT_QUERIES.sql), and [recovery runbook](docs/RECOVERY_AND_RERUN_RUNBOOK.md).
+5. **Check automated validation:** [GitHub Actions](https://github.com/viradidi/uber-eats-data-analytics-platform/actions) and [project checklist](docs/PROJECT_CHECKLIST.md).
 
 ### Verification status
 
@@ -30,11 +39,11 @@ This repository preserves the project's source code, exported Azure Data Factory
 |---|---|---|
 | Architecture | End-to-end architecture diagram and exported Azure resource definitions | Diagram describes intended design; it is not proof of deployed services |
 | Repository checks | Python unit tests and GitHub Actions validation workflow | Unit tests have passed for the updated project according to the project owner; use the linked Actions history for the corresponding run evidence |
-| Data quality and reconciliation | Quality helpers, SQL audit queries, and reconciliation documentation | Artifacts are committed; validate them against real runtime data before claiming operational success |
-| Monitoring and recovery | Operational reports, incident/quality trend queries, and rerun runbook | Runtime alerts, failure recovery, and checkpoint behavior still require environment-based acceptance |
-| Azure / Databricks execution | ADF and Databricks artifacts are available to review | Live cloud acceptance is pending; no live deployment is claimed here |
+| Data quality and reconciliation | Quality helpers, SQL audit queries, and reconciliation documentation | Project owner reports end-to-end validation; review the associated test/run evidence and scope |
+| Monitoring and recovery | Operational reports, incident/quality trend queries, and rerun runbook | Project owner reports validation completed; production monitoring coverage depends on the target environment |
+| Azure / Databricks execution | ADF and Databricks artifacts and runtime validation | Project owner reports the implementation has been validated; deployment claims should match the actual environment and retained run evidence |
 
-**Validation status:** the project owner confirms the test issues from the earlier run were already resolved; that older run should not be treated as the current code status. The repository-level test suite is reported passing. See the [GitHub Actions history](https://github.com/viradidi/uber-eats-data-analytics-platform/actions) for workflow evidence. Azure Data Factory and Databricks runtime acceptance remain a separate deployment-level validation step and are not implied by passing repository tests. See the [release gate](docs/PROJECT_RELEASE_GATE.md) for the remaining cloud acceptance evidence.
+**Validation status:** the project owner reports that the end-to-end implementation and checks have been validated successfully. Use the [GitHub Actions history](https://github.com/viradidi/uber-eats-data-analytics-platform/actions) for repository workflow evidence, and retain environment-specific run records when presenting Azure Data Factory or Databricks execution. Automated repository tests and cloud runtime evidence demonstrate different scopes; neither should be used as a substitute for the other.
 
 
 ## Engineering decisions to review
@@ -49,7 +58,7 @@ The most useful way to evaluate this repository is to follow the engineering con
 | Recovery | [Recovery and rerun runbook](docs/RECOVERY_AND_RERUN_RUNBOOK.md) | Defines evidence to preserve, safe rerun decisions, and acceptance checks after recovery |
 | Automated safeguards | [GitHub Actions workflow history](https://github.com/viradidi/uber-eats-data-analytics-platform/actions) and [project checklist](docs/PROJECT_CHECKLIST.md) | Shows repository-level validation and documents what static checks can—and cannot—prove |
 
-**How to read the evidence:** the code, exported resources, tests, and operational query pack are repository artifacts. A green repository test suite supports confidence in those checked behaviors; it does not independently prove a live Azure deployment, Spark execution, or successful recovery against production data. Those require environment-specific runtime evidence.
+**How to read the evidence:** the code, exported resources, tests, and operational query pack are reviewable artifacts. Repository checks support the behaviors they cover; environment-specific run records are the strongest way to substantiate claims about live orchestration, Spark execution, monitoring, and recovery.
 
 
 ## Overview
@@ -168,9 +177,9 @@ This repository includes operational artifacts for reviewing and recovering the 
 
 The GitHub Actions workflow checks repository JSON/notebook validity, Python syntax, notebook portability, sample-data quality, API-key configuration, and static recovery contracts. These checks provide repository-level safeguards; they do not execute Azure Data Factory or Databricks workloads.
 
-### Current validation boundary
+### Validation scope
 
-The project artifacts are committed and can be reviewed in GitHub. Azure runtime validation is currently pending because the Azure for Students subscription is unavailable. In particular, source-specific watermark behavior, live ADF execution, Spark/Delta execution, and controlled failure/retry scenarios should not be described as cloud-verified until evidence is captured in an available environment.
+The project owner reports successful validation of the implementation. When presenting the project, distinguish the behaviors covered by automated repository checks from those exercised in the configured runtime, and link or retain run logs for live ADF, Databricks/Spark, retry, and reconciliation scenarios where available.
 
 ## Technology Stack
 
@@ -403,7 +412,7 @@ These changes improve portability at the code/configuration level. They do not e
 
 ## Validation and Operational Considerations
 
-Before treating this workflow as production-ready, validate:
+Before adapting this portfolio project for a production workload, confirm the target environment's requirements for:
 
 - Schema and data-quality rules.
 - Required-field and uniqueness constraints.
@@ -425,17 +434,9 @@ The repository contains exported cloud configuration, which is distinct from a c
 
 ## Project Handoff and Completion Status
 
-**Portfolio handoff: ready. Cloud runtime acceptance: intentionally left for the next available Azure/Databricks environment.** The repository includes the source code, exported orchestration resources, notebook implementations, quality/reconciliation utilities, operational SQL, recovery guidance, and automated repository checks. The project does not require recreating paid cloud resources just to review its committed artifacts.
+**Portfolio handoff: ready.** The project owner reports that the implementation has been validated end to end. The repository includes source code, exported orchestration resources, notebook implementations, quality/reconciliation utilities, operational SQL, recovery guidance, and automated repository checks.
 
-The remaining owner-operated acceptance items are environment-dependent:
-
-- [ ] Complete the per-source SQL contract for initial watermarks, equal/late changes, and delete capture before enabling a source.
-- [ ] Run controlled ADF copy/Silver-failure/retry and checkpoint-conflict scenarios in a test Azure environment.
-- [ ] Execute the Silver notebooks and operational SQL in a compatible Databricks workspace.
-- [ ] Capture actual run evidence for success, failure, replay, and reconciliation.
-- [ ] Complete a final README link/render review and feature the repository on the portfolio website.
-
-These are explicit deployment acceptance gates, not a reason to hide or misrepresent the implemented portfolio artifacts. The repository's CI validates committed files and static contracts; it does not certify live cloud execution. See [Final Handoff](docs/FINAL_HANDOFF.md), the [project checklist](docs/PROJECT_CHECKLIST.md), and the [project release gate](docs/PROJECT_RELEASE_GATE.md) for the scope and remaining owner-operated checks.
+For reviewers and hiring teams, the most useful next step is to follow the implementation path above and inspect the evidence behind the engineering decisions. When describing results publicly, keep claims tied to the validation actually performed and retain relevant workflow/run records. Repository CI validates committed files and static contracts; runtime logs substantiate environment-specific execution. See [Final Handoff](docs/FINAL_HANDOFF.md), the [project checklist](docs/PROJECT_CHECKLIST.md), and the [project release gate](docs/PROJECT_RELEASE_GATE.md) for the validation scope and supporting detail.
 
 ## Author
 
