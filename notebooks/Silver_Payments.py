@@ -60,6 +60,9 @@ if required_null_count:
 key_columns = ["payment_id"]
 duplicate_key_count = df_payments_table.groupBy(*key_columns).count().filter(col("count") > 1).count()
 if duplicate_key_count:
+    duplicate_keys = df_payments_table.groupBy(*key_columns).count().filter(col("count") > 1).select(*key_columns)
+    duplicate_rows = df_payments_table.join(duplicate_keys, on=key_columns, how="inner")
+    quarantine_rejected_rows(spark, duplicate_rows, "payments", "duplicate business keys")
     fail_validation(f"payments API payload has {duplicate_key_count} duplicate business keys: {key_columns}")
 
 invalid_amount_count = df_payments_table.filter(col("amount").cast("double").isNull() | (col("amount").cast("double") < 0)).count()
