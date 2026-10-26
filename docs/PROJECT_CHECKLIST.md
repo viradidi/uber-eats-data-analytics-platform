@@ -88,3 +88,5 @@ Drivers now appends rows with null `driver_id` and unsupported `vehicle_type` to
 ## Merge-based duplicate-key handling milestone
 
 Drivers, Promotions, and Zones now identify duplicate business-key groups, persist every row in those groups to `ubereats_databricks1.silver.pipeline_rejected_records`, and fail the batch before the Delta merge. No winner is chosen nondeterministically. Drivers use `driver_id`, Promotions use `(promo_id, restaurant_id)`, and Zones use `zone_id`. This is a deliberate fail-fast policy until a source-specific winner rule (for example, latest source update timestamp with a stable tie-breaker) is established. Live Spark/Delta execution remains pending.
+- [x] Add static recovery contract tests in `tests/test_recovery_contract.py` for ADF copy/job/watermark dependency gates, checkpoint safety language, and operational report links. These tests run in the existing standard-library unittest CI step; they do not execute Azure services.
+- [x] Document the boundary between repository-level recovery contract tests and live Azure validation in the recovery runbook.
