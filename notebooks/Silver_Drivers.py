@@ -67,6 +67,24 @@ invalid_statuses = (
 
 print(f"drivers.quality.null_driver_id_rows={null_driver_ids}")
 print(f"drivers.quality.duplicate_driver_id_keys={duplicate_driver_keys}")
+
+# A duplicate business key has no deterministic winner rule. Quarantine every
+# row in each duplicate group and fail the batch instead of arbitrary deduplication.
+duplicate_driver_ids = (
+    df_drivers.filter(col("driver_id").isNotNull())
+    .groupBy("driver_id").count().filter(col("count") > 1)
+    .select("driver_id")
+)
+duplicate_driver_rows = df_drivers.join(duplicate_driver_ids, on="driver_id", how="inner")
+quarantine_rejected_rows(
+    spark, duplicate_driver_rows, "drivers",
+    "duplicate_driver_id_group_no_winner_policy",
+)
+if duplicate_driver_keys:
+    raise ValueError(
+        f"Drivers Silver input contains {duplicate_driver_keys} duplicate driver_id groups; "
+        "all rows in those groups were quarantined and publishing was stopped"
+    )
 print(f"drivers.quality.missing_join_date_rows={missing_join_dates}")
 print(f"drivers.quality.invalid_vehicle_type_rows={invalid_vehicle_types}")
 print(f"drivers.quality.invalid_status_rows={invalid_statuses}")
@@ -90,7 +108,7 @@ quarantine_rejected_rows(
 # driver_id, and keep supported vehicle types. Metrics above show what was
 # present before those operations.
 df_drivers = df_drivers.filter(col("driver_id").isNotNull())
-df_drivers = df_drivers.drop_duplicates(["driver_id"])
+df_drivers = df_drivers.drop_duplicates(["driver_id"])  # No-op after duplicate groups are rejected; retained defensively
 df_drivers = df_drivers.filter(col("vehicle_type").isin("SCOOTER", "BIKE"))
 
 # Validate the prepared merge input. A MERGE source must have unique keys.
