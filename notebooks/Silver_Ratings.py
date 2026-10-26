@@ -2,7 +2,7 @@
 from pyspark.sql.functions import *
 from pyspark.sql.types  import *
 from src.common.spark_utils import standardize_columns
-from src.common.quality_events import log_pipeline_failure
+from src.common.quality_events import log_pipeline_failure, quarantine_rejected_rows
 
 
 # COMMAND ----------
@@ -53,6 +53,7 @@ for condition in required_null_conditions[1:]:
     required_null_condition = required_null_condition | condition
 required_null_count = df_ratings_table.filter(required_null_condition).count()
 if required_null_count:
+    quarantine_rejected_rows(spark, df_ratings_table.filter(required_null_condition), "ratings", "null required fields")
     fail_validation(f"ratings API payload has {required_null_count} rows with null required fields: {required_columns}")
 
 key_columns = ["rating_id"]
@@ -62,6 +63,7 @@ if duplicate_key_count:
 
 invalid_rating_count = df_ratings_table.filter(col("rating").cast("double").isNull() | (col("rating").cast("double") < 1) | (col("rating").cast("double") > 5)).count()
 if invalid_rating_count:
+    quarantine_rejected_rows(spark, df_ratings_table.filter(col("rating").cast("double").isNull() | (col("rating").cast("double") < 1) | (col("rating").cast("double") > 5)), "ratings", "null, nonnumeric, or out-of-range rating")
     fail_validation(f"ratings contains {invalid_rating_count} rows with null, nonnumeric, or out-of-range rating")
 
 
