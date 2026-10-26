@@ -32,13 +32,13 @@ Do not replace overwrite paths with merges until source load patterns and reliab
 
 `notebooks/Silver_Zones.ipynb` reports source row count, null/blank zone IDs, duplicate zone keys, missing city/name fields, and invalid latitude/longitude values. Coordinates are cast to numeric values for validation, so null or nonnumeric values are counted as invalid. The notebook stops before the Delta write/merge if the merge key is missing/duplicated or either coordinate is outside its valid geographic range. The existing `zone_id` merge key and Delta write strategy remain unchanged.
 
-Drivers, Promotions, and Zones now append a successful-run record to `ubereats_databricks1.silver.pipeline_quality_results` after the Silver write/merge succeeds. Each record includes a generated run ID, dataset name, source row count, prepared row count, target row count after publishing, status, and recorded timestamp. The table is append-only so runs can be compared over time. This first increment records successful runs only; failed-run records, rejected-row quarantine, and row-level reconciliation remain open.
+Drivers, Promotions, Zones, Payments, Deliveries, Order Status, and Ratings now append a successful-run record to `ubereats_databricks1.silver.pipeline_quality_results` after the Silver write/merge or overwrite succeeds. Each record includes a generated run ID, dataset name, source row count, prepared row count, target row count after publishing, status, and recorded timestamp. The table is append-only so runs can be compared over time. This first increment records successful runs only; failed-run records, rejected-row quarantine, and row-level reconciliation remain open.
 
 ## Remaining transformation concerns
 
 ### API datasets
 
-The Payments, Deliveries, Order Status, and Ratings notebooks flatten the API `data` array and now report the flattened row count and fail before the existing Delta overwrite if the payload is empty. This prevents a transient empty API response from silently replacing a previously populated Silver table. Many sample sections for type casting, column standardization, null handling, deduplication, and validation remain commented out. Non-empty payload schema/business validation and source-to-target reconciliation remain open.
+The Payments, Deliveries, Order Status, and Ratings notebooks flatten the API `data` array, report the flattened row count, and fail before the existing Delta overwrite if the payload is empty. After a successful overwrite, they append a durable quality record containing run ID, source/prepared/target row counts, status, and timestamp to `ubereats_databricks1.silver.pipeline_quality_results`. This prevents a transient empty API response from silently replacing a previously populated Silver table and makes successful full-refresh runs visible for monitoring. Many sample sections for type casting, column standardization, null handling, deduplication, and validation remain commented out. Non-empty payload schema/business validation and source-to-target reconciliation remain open.
 
 ### Zones
 
@@ -55,7 +55,7 @@ CSV notebooks use `inferSchema=true`. This is convenient for exploration, but in
 ## Recommended next steps
 
 1. Extend equivalent source-key and required-field checks to the API-backed Silver notebooks.
-2. Extend durable quality-result recording to the API-backed datasets and add failed-run records.
+2. Add failed-run records for all Silver datasets and preserve run identifiers across failure reporting.
 3. Add source-to-target reconciliation for each table.
 4. Confirm whether each API Bronze path is a full snapshot or incremental batches before changing write strategies.
 5. Add dataset-specific schema/type checks to API notebooks.
@@ -64,6 +64,6 @@ CSV notebooks use `inferSchema=true`. This is convenient for exploration, but in
 
 ## Status
 
-Implemented in repository: pre-cleaning quality metrics and prepared merge-key checks for Drivers and Promotions; Zones reports key/coordinate quality and fails before publishing on invalid keys or coordinates; Drivers, Promotions, and Zones append successful-run metrics to `ubereats_databricks1.silver.pipeline_quality_results`; Payments, Deliveries, Order Status, and Ratings fail before overwrite on empty flattened API payloads; CI checks committed sample CSV fixtures.
+Implemented in repository: pre-cleaning quality metrics and prepared merge-key checks for Drivers and Promotions; Zones reports key/coordinate quality and fails before publishing on invalid keys or coordinates; Drivers, Promotions, Zones, Payments, Deliveries, Order Status, and Ratings append successful-run metrics to `ubereats_databricks1.silver.pipeline_quality_results`; Payments, Deliveries, Order Status, and Ratings fail before overwrite on empty flattened API payloads; CI checks committed sample CSV fixtures.
 
 Not yet runtime-verified: Databricks notebook execution, Delta writes/merges, source-to-target reconciliation, durable quality metrics, and end-to-end Azure orchestration.
