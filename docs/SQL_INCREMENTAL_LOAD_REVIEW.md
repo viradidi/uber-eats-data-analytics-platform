@@ -37,7 +37,7 @@ The control row's `last_watermark_value` is interpolated directly into the SQL p
 
 ### Late-arriving updates and equal watermark values
 
-The strict lower bound (`>`) can miss a changed record if its watermark is unchanged or if the source assigns a watermark value at or below the committed checkpoint after that checkpoint has advanced. Rows sharing a timestamp are all included only if that timestamp is greater than the prior checkpoint; a newly visible row with the exact checkpoint timestamp is excluded.
+The strict lower bound (`>`) can miss a changed record if its watermark is unchanged or if the source assigns a watermark value at or below the committed checkpoint after that checkpoint has advanced. Rows sharing a timestamp are all included only if that timestamp is greater than the prior checkpoint; a newly visible row with the same watermark value as the checkpoint is excluded.
 
 Choose a source-appropriate strategy before relying on this pipeline for mutable data, such as a reliable source-modified timestamp, a composite ordering key, or a controlled overlap window paired with idempotent merge/deduplication. An overlap window is not a drop-in fix: the destination must tolerate replay, and the checkpoint semantics must be defined. A timestamp alone is not a reliable change-data-capture mechanism when updates do not advance it.
 
