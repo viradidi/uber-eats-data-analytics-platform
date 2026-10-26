@@ -17,6 +17,7 @@ Use this checklist to distinguish available artifacts from verified implementati
 - [ ] Validate CSV ingestion output
 - [x] Review SQL incremental extraction boundaries and checkpoint dependencies in the exported ADF definition
 - [x] Document null-watermark, equal-boundary/late-update, dynamic SQL metadata, and replay/idempotency limitations in [the SQL incremental review](SQL_INCREMENTAL_LOAD_REVIEW.md); remediation and live validation remain pending
+- [x] Add a per-source [incremental extraction contract](INCREMENTAL_SOURCE_CONTRACT.md) covering initial load, keys, watermark semantics, deletes, replay, reconciliation, and runtime acceptance tests
 - [ ] Test reruns and partial-failure recovery
 
 ## Transformation and quality
