@@ -36,11 +36,13 @@ Use this checklist to distinguish available artifacts from verified implementati
 - [x] Quarantine duplicate-key groups for Payments, Deliveries, Order Status, and Ratings before failing validation
 - [x] Quarantine null driver IDs and unsupported vehicle types for Drivers; quarantine missing merge keys and invalid discounts for Promotions; quarantine invalid zone IDs/coordinates for Zones
 - [x] Quarantine all rows in duplicate-key groups for Drivers, Promotions, and Zones; fail the batch because no deterministic winner policy is defined
-- [ ] Add target-only stale-key reconciliation with an explicit full-snapshot versus incremental-source setting
+- [x] Add a reusable non-destructive full-snapshot reconciliation utility that requires explicit source_is_full_snapshot=True and records target-only/source-only keys, row counts, and optional aggregate comparisons
+- [ ] Confirm source completeness semantics and wire full-snapshot reconciliation into only those merge pipelines proven to consume complete snapshots
 - [x] Persist successful-run quality metrics for Payments, Deliveries, Order Status, and Ratings after successful Delta overwrite
 - [x] Reconcile prepared and published target row counts for API-backed full-refresh Silver tables
 - [x] Add source-key coverage and null-safe field-level reconciliation after Drivers, Promotions, and Zones Delta merges, with durable reconciliation outcomes and fail-fast mismatch handling (runtime execution pending)
-- [ ] Extend reconciliation to target-only stale keys and aggregate business-level totals
+- [x] Implement opt-in target-only stale-key detection and configurable aggregate comparisons in a separate reconciliation detail table
+- [ ] Configure and execute dataset-specific aggregate checks in Databricks after source snapshot semantics are confirmed
 
 ## Security
 
@@ -66,7 +68,7 @@ Use this checklist to distinguish available artifacts from verified implementati
 
 ## Merge-based Silver reconciliation milestone
 
-The Drivers, Promotions, and Zones merge-based Silver pipelines now call `reconcile_merge_target()` after publishing. The helper checks that every prepared source key exists in the target and compares selected fields with null-safe equality. It records source count, missing target-key count, mismatch count, status, run ID, target table, and timestamp in `ubereats_databricks1.silver.pipeline_reconciliation_results`. A mismatch records a failure event and raises before the notebook writes a successful-run quality record. This is committed code-level coverage; live Databricks execution remains pending.
+The Drivers, Promotions, and Zones merge-based Silver pipelines call `reconcile_merge_target()` after publishing. The helper checks source-key coverage and selected fields with null-safe equality and records outcomes in `ubereats_databricks1.silver.pipeline_reconciliation_results`. The separate `reconcile_full_snapshot()` utility checks source-only and target-only keys, row counts, and optional aggregates, writing to `ubereats_databricks1.silver.pipeline_reconciliation_details`. It requires explicit `source_is_full_snapshot=True` and never deletes target rows. It is not yet called by the three notebooks because their source completeness semantics must be confirmed first. All Spark/Delta runtime execution remains pending.
 
 ## API Silver validation milestone
 
