@@ -30,7 +30,7 @@ Use this checklist to distinguish available artifacts from verified implementati
 - [x] Add latitude/longitude validity checks and fail-fast guardrails to Zones
 - [x] Persist successful-run quality metrics with run ID, dataset, source/prepared/target counts, status, and timestamp for Drivers, Promotions, and Zones
 - [ ] Add failed-run records and rejected-row details with a run identifier
-- [ ] Extend durable quality metrics to API-backed Silver datasets
+- [x] Persist successful-run quality metrics for Payments, Deliveries, Order Status, and Ratings after successful Delta overwrite
 - [ ] Add source-to-target reconciliation
 
 ## Security
