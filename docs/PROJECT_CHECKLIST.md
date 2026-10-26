@@ -35,7 +35,8 @@ Use this checklist to distinguish available artifacts from verified implementati
 - [x] Add JSON-based rejected-row quarantine for API Silver required-field failures and Payments/Ratings domain-rule failures, with run IDs and rejection reasons
 - [x] Quarantine duplicate-key groups for Payments, Deliveries, Order Status, and Ratings before failing validation
 - [x] Quarantine null driver IDs and unsupported vehicle types for Drivers; quarantine missing merge keys and invalid discounts for Promotions; quarantine invalid zone IDs/coordinates for Zones
-- [ ] Define deterministic duplicate-key treatment and extend quarantine to duplicate-key groups in merge-based datasets
+- [x] Quarantine all rows in duplicate-key groups for Drivers, Promotions, and Zones; fail the batch because no deterministic winner policy is defined
+- [ ] Add target-only stale-key reconciliation with an explicit full-snapshot versus incremental-source setting
 - [x] Persist successful-run quality metrics for Payments, Deliveries, Order Status, and Ratings after successful Delta overwrite
 - [x] Reconcile prepared and published target row counts for API-backed full-refresh Silver tables
 - [x] Add source-key coverage and null-safe field-level reconciliation after Drivers, Promotions, and Zones Delta merges, with durable reconciliation outcomes and fail-fast mismatch handling (runtime execution pending)
@@ -75,3 +76,8 @@ The Payments, Deliveries, Order Status, and Ratings notebook exports fail before
 ## Merge-based rejected-record quarantine milestone
 
 Drivers now appends rows with null `driver_id` and unsupported `vehicle_type` to `ubereats_databricks1.silver.pipeline_rejected_records` before the existing filters run. Promotions quarantines null `promo_id`/`restaurant_id` rows and stops before publishing when either merge key is null; null or nonpositive discounts are quarantined before the existing positive-discount filter. Zones quarantines rows with missing/blank `zone_id` values or invalid coordinates before its existing fail-fast checks. Quarantine records carry the shared helper's run ID, dataset name, rejection reason, timestamp, and JSON payload. Existing merge keys and valid-row transformation rules are retained. Duplicate-key groups are not yet quarantined for these merge-based datasets because selecting a deterministic winner or rejecting the entire batch requires an explicit business rule. These changes are committed code-level updates; live Delta/Spark execution remains pending.
+
+
+## Merge-based duplicate-key handling milestone
+
+Drivers, Promotions, and Zones now identify duplicate business-key groups, persist every row in those groups to `ubereats_databricks1.silver.pipeline_rejected_records`, and fail the batch before the Delta merge. No winner is chosen nondeterministically. Drivers use `driver_id`, Promotions use `(promo_id, restaurant_id)`, and Zones use `zone_id`. This is a deliberate fail-fast policy until a source-specific winner rule (for example, latest source update timestamp with a stable tie-breaker) is established. Live Spark/Delta execution remains pending.
