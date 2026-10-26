@@ -34,7 +34,8 @@ Use this checklist to distinguish available artifacts from verified implementati
 - [x] Extend Silver failure logging to source-read failures for Drivers, Promotions, and Zones, and retain API Silver validation, reconciliation, and publish failure logging
 - [x] Add JSON-based rejected-row quarantine for API Silver required-field failures and Payments/Ratings domain-rule failures, with run IDs and rejection reasons
 - [x] Quarantine duplicate-key groups for Payments, Deliveries, Order Status, and Ratings before failing validation
-- [ ] Extend quarantine to other validation rules and merge-based Silver datasets
+- [x] Quarantine null driver IDs and unsupported vehicle types for Drivers; quarantine missing merge keys and invalid discounts for Promotions; quarantine invalid zone IDs/coordinates for Zones
+- [ ] Define deterministic duplicate-key treatment and extend quarantine to duplicate-key groups in merge-based datasets
 - [x] Persist successful-run quality metrics for Payments, Deliveries, Order Status, and Ratings after successful Delta overwrite
 - [x] Reconcile prepared and published target row counts for API-backed full-refresh Silver tables
 - [x] Add source-key coverage and null-safe field-level reconciliation after Drivers, Promotions, and Zones Delta merges, with durable reconciliation outcomes and fail-fast mismatch handling (runtime execution pending)
@@ -69,3 +70,8 @@ The Drivers, Promotions, and Zones merge-based Silver pipelines now call `reconc
 ## API Silver validation milestone
 
 The Payments, Deliveries, Order Status, and Ratings notebook exports fail before Delta overwrite when required columns are missing, required fields are null, or configured business keys are duplicated. Rejected rows for null required fields and duplicate-key groups are appended to `ubereats_databricks1.silver.pipeline_rejected_records` before validation fails. Payments additionally quarantines null, nonnumeric, or negative amounts; Ratings quarantines null, nonnumeric, or out-of-range ratings (valid range 1–5). The Order Status key is the composite `(order_id, status_timestamp)` because an order can legitimately have multiple status events. Validation and quarantine are implemented in both `.py` exports and `.ipynb` notebooks; live Spark execution remains pending.
+
+
+## Merge-based rejected-record quarantine milestone
+
+Drivers now appends rows with null `driver_id` and unsupported `vehicle_type` to `ubereats_databricks1.silver.pipeline_rejected_records` before the existing filters run. Promotions quarantines null `promo_id`/`restaurant_id` rows and stops before publishing when either merge key is null; null or nonpositive discounts are quarantined before the existing positive-discount filter. Zones quarantines rows with missing/blank `zone_id` values or invalid coordinates before its existing fail-fast checks. Quarantine records carry the shared helper's run ID, dataset name, rejection reason, timestamp, and JSON payload. Existing merge keys and valid-row transformation rules are retained. Duplicate-key groups are not yet quarantined for these merge-based datasets because selecting a deterministic winner or rejecting the entire batch requires an explicit business rule. These changes are committed code-level updates; live Delta/Spark execution remains pending.
