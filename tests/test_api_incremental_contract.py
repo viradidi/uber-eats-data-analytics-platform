@@ -122,6 +122,20 @@ class ApiTimestampContractTests(unittest.TestCase):
             self.assertEqual(original, path.read_text(encoding="utf-8"))
             self.assertEqual(["payments.json"], sorted(item.name for item in Path(directory).iterdir()))
 
+    def test_data_paths_are_absolute_and_independent_of_working_directory(self):
+        path = Path(api._data_file_path("payments.json"))
+        self.assertTrue(path.is_absolute())
+        self.assertEqual(Path(api.__file__).resolve().parent / "data" / "payments.json", path)
+
+    def test_load_json_file_reads_from_application_data_directory(self):
+        expected = [{"payment_id": "P-test"}]
+        with tempfile.TemporaryDirectory() as directory:
+            data_dir = Path(directory) / "data"
+            data_dir.mkdir()
+            (data_dir / "payments.json").write_text(json.dumps(expected), encoding="utf-8")
+            with patch.object(api, "DATA_DIR", str(data_dir)):
+                self.assertEqual(expected, api.load_json_file("payments.json"))
+
 
 if __name__ == "__main__":
     unittest.main()
