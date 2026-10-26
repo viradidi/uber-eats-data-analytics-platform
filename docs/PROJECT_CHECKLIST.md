@@ -1,4 +1,3 @@
-
 # Project Completion and Evidence Checklist
 
 Use this checklist to distinguish available artifacts from verified implementation.
@@ -23,8 +22,9 @@ Use this checklist to distinguish available artifacts from verified implementati
 
 - [ ] Validate notebook inputs and outputs
 - [x] Document transformation behavior and reliability findings in `docs/SILVER_TRANSFORMATION_REVIEW.md`
-- [ ] Add schema and required-field tests
-- [ ] Add uniqueness and duplicate checks where applicable
+- [x] Add CI tests for required columns, nonblank keys, key uniqueness, allowed CSV domain values, promotion dates/discounts, and zone coordinate ranges in committed sample fixtures
+- [ ] Add equivalent schema and required-field checks to the executed Silver transformations
+- [ ] Add source-batch duplicate checks before deduplication/merge
 - [ ] Add source-to-target reconciliation
 
 ## Security
@@ -40,12 +40,9 @@ Use this checklist to distinguish available artifacts from verified implementati
 - [ ] Document failure handling and recovery
 - [ ] Document deployment prerequisites
 - [ ] Record known limitations
-- [x] Add CI checks where appropriate (GitHub Actions workflow committed; successful run still to be confirmed)
+- [x] Add CI checks for repository structure, Python syntax, API key configuration, and sample CSV quality (confirm the new workflow run succeeds)
 
 ## Release
 
-- [ ] Review `git status`
-- [ ] Review staged files before committing
-- [ ] Push documentation changes to GitHub
 - [ ] Verify the README renders correctly on GitHub
 - [ ] Add the repository to the portfolio website
