@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="960" viewBox="0 0 1600 960" role="img" aria-labelledby="title desc">
+<title id="title">Uber Eats End-to-End Azure Data Engineering Platform</title>
+<desc id="desc">Architecture overview of API, CSV, and SQL sources, Azure Data Factory ingestion, ADLS Gen2 landing, Databricks Silver transformations, data consumers, metadata and control plane, and security.</desc>
+<defs>
+ <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f7faff"/><stop offset="1" stop-color="#e9f1fb"/></linearGradient>
+ <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0L0 6L9 3Z" fill="#334b66"/></marker>
+ <style>
+ text{font-family:Inter,Segoe UI,Arial,sans-serif;fill:#172c45}.title{font-size:32px;font-weight:800}.sub{font-size:16px;fill:#5b7188}.section{font-size:15px;font-weight:800;letter-spacing:1px;fill:white}.head{font-size:19px;font-weight:750}.body{font-size:15px}.small{font-size:13px;fill:#526980}.card{fill:#fff;stroke:#c6d5e5;stroke-width:1.5}.flow{fill:none;stroke:#334b66;stroke-width:2.5;marker-end:url(#arrow)}.dashed{fill:none;stroke:#7b72bf;stroke-width:2;stroke-dasharray:7 6}
+ </style>
+</defs>
+<rect width="1600" height="960" rx="18" fill="url(#bg)"/>
+<text x="800" y="50" text-anchor="middle" class="title">Uber Eats — End-to-End Azure Data Platform</text>
+<text x="800" y="80" text-anchor="middle" class="sub">Multi-source ingestion · metadata-driven configuration · incremental SQL · lake storage · Databricks transformation</text>
+<!-- main platform boundary -->
+<rect x="24" y="112" width="1552" height="668" rx="20" fill="#fff" stroke="#1f5b9b" stroke-width="2"/>
+<rect x="42" y="126" width="1516" height="40" rx="9" fill="#164d85"/><text x="800" y="152" text-anchor="middle" class="section">AZURE DATA PLATFORM · LOGICAL ARCHITECTURE</text>
+<!-- sources -->
+<rect x="48" y="195" width="225" height="490" rx="14" fill="#f4f8ff" stroke="#9bb9dd" stroke-width="1.5"/>
+<rect x="48" y="195" width="225" height="46" rx="10" fill="#2868a8"/><text x="160" y="224" text-anchor="middle" class="section">SOURCE SYSTEMS</text>
+<!-- api logo icon -->
+<circle cx="160" cy="287" r="30" fill="#e2efff" stroke="#387fbd" stroke-width="2"/><path d="M145 279h30M145 287h30M145 295h20" stroke="#387fbd" stroke-width="3" stroke-linecap="round"/>
+<text x="160" y="339" text-anchor="middle" class="head">REST API</text><text x="160" y="361" text-anchor="middle" class="body">Payments · Deliveries</text><text x="160" y="382" text-anchor="middle" class="body">Ratings · Order status</text>
+<line x1="70" y1="402" x2="251" y2="402" stroke="#d3e0ef" stroke-width="2"/>
+<!-- csv icon -->
+<rect x="130" y="422" width="60" height="48" rx="5" fill="#e4f5e9" stroke="#2b8657" stroke-width="2"/><path d="M140 434h40M140 445h40M140 456h28" stroke="#2b8657" stroke-width="3"/>
+<text x="160" y="494" text-anchor="middle" class="head">CSV / Files</text><text x="160" y="516" text-anchor="middle" class="body">Drivers · Promotions</text><text x="160" y="537" text-anchor="middle" class="body">Delivery zones</text>
+<line x1="70" y1="556" x2="251" y2="556" stroke="#d3e0ef" stroke-width="2"/>
+<!-- sql icon -->
+<ellipse cx="160" cy="585" rx="32" ry="11" fill="#4b9bd0"/><path d="M128 585v35c0 15 64 15 64 0v-35" fill="#2d78b6"/><ellipse cx="160" cy="620" rx="32" ry="11" fill="#25659d"/><path d="M128 597c0 14 64 14 64 0M128 608c0 14 64 14 64 0" fill="none" stroke="#dcefff" stroke-width="2"/>
+<text x="160" y="657" text-anchor="middle" class="head">SQL source</text>
+<!-- ingestion / ADF -->
+<rect x="310" y="195" width="275" height="490" rx="14" fill="#fff8ef" stroke="#d8ae76" stroke-width="1.5"/>
+<rect x="310" y="195" width="275" height="46" rx="10" fill="#a65a17"/><text x="447" y="224" text-anchor="middle" class="section">INGESTION &amp; ORCHESTRATION</text>
+<!-- ADF-ish icon -->
+<path d="M405 280l42-23 42 23-42 23Z" fill="#d9eaff" stroke="#2778c4" stroke-width="2"/><path d="M447 303v25m0 0-20 18m20-18 20 18" fill="none" stroke="#2778c4" stroke-width="3"/><circle cx="427" cy="348" r="6" fill="#2778c4"/><circle cx="467" cy="348" r="6" fill="#2778c4"/>
+<text x="447" y="380" text-anchor="middle" class="head">Azure Data Factory</text><text x="447" y="402" text-anchor="middle" class="body">Pipeline orchestration</text>
+<rect x="334" y="427" width="227" height="94" rx="10" fill="#fff" stroke="#e1c49e"/><text x="447" y="451" text-anchor="middle" class="head">Pipeline patterns</text><text x="350" y="476" class="body">• API initial load</text><text x="350" y="497" class="body">• CSV file ingestion</text><text x="350" y="516" class="body">• SQL incremental load</text>
+<rect x="334" y="541" width="227" height="113" rx="10" fill="#f8ead9" stroke="#dfbd91"/><text x="447" y="566" text-anchor="middle" class="head">Python API service</text><text x="350" y="590" class="body">FastAPI · paging</text><text x="350" y="611" class="body">Timestamp filtering</text><text x="350" y="632" class="body">Watermark endpoint</text>
+<!-- storage -->
+<rect x="622" y="195" width="240" height="490" rx="14" fill="#effaf4" stroke="#83c5a0" stroke-width="1.5"/>
+<rect x="622" y="195" width="240" height="46" rx="10" fill="#26764d"/><text x="742" y="224" text-anchor="middle" class="section">CLOUD STORAGE</text>
+<!-- bucket icon -->
+<path d="M690 285h105l-12 75h-81Z" fill="#cdebd8" stroke="#2b8657" stroke-width="2.5"/><path d="M690 285l52 25 53-25" fill="none" stroke="#2b8657" stroke-width="2.5"/>
+<text x="742" y="397" text-anchor="middle" class="head">Azure Data Lake</text><text x="742" y="420" text-anchor="middle" class="head">Storage Gen2</text><text x="742" y="451" text-anchor="middle" class="body">Landing / raw files</text><text x="742" y="473" text-anchor="middle" class="body">Source-specific folders</text>
+<rect x="646" y="509" width="192" height="82" rx="10" fill="#fff" stroke="#a9d8ba"/><text x="742" y="535" text-anchor="middle" class="head">Data handoff</text><text x="742" y="558" text-anchor="middle" class="body">Files for downstream</text><text x="742" y="578" text-anchor="middle" class="body">Databricks processing</text>
+<!-- processing -->
+<rect x="899" y="195" width="320" height="490" rx="14" fill="#fff4f2" stroke="#e7a49b" stroke-width="1.5"/>
+<rect x="899" y="195" width="320" height="46" rx="10" fill="#bd3d30"/><text x="1059" y="224" text-anchor="middle" class="section">TRANSFORMATION</text>
+<g transform="translate(1004 266)"><path d="M0 16L20 4 40 16 20 28Z M0 29L20 41 40 29 M0 42L20 54 40 42" fill="none" stroke="#ff3621" stroke-width="4" stroke-linejoin="round"/></g>
+<text x="1059" y="342" text-anchor="middle" class="head">Azure Databricks</text><text x="1059" y="365" text-anchor="middle" class="body">PySpark / notebook processing</text>
+<rect x="923" y="390" width="272" height="75" rx="10" fill="#fff" stroke="#e8b0a8"/><text x="1059" y="416" text-anchor="middle" class="head">Silver transformations</text><text x="1059" y="440" text-anchor="middle" class="body">Deliveries · Payments · Ratings</text><text x="1059" y="458" text-anchor="middle" class="body">Orders · Drivers · Promotions · Zones</text>
+<rect x="923" y="482" width="272" height="75" rx="10" fill="#f9e1dd" stroke="#e8b0a8"/><text x="1059" y="508" text-anchor="middle" class="head">Data preparation</text><text x="1059" y="532" text-anchor="middle" class="body">Cleaning / standardization</text><text x="1059" y="550" text-anchor="middle" class="body">Dataset-specific rules</text>
+<rect x="923" y="574" width="272" height="77" rx="10" fill="#fff" stroke="#e8b0a8"/><text x="1059" y="600" text-anchor="middle" class="head">Curated outputs</text><text x="1059" y="624" text-anchor="middle" class="body">Analytics-ready datasets</text><text x="1059" y="643" text-anchor="middle" class="small">Targets depend on configuration</text>
+<!-- consumers -->
+<rect x="1255" y="195" width="285" height="490" rx="14" fill="#f4f3ff" stroke="#a8a1dc" stroke-width="1.5"/>
+<rect x="1255" y="195" width="285" height="46" rx="10" fill="#51468e"/><text x="1397" y="224" text-anchor="middle" class="section">CONSUMPTION &amp; OPERATIONS</text>
+<rect x="1290" y="275" width="215" height="91" rx="10" fill="#fff" stroke="#bcb6e3"/><g transform="translate(1310 296)" fill="#e3b500"><rect x="0" y="32" width="13" height="20" rx="2"/><rect x="20" y="18" width="13" height="34" rx="2"/><rect x="40" y="0" width="13" height="52" rx="2"/></g><text x="1410" y="314" class="head">Analytics</text><text x="1410" y="338" class="body">Dataset consumers</text><text x="1410" y="358" class="small">Reporting-ready outputs</text>
+<rect x="1290" y="390" width="215" height="91" rx="10" fill="#fff" stroke="#bcb6e3"/><text x="1397" y="419" text-anchor="middle" class="head">Monitoring</text><text x="1397" y="443" text-anchor="middle" class="body">Pipeline runs / failures</text><text x="1397" y="463" text-anchor="middle" class="small">Operational follow-up</text>
+<rect x="1290" y="505" width="215" height="91" rx="10" fill="#fff" stroke="#bcb6e3"/><text x="1397" y="534" text-anchor="middle" class="head">Reliability checks</text><text x="1397" y="558" text-anchor="middle" class="body">Watermark / retries</text><text x="1397" y="578" text-anchor="middle" class="small">Confirm in deployed run</text>
+<text x="1397" y="635" text-anchor="middle" class="small">Consumer tools depend on deployment</text>
+<!-- arrows main -->
+<path d="M273 432H304" class="flow"/><path d="M585 432H616" class="flow"/><path d="M862 432H893" class="flow"/><path d="M1219 432H1249" class="flow"/>
+<!-- control / metadata plane -->
+<rect x="48" y="710" width="1492" height="49" rx="10" fill="#f0edff" stroke="#aaa2df" stroke-width="1.5"/>
+<text x="82" y="740" class="head" fill="#51468e">CONTROL &amp; METADATA PLANE</text>
+<text x="390" y="740" class="body">API / CSV metadata</text><text x="610" y="740" class="body">Dataset definitions</text><text x="835" y="740" class="body">Linked services / integration runtimes</text><text x="1235" y="740" class="body">SQL watermarks / control table</text>
+<path d="M447 685V703" class="dashed"/><path d="M742 685V703" class="dashed"/><path d="M1059 685V703" class="dashed"/>
+<!-- bottom governance -->
+<rect x="24" y="812" width="1552" height="110" rx="16" fill="#e8f5f7" stroke="#4a98a1" stroke-width="1.5"/>
+<text x="800" y="842" text-anchor="middle" class="head">CROSS-CUTTING ENGINEERING CONTROLS</text>
+<g transform="translate(92 861)" fill="none" stroke="#176d76" stroke-width="3"><path d="M0 0l15-6 15 6v13c0 10-15 18-15 18S0 23 0 13Z"/><path d="M7 12l6 6 11-12"/></g><text x="135" y="883" class="body">Secrets &amp; access control</text>
+<g transform="translate(420 862)" fill="none" stroke="#176d76" stroke-width="3"><rect width="29" height="32" rx="3"/><path d="M6 9h17M6 16h17M6 23h11"/></g><text x="462" y="883" class="body">Logging &amp; runbooks</text>
+<g transform="translate(690 863)" fill="none" stroke="#176d76" stroke-width="3"><circle cx="0" cy="0" r="4"/><circle cx="0" cy="24" r="4"/><circle cx="27" cy="12" r="4"/><path d="M0 4v16M4 0l19 10M4 24l19-10"/></g><text x="731" y="883" class="body">Lineage &amp; data quality</text>
+<g transform="translate(1010 864)" fill="none" stroke="#176d76" stroke-width="3"><path d="M0 0h32v27H0Z"/><path d="M6 8h20M6 14h20M6 20h13"/></g><text x="1055" y="883" class="body">Versioned deployment assets</text>
+<text x="1550" y="942" text-anchor="end" class="small">Logical architecture based on repository artifacts · deployed services and runtime connectivity are environment-dependent</text>
+</svg>
