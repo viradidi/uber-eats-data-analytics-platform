@@ -2,7 +2,7 @@
 
 ## Finding in the exported ADF pipeline
 
-The exported `update watermark_copy1` activity updates `dbo.pipeline_control.last_watermark_value` using `control_id` alone and does not condition the update on the prior watermark observed by this run. The exported pipeline now declares `properties.concurrency: 1`, which serializes runs of this pipeline when that definition is deployed and honored by ADF. This is a conservative global guard, not a per-source lock, and it does not protect against other pipelines or external writers updating the same control table.
+The exported `update watermark_copy1` activity now includes a compare-and-swap predicate on both `control_id` and the prior `last_watermark_value`, then throws SQL error 51001 when the update affects anything other than one row. The exported pipeline also declares `properties.concurrency: 1`, which serializes runs of this pipeline when deployed and honored by ADF. This is a conservative global guard, not a per-source lock, and it does not protect against other pipelines or external writers updating the same control table.
 
 This is a configuration finding, not proof that overlapping runs have occurred. The Azure deployment is not available for live validation.
 
@@ -62,4 +62,4 @@ A global pipeline concurrency limit can serialize all tables but may reduce thro
 
 ## Current status
 
-The exported ADF definition now sets pipeline concurrency to 1. This serializing setting is committed in the repository but has not been deployed or runtime-validated in Azure. The compare-and-swap SQL pattern remains a design reference and has not been executed against the SQL database or validated as an ADF Script expression. Do not mark optimistic checkpoint conflict detection as implemented until that mechanism is committed and tested.
+The exported ADF definition now sets pipeline concurrency to 1 and the checkpoint-update expression includes the compare-and-swap predicate plus a visible SQL THROW on a zero/multiple-row update. These changes are committed but have not been deployed or runtime-validated in Azure. The expression still interpolates watermark values into SQL text, so validate actual watermark types, precision, quoting, and ADF Script execution in the target environment; a parameterized stored procedure is preferable where the current connector supports it. The existing null-watermark limitation remains: equality does not match NULL, and the current pipeline requires a deliberate non-null starting checkpoint.
