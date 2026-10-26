@@ -2,6 +2,7 @@
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
 from src.common.spark_utils import standardize_columns
+from src.common.quality_events import log_pipeline_failure
 from delta.tables import DeltaTable
 
 # COMMAND ----------
@@ -13,13 +14,17 @@ BRONZE_ROOT = dbutils.widgets.get("bronze_root").rstrip("/")
 
 
 # Read the Bronze source.
-df_drivers_raw = (
-    spark.read
-    .format("csv")
-    .option("header", "true")
-    .option("inferSchema", "true")
-    .load(f"{BRONZE_ROOT}/csv/drivers/")
-)
+try:
+    df_drivers_raw = (
+        spark.read
+        .format("csv")
+        .option("header", "true")
+        .option("inferSchema", "true")
+        .load(f"{BRONZE_ROOT}/csv/drivers/")
+    )
+except Exception as exc:
+    log_pipeline_failure(spark, "drivers", "source_read", exc)
+    raise
 
 source_rows = df_drivers_raw.count()
 print(f"drivers.source_rows={source_rows}")
