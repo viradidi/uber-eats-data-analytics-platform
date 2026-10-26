@@ -26,7 +26,7 @@ Use this checklist to distinguish available artifacts from verified implementati
 - [x] Add CI tests for required columns, nonblank keys, key uniqueness, allowed CSV domain values, promotion dates/discounts, and zone coordinate ranges in committed sample fixtures
 - [x] Add pre-cleaning quality metrics and prepared merge-key checks to Drivers and Promotions Silver notebooks
 - [x] Prevent empty flattened API payloads from overwriting existing Payments, Deliveries, Order Status, and Ratings Silver tables
-- [ ] Add equivalent schema and required-field checks to the executed API Silver transformations
+- [x] Add schema, required-field, business-key uniqueness, and dataset-specific value checks to the API Silver notebook exports (runtime execution still pending)
 - [x] Add null-key and duplicate-key checks to the Zones merge input
 - [x] Add latitude/longitude validity checks and fail-fast guardrails to Zones
 - [x] Persist successful-run quality metrics with run ID, dataset, source/prepared/target counts, status, and timestamp for Drivers, Promotions, and Zones
@@ -57,3 +57,8 @@ Use this checklist to distinguish available artifacts from verified implementati
 
 - [ ] Verify the README renders correctly on GitHub
 - [ ] Add the repository to the portfolio website
+
+
+## API Silver validation milestone
+
+The Payments, Deliveries, Order Status, and Ratings notebook exports now fail before Delta overwrite when required columns are missing, required fields are null, or configured business keys are duplicated. Payments additionally rejects null, nonnumeric, or negative amounts; Ratings rejects null, nonnumeric, or out-of-range ratings (valid range 1–5). The Order Status key is the composite `(order_id, status_timestamp)` because an order can legitimately have multiple status events. These are fail-fast gates, not a quarantine flow: invalid rows are not silently filtered or discarded. Validation is implemented in both `.py` exports and `.ipynb` notebooks; live Spark execution remains pending.
