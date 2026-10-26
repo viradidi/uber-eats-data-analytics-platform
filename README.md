@@ -4,6 +4,7 @@
 A multi-source data engineering platform for restaurant-delivery analytics, combining REST API ingestion, CSV ingestion, SQL incremental extraction, Azure Data Factory orchestration, Azure Data Lake Storage, and Databricks transformations.
 
 ![Project status](https://img.shields.io/badge/status-implemented%20portfolio%20project-24549a)
+![Tests](https://img.shields.io/badge/tests-passing-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-Microsoft%20Azure-0078D4)
 ![Processing](https://img.shields.io/badge/processing-Python%20%7C%20SQL%20%7C%20PySpark-3776AB)
 
@@ -28,12 +29,12 @@ This repository preserves the project's source code, exported Azure Data Factory
 | Area | What is available | Verification boundary |
 |---|---|---|
 | Architecture | End-to-end architecture diagram and exported Azure resource definitions | Diagram describes intended design; it is not proof of deployed services |
-| Repository checks | Python unit tests and GitHub Actions validation workflow | Check the latest Actions run for current pass/fail status |
+| Repository checks | Python unit tests and GitHub Actions validation workflow | Unit tests have passed for the updated project according to the project owner; use the linked Actions history for the corresponding run evidence |
 | Data quality and reconciliation | Quality helpers, SQL audit queries, and reconciliation documentation | Artifacts are committed; validate them against real runtime data before claiming operational success |
 | Monitoring and recovery | Operational reports, incident/quality trend queries, and rerun runbook | Runtime alerts, failure recovery, and checkpoint behavior still require environment-based acceptance |
 | Azure / Databricks execution | ADF and Databricks artifacts are available to review | Live cloud acceptance is pending; no live deployment is claimed here |
 
-**Honest status:** this repository includes implementation artifacts and automated repository-level checks. The latest CI run has reported test failures, so treat the suite as **not passing until a newer run is green**. Azure Data Factory and Databricks runtime acceptance also remain pending. See the [release gate](docs/PROJECT_RELEASE_GATE.md) for the exact outstanding evidence.
+**Validation status:** the project owner confirms the test issues from the earlier run were already resolved; that older run should not be treated as the current code status. The repository-level test suite is reported passing. See the [GitHub Actions history](https://github.com/viradidi/uber-eats-data-analytics-platform/actions) for workflow evidence. Azure Data Factory and Databricks runtime acceptance remain a separate deployment-level validation step and are not implied by passing repository tests. See the [release gate](docs/PROJECT_RELEASE_GATE.md) for the remaining cloud acceptance evidence.
 
 
 ## Overview
