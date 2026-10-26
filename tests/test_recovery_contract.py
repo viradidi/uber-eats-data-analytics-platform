@@ -27,6 +27,33 @@ def _dependency_names(activity):
     }
 
 
+
+
+def _validate_activity_scopes(activities, errors, scope="root"):
+    """Validate unique sibling names and dependency references in exported ADF scopes."""
+    names = [activity.get("name") for activity in activities]
+    named = [name for name in names if name]
+    if len(named) != len(set(named)):
+        errors.append(f"{scope}: duplicate activity names")
+    known = set(named)
+    for activity in activities:
+        name = activity.get("name", "<unnamed>")
+        for dependency in activity.get("dependsOn", []):
+            dependency_name = dependency.get("activity")
+            if dependency_name not in known:
+                errors.append(f"{scope}/{name}: dependency {dependency_name!r} is not a sibling activity")
+            if not dependency.get("dependencyConditions"):
+                errors.append(f"{scope}/{name}: dependency {dependency_name!r} has no conditions")
+        props = activity.get("typeProperties", {})
+        if activity.get("type") == "ForEach":
+            children = props.get("activities", [])
+            _validate_activity_scopes(children, errors, f"{scope}/{name}")
+        elif activity.get("type") == "IfCondition":
+            for branch in ("ifTrueActivities", "ifFalseActivities"):
+                children = props.get(branch, [])
+                if children:
+                    _validate_activity_scopes(children, errors, f"{scope}/{name}/{branch}")
+
 class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -42,6 +69,11 @@ class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
         cls.watermark_update = _find_activity(cls.true_activities, "update watermark_copy1")
         cls.runbook = RUNBOOK_PATH.read_text(encoding="utf-8")
         cls.operations = OPERATIONS_PATH.read_text(encoding="utf-8")
+
+    def test_all_adf_activity_dependencies_reference_unique_siblings(self):
+        errors = []
+        _validate_activity_scopes(self.top_activities, errors)
+        self.assertEqual([], errors, "Invalid ADF activity graph:\\n" + "\\n".join(errors))
 
     def test_copy_waits_for_bounded_max_watermark_lookup(self):
         dependencies = _dependency_names(self.copy)
