@@ -72,6 +72,39 @@ jobs:
           print(f"Syntax-checked {len(paths)} Python files.")
           PY
 
+      - name: Compile Python code cells in notebooks
+        run: |
+          python - <<'PY'
+          import ast
+          import json
+          from pathlib import Path
+
+          paths = sorted(Path("notebooks").rglob("*.ipynb"))
+          failures = []
+          checked = 0
+          for path in paths:
+              try:
+                  notebook = json.loads(path.read_text(encoding="utf-8"))
+                  for index, cell in enumerate(notebook.get("cells", [])):
+                      if cell.get("cell_type") != "code":
+                          continue
+                      source = "".join(cell.get("source", []))
+                      if not source.strip():
+                          continue
+                      try:
+                          ast.parse(source, filename=f"{path} [cell {index}]")
+                          checked += 1
+                      except SyntaxError as exc:
+                          failures.append(f"{path} [cell {index}]: {exc}")
+              except Exception as exc:
+                  failures.append(f"{path}: {exc}")
+
+          if failures:
+              print("\n".join(failures))
+              raise SystemExit(1)
+
+          print(f"Syntax-checked {checked} Python notebook code cells across {len(paths)} notebooks.")
+          PY
 
       - name: Check Silver notebook portability
         run: |
