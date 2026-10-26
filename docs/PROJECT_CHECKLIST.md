@@ -29,7 +29,9 @@ Use this checklist to distinguish available artifacts from verified implementati
 - [x] Add null-key and duplicate-key checks to the Zones merge input
 - [x] Add latitude/longitude validity checks and fail-fast guardrails to Zones
 - [x] Persist successful-run quality metrics with run ID, dataset, source/prepared/target counts, status, and timestamp for Drivers, Promotions, and Zones
-- [ ] Add failed-run records and rejected-row details with a run identifier
+- [x] Log Silver write/merge failures to `pipeline_failure_events` with run ID, dataset, exception type/message, stage, and timestamp
+- [ ] Extend failure logging to source-read and pre-publish validation errors
+- [ ] Add rejected-row details with a run identifier
 - [x] Persist successful-run quality metrics for Payments, Deliveries, Order Status, and Ratings after successful Delta overwrite
 - [x] Reconcile prepared and published target row counts for API-backed full-refresh Silver tables
 - [ ] Add field-level reconciliation and source-to-target reconciliation for merge-based Silver tables
