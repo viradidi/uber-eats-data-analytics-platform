@@ -8,7 +8,11 @@ import unittest
 from datetime import date
 from pathlib import Path
 
-from src.common.quality_events import reconcile_full_snapshot
+from src.common.quality_events import (
+    _build_snapshot_checks,
+    _snapshot_values_match,
+    reconcile_full_snapshot,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -145,6 +149,36 @@ class SnapshotReconciliationGuardTests(unittest.TestCase):
                 key_columns=[],
                 source_is_full_snapshot=True,
             )
+
+
+    def test_target_only_keys_fail_full_snapshot_coverage_check(self):
+        checks = _build_snapshot_checks(
+            source_only_keys=0,
+            target_only_keys=2,
+            source_values={"__row_count": 3},
+            target_values={"__row_count": 5},
+            aggregate_specs={},
+        )
+        result = {name: passed for _, name, _, _, passed in checks}
+        self.assertFalse(result["target_only_key_count"])
+        self.assertFalse(result["row_count"])
+        self.assertTrue(result["source_only_key_count"])
+
+    def test_aggregate_mismatch_is_detected(self):
+        checks = _build_snapshot_checks(
+            source_only_keys=0,
+            target_only_keys=0,
+            source_values={"__row_count": 3, "__aggregate_amount": 42.0},
+            target_values={"__row_count": 3, "__aggregate_amount": 41.0},
+            aggregate_specs={"amount": "sum"},
+        )
+        result = {name: passed for _, name, _, _, passed in checks}
+        self.assertTrue(result["row_count"])
+        self.assertFalse(result["sum:amount"])
+
+    def test_numeric_tolerance_accepts_small_float_drift(self):
+        self.assertTrue(_snapshot_values_match(10.0, 10.0 + 1e-10))
+        self.assertFalse(_snapshot_values_match(10.0, 10.1))
 
     def test_unsupported_aggregate_is_rejected_before_spark_access(self):
         with self.assertRaisesRegex(ValueError, "Unsupported aggregate specifications"):
