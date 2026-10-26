@@ -188,7 +188,9 @@ class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
         self.assertIn("item().last_watermark_value", file_name)
         self.assertIn("activity('Get max watermark_copy1').output.firstRow.max_watermark", file_name)
         self.assertNotIn("utcNow()", file_name)
-        self.assertIn("does not guarantee idempotent Silver processing", self.review)
+        review_path = ROOT / "docs" / "SQL_INCREMENTAL_LOAD_REVIEW.md"
+        review = review_path.read_text(encoding="utf-8")
+        self.assertIn("does not guarantee idempotent Silver processing", review)
 
     def test_sql_control_preflight_checks_metadata_and_duplicate_mappings(self):
         preflight_path = ROOT / "docs" / "SQL_INCREMENTAL_CONTROL_PREFLIGHT.sql"
