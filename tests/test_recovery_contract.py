@@ -75,6 +75,14 @@ class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
         _validate_activity_scopes(self.top_activities, errors)
         self.assertEqual([], errors, "Invalid ADF activity graph:\\n" + "\\n".join(errors))
 
+    def test_sql_incremental_pipeline_serializes_runs(self):
+        # ADF pipeline-level concurrency is part of the exported deployment artifact.
+        self.assertEqual(1, self.pipeline["properties"].get("concurrency"))
+        contract_path = ROOT / "docs" / "CHECKPOINT_CONCURRENCY_CONTRACT.md"
+        contract = contract_path.read_text(encoding="utf-8")
+        self.assertIn("global guard", contract)
+        self.assertIn("other pipelines or external writers", contract)
+
     def test_copy_waits_for_bounded_max_watermark_lookup(self):
         dependencies = _dependency_names(self.copy)
         self.assertIn("Get max watermark_copy1", dependencies)
@@ -231,7 +239,7 @@ class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
             "@previous_watermark",
             "@@ROWCOUNT <> 1",
             "per-source lease/lock",
-            "has not been changed to implement this contract",
+            "has not been deployed or runtime-validated in Azure",
         ):
             self.assertIn(expected, contract)
 
