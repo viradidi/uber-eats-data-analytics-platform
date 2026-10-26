@@ -2,7 +2,7 @@
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
 from src.common.spark_utils import standardize_columns
-from src.common.quality_events import log_pipeline_failure, reconcile_merge_target
+from src.common.quality_events import log_pipeline_failure, quarantine_rejected_rows, reconcile_merge_target
 from delta.tables import DeltaTable
 
 # COMMAND ----------
@@ -70,6 +70,21 @@ print(f"drivers.quality.duplicate_driver_id_keys={duplicate_driver_keys}")
 print(f"drivers.quality.missing_join_date_rows={missing_join_dates}")
 print(f"drivers.quality.invalid_vehicle_type_rows={invalid_vehicle_types}")
 print(f"drivers.quality.invalid_status_rows={invalid_statuses}")
+
+# Persist records that the existing rules will discard, before filtering.
+quarantine_run_id = str(__import__("uuid").uuid4())
+quarantine_rejected_rows(
+    spark, df_drivers.filter(col("driver_id").isNull()), "drivers",
+    "missing_driver_id", run_id=quarantine_run_id,
+)
+quarantine_rejected_rows(
+    spark,
+    df_drivers.filter(
+        col("driver_id").isNotNull()
+        & (col("vehicle_type").isNull() | ~col("vehicle_type").isin("SCOOTER", "BIKE"))
+    ),
+    "drivers", "unsupported_vehicle_type", run_id=quarantine_run_id,
+)
 
 # Preserve the existing transformation rules: remove null IDs, deduplicate by
 # driver_id, and keep supported vehicle types. Metrics above show what was
