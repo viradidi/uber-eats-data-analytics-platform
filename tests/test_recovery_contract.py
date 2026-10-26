@@ -108,6 +108,23 @@ class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
         self.assertIn("Data-quality trends and incident analysis", self.operations)
         self.assertIn("Reconciliation audit queries", self.operations)
 
+    def test_change_presence_lookup_is_not_misrepresented_as_a_bounded_extract(self):
+        check = _find_activity(self.foreach_activities, "Check any new data")
+        query = check["typeProperties"]["source"]["sqlReaderQuery"]["value"]
+        self.assertIn("item().last_watermark_value", query)
+        self.assertIn("item().watermark_column", query)
+        review_path = ROOT / "docs" / "SQL_INCREMENTAL_LOAD_REVIEW.md"
+        review = review_path.read_text(encoding="utf-8")
+        self.assertIn("change-presence check only", review)
+        self.assertIn("not a completeness guarantee", review)
+
+    def test_control_table_metadata_is_treated_as_privileged_configuration(self):
+        contract_path = ROOT / "docs" / "INCREMENTAL_SOURCE_CONTRACT.md"
+        contract = contract_path.read_text(encoding="utf-8")
+        self.assertIn("approved allowlist", contract)
+        self.assertIn("Restrict write access to the control table", contract)
+        self.assertIn("Invalid table/column metadata is rejected", contract)
+
 
 if __name__ == "__main__":
     unittest.main()
