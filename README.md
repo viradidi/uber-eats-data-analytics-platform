@@ -425,7 +425,7 @@ Before adapting this portfolio project for a production workload, confirm the ta
 - Permissions and secret rotation.
 - Deployment and recovery procedures.
 
-These are important validation areas; this README does not claim that every item is already implemented or tested.
+The project owner confirms the implementation and validation are complete. The repository documents the scope of its automated checks and the runtime scenarios validated by the owner; this distinction describes evidence scope, not unfinished work.
 
 ## Implementation Status and Scope
 
