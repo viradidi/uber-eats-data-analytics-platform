@@ -101,7 +101,22 @@ The merge-based Drivers, Promotions, and Zones transformations use `reconcile_me
 
 The utility requires the caller to pass `source_is_full_snapshot=True`. Do not enable it for incremental batches: a target key absent from a batch may be valid historical data, not a stale record. The utility is non-destructive; it reports target-only keys and does not delete them. Before integrating it into a pipeline, document the source delivery contract and confirm whether the extract is a full snapshot. Configure aggregate comparisons only for stable, semantically comparable columns. Failure events can reuse the same `run_id` as reconciliation details so operators can correlate the failed check with its error event. Failure-event logging is best-effort: if the event table cannot be written, the original pipeline failure remains the primary exception. These controls are implemented in repository code but have not been executed against a live Databricks/Delta workspace.
 
-## 9. Notification Endpoint Security
+## 9. Operational SQL Reports
+
+Use the repository's read-only SQL reports as a first-pass operational review after the audit Delta tables have been created:
+
+- [Operational health report](OPERATIONAL_HEALTH_REPORT.sql): latest quality and merge-reconciliation outcomes, failures in the last 24 hours, and rejected-row volume.
+- [Data-quality trends and incident analysis](DATA_QUALITY_TRENDS_AND_INCIDENTS.sql): daily quality outcomes, reconciliation misses and mismatches, failure-event counts, rejected-row counts, and day-over-day changes across the current date and previous seven calendar days.
+- [Reconciliation audit queries](RECONCILIATION_AUDIT_QUERIES.sql): detailed failed checks, failure-event correlation, quarantine summaries, and recent merge-reconciliation outcomes.
+
+Interpretation safeguards:
+
+1. A missing quality or reconciliation row means no result was recorded in that table; it does not prove a successful run.
+2. Failure-event counts are event counts, not deduplicated incidents. These reports do not calculate incident duration or time-to-resolution.
+3. Quarantine counts are rejected-record events; they are not necessarily counts of distinct source entities.
+4. A report's SQL and repository references have been reviewed, but live Databricks execution is pending an available workspace. Treat the output as an operational query pack, not evidence that the current cloud environment is running.
+
+## 10. Notification Endpoint Security
 
 The SQL incremental pipeline export intentionally does not contain a live Logic App callback URL. Configure notifications during deployment using a secret-backed design, such as retrieving the callback URL from Azure Key Vault with an appropriately authorized managed identity. Do not commit callback signatures, SAS tokens, API keys, or other credentials to source control.
 
