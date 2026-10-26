@@ -20,11 +20,13 @@ Use this checklist to distinguish available artifacts from verified implementati
 
 ## Transformation and quality
 
-- [ ] Validate notebook inputs and outputs
+- [ ] Validate notebook inputs and outputs in a Spark environment
 - [x] Document transformation behavior and reliability findings in `docs/SILVER_TRANSFORMATION_REVIEW.md`
 - [x] Add CI tests for required columns, nonblank keys, key uniqueness, allowed CSV domain values, promotion dates/discounts, and zone coordinate ranges in committed sample fixtures
-- [ ] Add equivalent schema and required-field checks to the executed Silver transformations
-- [ ] Add source-batch duplicate checks before deduplication/merge
+- [x] Add pre-cleaning quality metrics and prepared merge-key checks to Drivers and Promotions Silver notebooks
+- [ ] Add equivalent schema and required-field checks to the executed API Silver transformations
+- [ ] Add null-key and duplicate-key checks to the Zones merge input
+- [ ] Persist quality metrics and rejected-row details with a run identifier
 - [ ] Add source-to-target reconciliation
 
 ## Security
@@ -40,7 +42,7 @@ Use this checklist to distinguish available artifacts from verified implementati
 - [ ] Document failure handling and recovery
 - [ ] Document deployment prerequisites
 - [ ] Record known limitations
-- [x] Add CI checks for repository structure, Python syntax, API key configuration, and sample CSV quality (confirm the new workflow run succeeds)
+- [x] Add CI checks for repository structure, Python syntax, API key configuration, and sample CSV quality (successful run confirmed for the current workflow revision)
 
 ## Release
 
