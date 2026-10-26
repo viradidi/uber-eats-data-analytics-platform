@@ -2,7 +2,7 @@
 
 ## Finding in the exported ADF pipeline
 
-The exported `update watermark_copy1` activity updates `dbo.pipeline_control.last_watermark_value` using `control_id` alone. It does not condition the update on the prior watermark observed by this run, and the pipeline export does not show an explicit pipeline-level concurrency limit. Therefore, the export does not demonstrate protection against overlapping runs for the same control row.
+The exported `update watermark_copy1` activity updates `dbo.pipeline_control.last_watermark_value` using `control_id` alone and does not condition the update on the prior watermark observed by this run. The exported pipeline now declares `properties.concurrency: 1`, which serializes runs of this pipeline when that definition is deployed and honored by ADF. This is a conservative global guard, not a per-source lock, and it does not protect against other pipelines or external writers updating the same control table.
 
 This is a configuration finding, not proof that overlapping runs have occurred. The Azure deployment is not available for live validation.
 
@@ -62,4 +62,4 @@ A global pipeline concurrency limit can serialize all tables but may reduce thro
 
 ## Current status
 
-The current exported pipeline has not been changed to implement this contract. The SQL pattern is a design reference; it has not been executed against the user's SQL database or validated as an ADF Script expression. Do not mark concurrency protection as implemented until the chosen mechanism is committed and tested.
+The exported ADF definition now sets pipeline concurrency to 1. This serializing setting is committed in the repository but has not been deployed or runtime-validated in Azure. The compare-and-swap SQL pattern remains a design reference and has not been executed against the SQL database or validated as an ADF Script expression. Do not mark optimistic checkpoint conflict detection as implemented until that mechanism is committed and tested.
