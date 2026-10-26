@@ -5,12 +5,14 @@ Run with: python -m unittest discover -s tests -v
 """
 import csv
 import unittest
+from unittest.mock import MagicMock
 from datetime import date
 from pathlib import Path
 
 from src.common.quality_events import (
     _build_snapshot_checks,
     _snapshot_values_match,
+    log_pipeline_failure,
     reconcile_full_snapshot,
 )
 
@@ -128,6 +130,32 @@ class SourceFixtureQualityTests(unittest.TestCase):
 
 
 class SnapshotReconciliationGuardTests(unittest.TestCase):
+
+    def test_failure_event_reuses_pipeline_run_id(self):
+        spark = MagicMock()
+        log_pipeline_failure(
+            spark,
+            dataset_name="payments",
+            stage="full_snapshot_reconciliation",
+            error=RuntimeError("aggregate mismatch"),
+            run_id="run-123",
+        )
+        record = spark.createDataFrame.call_args.args[0][0]
+        self.assertEqual(record["run_id"], "run-123")
+        self.assertEqual(record["dataset_name"], "payments")
+        self.assertEqual(record["error_type"], "RuntimeError")
+
+    def test_failure_logging_does_not_raise_when_event_write_fails(self):
+        spark = MagicMock()
+        spark.createDataFrame.side_effect = RuntimeError("audit table unavailable")
+        try:
+            log_pipeline_failure(
+                spark, "payments", "reconciliation", RuntimeError("original failure"),
+                run_id="run-456",
+            )
+        except Exception as exc:
+            self.fail(f"failure logging masked the original pipeline path: {exc}")
+
     def test_incremental_source_is_rejected_before_spark_access(self):
         with self.assertRaisesRegex(ValueError, "source_is_full_snapshot=True"):
             reconcile_full_snapshot(
