@@ -1,6 +1,6 @@
 -- Data-quality trend and incident-analysis report for the Uber Eats Silver layer.
 -- Read-only Databricks SQL. Requires the four audit Delta tables to exist.
--- Window: the current date plus the preceding seven calendar days.
+-- Window: the current date plus the preceding seven calendar days (eight dates total).
 --
 -- Each row is one dataset/day. Missing event categories are shown as zero.
 -- Rejected-row trends count quarantine records, not unique source entities.
@@ -17,7 +17,7 @@ WITH quality_daily AS (
         SUM(CASE WHEN status <> 'SUCCEEDED' OR status IS NULL THEN 1 ELSE 0 END) AS quality_non_successes,
         MAX(TRY_CAST(recorded_at_utc AS TIMESTAMP)) AS latest_quality_event_utc
     FROM ubereats_databricks1.silver.pipeline_quality_results
-    WHERE TRY_CAST(recorded_at_utc AS TIMESTAMP) >= current_timestamp() - INTERVAL 7 DAYS
+    WHERE CAST(TRY_CAST(recorded_at_utc AS TIMESTAMP) AS DATE) >= date_sub(current_date(), 7)
     GROUP BY dataset_name, CAST(TRY_CAST(recorded_at_utc AS TIMESTAMP) AS DATE)
 ),
 reconciliation_daily AS (
@@ -31,7 +31,7 @@ reconciliation_daily AS (
         SUM(COALESCE(mismatched_rows, 0)) AS mismatched_rows_total,
         MAX(TRY_CAST(recorded_at_utc AS TIMESTAMP)) AS latest_reconciliation_event_utc
     FROM ubereats_databricks1.silver.pipeline_reconciliation_results
-    WHERE TRY_CAST(recorded_at_utc AS TIMESTAMP) >= current_timestamp() - INTERVAL 7 DAYS
+    WHERE CAST(TRY_CAST(recorded_at_utc AS TIMESTAMP) AS DATE) >= date_sub(current_date(), 7)
     GROUP BY dataset_name, CAST(TRY_CAST(recorded_at_utc AS TIMESTAMP) AS DATE)
 ),
 failure_daily AS (
@@ -41,7 +41,7 @@ failure_daily AS (
         COUNT(*) AS failure_events,
         MAX(TRY_CAST(recorded_at_utc AS TIMESTAMP)) AS latest_failure_event_utc
     FROM ubereats_databricks1.silver.pipeline_failure_events
-    WHERE TRY_CAST(recorded_at_utc AS TIMESTAMP) >= current_timestamp() - INTERVAL 7 DAYS
+    WHERE CAST(TRY_CAST(recorded_at_utc AS TIMESTAMP) AS DATE) >= date_sub(current_date(), 7)
     GROUP BY dataset_name, CAST(TRY_CAST(recorded_at_utc AS TIMESTAMP) AS DATE)
 ),
 rejection_daily AS (
@@ -51,17 +51,27 @@ rejection_daily AS (
         COUNT(*) AS rejected_rows,
         MAX(TRY_CAST(quarantined_at_utc AS TIMESTAMP)) AS latest_rejection_utc
     FROM ubereats_databricks1.silver.pipeline_rejected_records
-    WHERE TRY_CAST(quarantined_at_utc AS TIMESTAMP) >= current_timestamp() - INTERVAL 7 DAYS
+    WHERE CAST(TRY_CAST(quarantined_at_utc AS TIMESTAMP) AS DATE) >= date_sub(current_date(), 7)
     GROUP BY dataset_name, CAST(TRY_CAST(quarantined_at_utc AS TIMESTAMP) AS DATE)
 ),
+dataset_inventory AS (
+    SELECT dataset_name FROM quality_daily
+    UNION
+    SELECT dataset_name FROM reconciliation_daily
+    UNION
+    SELECT dataset_name FROM failure_daily
+    UNION
+    SELECT dataset_name FROM rejection_daily
+),
+calendar AS (
+    SELECT EXPLODE(
+        SEQUENCE(date_sub(current_date(), 7), current_date(), INTERVAL 1 DAY)
+    ) AS event_date
+),
 daily_keys AS (
-    SELECT dataset_name, event_date FROM quality_daily
-    UNION
-    SELECT dataset_name, event_date FROM reconciliation_daily
-    UNION
-    SELECT dataset_name, event_date FROM failure_daily
-    UNION
-    SELECT dataset_name, event_date FROM rejection_daily
+    SELECT i.dataset_name, c.event_date
+    FROM dataset_inventory i
+    CROSS JOIN calendar c
 ),
 daily_combined AS (
     SELECT
