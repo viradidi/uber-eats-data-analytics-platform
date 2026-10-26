@@ -58,6 +58,7 @@ Use this checklist to distinguish available artifacts from verified implementati
 - [ ] Capture successful pipeline execution evidence
 - [x] Add [read-only Databricks SQL audit queries](RECONCILIATION_AUDIT_QUERIES.sql) for latest quality outcomes, reconciliation failures, failure-event correlation, rejected-row summaries, and merge-reconciliation outcomes. The SQL is code-reviewed for table-reference consistency; live execution is pending an available Databricks runtime.
 - [x] Add a [dataset-level operational health report](OPERATIONAL_HEALTH_REPORT.sql) combining latest quality and merge-reconciliation outcomes with failure and quarantine volumes from the last 24 hours. Statuses remain NULL when no recorded result exists; the report is read-only and has not been live-executed against Databricks.
+- [x] Add a [recovery and rerun runbook](RECOVERY_AND_RERUN_RUNBOOK.md) covering failure triage, SQL incremental recovery, Silver notebook recovery, checkpoint advancement gates, and rerun acceptance checks. Procedures are documented; live Azure recovery remains unverified.
 - [x] Add a [data-quality trends and incident analysis report](DATA_QUALITY_TRENDS_AND_INCIDENTS.sql) showing daily quality outcomes, reconciliation misses/mismatches, failure-event counts, rejected-row volume, and day-over-day changes. It reports event counts rather than claiming incident duration; live Databricks execution remains pending.
 - [ ] Document failure handling and recovery
 - [ ] Document deployment prerequisites
