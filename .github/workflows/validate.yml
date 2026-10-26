@@ -1,0 +1,85 @@
+name: Validate repository
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate JSON and notebook files
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          paths = sorted(
+              p for p in Path(".").rglob("*")
+              if p.is_file()
+              and (p.suffix.lower() == ".json" or p.suffix.lower() == ".ipynb")
+              and ".git" not in p.parts
+          )
+          failures = []
+          for path in paths:
+              try:
+                  with path.open(encoding="utf-8") as stream:
+                      json.load(stream)
+              except Exception as exc:
+                  failures.append(f"{path}: {exc}")
+
+          if failures:
+              print("\n".join(failures))
+              raise SystemExit(1)
+
+          print(f"Validated {len(paths)} JSON/notebook files.")
+          PY
+
+      - name: Compile Python source files
+        run: |
+          python - <<'PY'
+          import ast
+          from pathlib import Path
+
+          paths = sorted(Path(".").rglob("*.py"))
+          failures = []
+          for path in paths:
+              if ".git" in path.parts:
+                  continue
+              try:
+                  ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+              except Exception as exc:
+                  failures.append(f"{path}: {exc}")
+
+          if failures:
+              print("\n".join(failures))
+              raise SystemExit(1)
+
+          print(f"Syntax-checked {len(paths)} Python files.")
+          PY
+
+      - name: Check API security configuration
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          source = Path("main.py").read_text(encoding="utf-8")
+          assert 'API_KEY = os.getenv("API_KEY")' in source, "API_KEY must come from the environment"
+          assert "ubereats-demo-key-123" not in source, "Hard-coded demo key must not return"
+          assert "API authentication is not configured" in source, "Missing-key fail-closed behavior is required"
+          print("API key configuration guard passed.")
+          PY
