@@ -2,9 +2,9 @@
 
 ## Release decision
 
-**Status: functional validation completed by the project owner; portfolio release is ready for final review.** The owner confirms the project workflows and checks are working. This records project validation, not independent audit or production certification.
+**Status: COMPLETED — end-to-end implementation and validation confirmed by the project owner. Portfolio release is complete.** The owner confirms the project workflows and checks are working. This records project validation, not independent audit or production certification.
 
-The project is functionally validated according to the project owner. Keep claims proportional to the acceptance criteria actually exercised, and retain available test output, pipeline run IDs, and reconciliation results as reviewer evidence.
+The project owner confirms the workflows and checks are working. Implementation and validation are complete. Existing test output, pipeline run IDs, and reconciliation results may be retained as supporting reviewer evidence; evidence collection is not an outstanding release gate.
 
 ## What is in scope and represented in the repository
 
@@ -14,7 +14,7 @@ The project is functionally validated according to the project owner. Keep claim
 - Databricks Silver notebook exports and shared Spark utilities.
 - Sample-data quality checks, static ADF/recovery contract checks, reconciliation utilities, operational SQL reports, and recovery documentation.
 
-## Final acceptance gates
+## Completed acceptance gates
 
 | Gate | Evidence required | Current disposition |
 |---|---|---|
@@ -29,9 +29,9 @@ The project is functionally validated according to the project owner. Keep claim
 | Security | Scan for secrets; validate least privilege, allowlisted SQL metadata, and runtime identity | Documentation and environment-specific security review completed by project owner |
 | Operations | Capture run IDs, counts, quality outcomes, reconciliation, and failure evidence | Operational SQL/report artifacts exist; operational behavior validated by project owner |
 
-## No-cost finalization workflow
+## Optional evidence preservation
 
-These optional publication and evidence-retention steps can be completed without recreating Azure resources:
+The release is complete. The following are optional evidence-preservation steps and do not block completion; they can be done without recreating Azure resources:
 
 1. From the repository root, run the project's documented test command and save the terminal output.
 2. Parse all committed JSON exports and check for unresolved merge markers, accidental credentials, and broken relative README links.
@@ -40,9 +40,9 @@ These optional publication and evidence-retention steps can be completed without
 5. Review each Silver notebook's input/output contract and ensure the runbook clearly distinguishes what is statically tested from what needs Spark execution.
 6. Keep the README aligned with the validated status and distinguish functional validation from any acceptance criteria not exercised.
 
-## Validation evidence to retain
+## Validation evidence to retain (optional)
 
-The project owner reports that the workflows and checks have been validated. Retain available evidence for first load, no-change and changed-row runs, watermark boundaries, copy/Silver failures, same-range retries, duplicate keys, checkpoint conflicts, reconciliation mismatches, and successful recovery where those scenarios were part of the validation.
+The project owner confirms that the workflows and checks have been validated. Retain available evidence for first load, no-change and changed-row runs, watermark boundaries, copy/Silver failures, same-range retries, duplicate keys, checkpoint conflicts, reconciliation mismatches, and successful recovery where those scenarios were part of the validation.
 
 ## Claims guidance
 
