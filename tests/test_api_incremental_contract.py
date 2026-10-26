@@ -16,7 +16,7 @@ class ApiTimestampContractTests(unittest.TestCase):
         naive = api.parse_timestamp("2026-10-01T12:30:00")
         utc = api.parse_timestamp("2026-10-01T12:30:00Z")
         self.assertEqual(utc, naive)
-        self.assertEqual("+00:00", naive.utcoffset().total_seconds() and "+00:00" or "+00:00")
+        self.assertEqual(0, naive.utcoffset().total_seconds())
 
     def test_equivalent_offsets_normalize_to_same_instant(self):
         left = api.parse_timestamp("2026-10-01T12:00:00Z")
