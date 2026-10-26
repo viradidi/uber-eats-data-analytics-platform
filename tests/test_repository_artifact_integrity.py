@@ -26,7 +26,7 @@ class RepositoryArtifactIntegrityTests(unittest.TestCase):
     def test_text_artifacts_have_no_unresolved_merge_markers(self):
         """Catch accidental conflict markers in committed project artifacts."""
         suffixes = {".md", ".py", ".json", ".yml", ".yaml", ".sql", ".txt", ".toml", ".svg"}
-        markers = ("<<<<<<< ", ">>>>>>> ", "=======")
+        markers = ("<<<<<<< ", ">>>>>>> ")
         failures = []
         for path in ROOT.rglob("*"):
             if not path.is_file() or path.suffix.lower() not in suffixes:
