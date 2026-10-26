@@ -16,7 +16,7 @@ Use this checklist to distinguish available artifacts from verified implementati
 - [ ] Verify API endpoints and authentication
 - [ ] Validate API ingestion output
 - [ ] Validate CSV ingestion output
-- [ ] Verify SQL incremental extraction boundaries
+- [x] Review SQL incremental extraction boundaries and checkpoint dependencies in the exported ADF definition
 - [ ] Test reruns and partial-failure recovery
 
 ## Transformation and quality
@@ -40,7 +40,7 @@ Use this checklist to distinguish available artifacts from verified implementati
 - [ ] Document failure handling and recovery
 - [ ] Document deployment prerequisites
 - [ ] Record known limitations
-- [ ] Add CI checks where appropriate
+- [x] Add CI checks where appropriate (GitHub Actions workflow committed; successful run still to be confirmed)
 
 ## Release
 
