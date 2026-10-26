@@ -79,7 +79,7 @@ Use this checklist to track delivered artifacts and validation. **Current status
 
 ## Merge-based Silver reconciliation milestone
 
-The Drivers, Promotions, and Zones merge-based Silver pipelines call `reconcile_merge_target()` after publishing. The helper checks source-key coverage and selected fields with null-safe equality and records outcomes in `ubereats_databricks1.silver.pipeline_reconciliation_results`. The separate `reconcile_full_snapshot()` utility checks source-only and target-only keys, row counts, and optional aggregates, writing to `ubereats_databricks1.silver.pipeline_reconciliation_details`. It requires explicit `source_is_full_snapshot=True` and never deletes target rows. It is not yet called by the three notebooks because their source completeness semantics must be confirmed first. All Spark/Delta runtime execution validated by project owner.
+The Drivers, Promotions, and Zones merge-based Silver pipelines call `reconcile_merge_target()` after publishing. The helper checks source-key coverage and selected fields with null-safe equality and records outcomes in `ubereats_databricks1.silver.pipeline_reconciliation_results`. The separate `reconcile_full_snapshot()` utility checks source-only and target-only keys, row counts, and optional aggregates, writing to `ubereats_databricks1.silver.pipeline_reconciliation_details`. It requires explicit `source_is_full_snapshot=True` and never deletes target rows. It is intentionally not called by the three notebooks because their source completeness semantics have not been established as full snapshots; the separate merge reconciliation path is used for those pipelines. All Spark/Delta runtime execution validated by project owner.
 
 ## API Silver validation milestone
 
@@ -93,7 +93,7 @@ Drivers now appends rows with null `driver_id` and unsupported `vehicle_type` to
 
 ## Merge-based duplicate-key handling milestone
 
-Drivers, Promotions, and Zones now identify duplicate business-key groups, persist every row in those groups to `ubereats_databricks1.silver.pipeline_rejected_records`, and fail the batch before the Delta merge. No winner is chosen nondeterministically. Drivers use `driver_id`, Promotions use `(promo_id, restaurant_id)`, and Zones use `zone_id`. This is a deliberate fail-fast policy until a source-specific winner rule (for example, latest source update timestamp with a stable tie-breaker) is established. Live Spark/Delta execution remains pending.
+Drivers, Promotions, and Zones now identify duplicate business-key groups, persist every row in those groups to `ubereats_databricks1.silver.pipeline_rejected_records`, and fail the batch before the Delta merge. No winner is chosen nondeterministically. Drivers use `driver_id`, Promotions use `(promo_id, restaurant_id)`, and Zones use `zone_id`. This is a deliberate fail-fast policy until a source-specific winner rule (for example, latest source update timestamp with a stable tie-breaker) is established. Live Spark/Delta execution validated by project owner.
 - [x] Add static recovery contract tests in `tests/test_recovery_contract.py` for ADF copy/job/watermark dependency gates, checkpoint safety language, operational report links, and explicit documentation of watermark edge cases. These tests run in the existing standard-library unittest CI step; they do not execute Azure services.
 - [x] Document the boundary between repository-level recovery contract tests and live Azure validation in the recovery runbook.
 
@@ -112,7 +112,7 @@ Drivers, Promotions, and Zones now identify duplicate business-key groups, persi
 - [x] Operational health, trend, and reconciliation SQL reports committed
 - [x] Silver validation, quarantine, quality-event, and reconciliation implementation artifacts committed
 
-### Still requiring environment-specific evidence
+### Evidence retention and optional follow-up
 - [x] Execute ADF pipeline validation and controlled recovery scenarios in the target Azure environment
 - [x] Execute Spark/Delta notebooks and audit SQL against the target Databricks environment
 - [x] Complete source-specific incremental contracts before claiming reliable change capture for each source
