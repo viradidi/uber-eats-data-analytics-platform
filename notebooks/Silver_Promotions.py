@@ -59,6 +59,27 @@ missing_promo_codes = df_promotions.filter(
 print(f"promotions.quality.null_promo_id_rows={null_promo_ids}")
 print(f"promotions.quality.null_restaurant_id_rows={null_restaurant_ids}")
 print(f"promotions.quality.duplicate_composite_keys={duplicate_promotion_keys}")
+
+# No deterministic winner rule exists for duplicate composite keys. Quarantine
+# every row in each duplicate group and stop rather than choosing arbitrarily.
+duplicate_promotion_key_values = (
+    df_promotions
+    .filter(col("promo_id").isNotNull() & col("restaurant_id").isNotNull())
+    .groupBy("promo_id", "restaurant_id").count().filter(col("count") > 1)
+    .select("promo_id", "restaurant_id")
+)
+duplicate_promotion_rows = df_promotions.join(
+    duplicate_promotion_key_values, on=["promo_id", "restaurant_id"], how="inner"
+)
+quarantine_rejected_rows(
+    spark, duplicate_promotion_rows, "promotions",
+    "duplicate_promo_restaurant_key_group_no_winner_policy",
+)
+if duplicate_promotion_keys:
+    raise ValueError(
+        f"Promotions Silver input contains {duplicate_promotion_keys} duplicate composite-key groups; "
+        "all rows in those groups were quarantined and publishing was stopped"
+    )
 print(f"promotions.quality.invalid_discount_rows={invalid_discount_values}")
 print(f"promotions.quality.missing_promo_code_rows={missing_promo_codes}")
 
