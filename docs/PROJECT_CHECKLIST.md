@@ -20,6 +20,7 @@ Use this checklist to distinguish available artifacts from verified implementati
 - [x] Add [read-only SQL control-table preflight queries](SQL_INCREMENTAL_CONTROL_PREFLIGHT.sql) for missing metadata, invalid simple identifiers, duplicate control IDs/mappings, and configured dbo table/column existence with watermark data type visibility; approved allowlist review and live execution remain required
 - [x] Add [incremental-run acceptance query templates](SQL_INCREMENTAL_RUN_ACCEPTANCE_QUERIES.md) for bounded source counts, landed-batch duplicate keys, count reconciliation, and checkpoint-advancement evidence; source-specific adaptation and runtime execution remain required
 - [x] Set pipeline-level concurrency to `1` and add a prior-watermark compare-and-swap predicate plus SQL conflict error to the exported ADF checkpoint update; deployment/runtime validation and protection against external or cross-pipeline writers remain pending
+- [x] Derive SQL incremental landing filenames from the control ID and lower/upper watermark range for deterministic batch identity; verify ADLS overwrite behavior and Silver replay safety in a runtime environment before claiming end-to-end idempotency
 - [x] Add a per-source [incremental extraction contract](INCREMENTAL_SOURCE_CONTRACT.md) covering initial load, keys, watermark semantics, deletes, replay, reconciliation, and runtime acceptance tests
 - [ ] Test reruns and partial-failure recovery
 
