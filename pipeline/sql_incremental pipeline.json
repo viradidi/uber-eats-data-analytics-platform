@@ -168,7 +168,7 @@
                         "type": "DatasetReference",
                         "parameters": {
                           "p_file_name": {
-                            "value": "@concat(item().table_name,'_',formatDateTime(utcNow(),'yyyyMMdd_HHmmss'),'.csv')",
+                            "value": "@concat('ctl',string(item().control_id),'_',replace(replace(replace(replace(replace(string(item().last_watermark_value),'-',''),':',''),'.',''),' ',''),'+',''),'_',replace(replace(replace(replace(replace(string(activity('Get max watermark_copy1').output.firstRow.max_watermark),'-',''),':',''),'.',''),' ',''),'+',''),'.csv')",
                             "type": "Expression"
                           },
                           "p_folder_path": {
