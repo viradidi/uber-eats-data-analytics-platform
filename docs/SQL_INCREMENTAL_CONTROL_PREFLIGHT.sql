@@ -81,7 +81,4 @@ LEFT JOIN sys.columns AS c
    AND c.name = pc.watermark_column
 LEFT JOIN sys.types AS ty
     ON ty.user_type_id = c.user_type_id
-WHERE t.object_id IS NULL
-   OR c.column_id IS NULL
-   OR c.column_id IS NOT NULL
 ORDER BY pc.control_id;
