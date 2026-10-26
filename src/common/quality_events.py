@@ -153,13 +153,14 @@ def reconcile_full_snapshot(
     table so the existing reconciliation table schema remains unchanged.
     """
     from math import isclose
-    from pyspark.sql import functions as F
 
     if source_is_full_snapshot is not True:
         raise ValueError(
             "Pass source_is_full_snapshot=True only for a confirmed full snapshot; "
             "incremental batches should use reconcile_merge_target()"
         )
+    from pyspark.sql import functions as F
+
     if not key_columns:
         raise ValueError("key_columns must contain at least one business key")
 
