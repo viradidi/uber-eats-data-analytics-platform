@@ -317,7 +317,9 @@ These files represent exported resource definitions. Validate linked services, i
 
 Open the notebook exports in `notebooks/` and review their source configuration, transformation logic, dependencies, and target locations before execution.
 
-Some notebooks may require changes to match your workspace, catalog, schema, storage paths, and compute configuration.
+The Silver notebook exports use a Databricks widget named `bronze_root` to configure the Bronze storage root. Its default preserves the original project location; override it for another environment before running the notebook/job. Configure storage authentication separately through your approved Azure/Databricks identity or secret mechanism—do not put credentials in the widget. The shared column-standardization helper now lives in `src/common/spark_utils.py`, replacing a personal workspace-path dependency.
+
+These changes improve portability at the code/configuration level. They do not establish that the notebooks have been executed successfully in a live Spark workspace; validate catalog/schema names, storage permissions, and runtime behavior in the target environment.
 
 ## Security and Data Handling
 
@@ -359,7 +361,8 @@ The next improvements that would strengthen this platform further include:
 - Source-to-target reconciliation reports.
 - Centralized logging and pipeline observability.
 - Automated deployment validation through CI/CD.
-- Environment-specific configuration for development and production.
+- Validate the configurable Bronze root and shared helper imports in a live Databricks workspace.
+- Extend environment-specific configuration to catalog/schema names and orchestration parameters.
 - Documented runbooks and recovery procedures.
 
 These are suggested enhancements, not claims about existing functionality.
