@@ -393,7 +393,7 @@ The repository already contains sample-data quality tests, static recovery-contr
 - [ ] Capture run evidence for successful processing, failed processing, replay, and reconciliation.
 - [ ] Complete final README link/render review and add the project to the portfolio site.
 
-The repository checks validate committed artifacts and static contracts; they do not claim live Azure or Databricks execution. See the [project checklist](docs/PROJECT_CHECKLIST.md) for the release-readiness view.
+The repository checks validate committed artifacts and static contracts; they do not claim live Azure or Databricks execution. See the [project checklist](docs/PROJECT_CHECKLIST.md) for the release-readiness view and the [project release gate](docs/PROJECT_RELEASE_GATE.md) for the consolidated acceptance criteria and no-cost finalization workflow.
 
 ## Author
 
