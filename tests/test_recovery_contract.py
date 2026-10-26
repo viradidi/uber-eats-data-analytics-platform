@@ -129,6 +129,10 @@ class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
         self.assertIn("UPDATE dbo.pipeline_control SET last_watermark_value", script)
         self.assertIn("activity('Get max watermark_copy1').output.firstRow.max_watermark", script)
         self.assertIn("item().control_id", script)
+        self.assertIn("item().last_watermark_value", script)
+        self.assertIn("@@ROWCOUNT <> 1", script)
+        self.assertIn("THROW 51001", script)
+        self.assertIn("Checkpoint conflict", script)
 
     def test_runbook_requires_success_before_checkpoint_advancement(self):
         self.assertIn("Advance a watermark/checkpoint only when all applicable conditions are true", self.runbook)
