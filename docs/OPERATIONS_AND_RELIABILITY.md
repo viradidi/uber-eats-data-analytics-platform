@@ -95,6 +95,12 @@ The appropriate strategy depends on source guarantees, timestamp precision, upda
 
 **Project-specific note:** The mock API filters using `updated_after`. That is a useful incremental
 
+## 8. Reconciliation and Snapshot Completeness
+
+The merge-based Drivers, Promotions, and Zones transformations use `reconcile_merge_target()` for source-key coverage and selected field-level comparisons. A separate `reconcile_full_snapshot()` utility is available for a confirmed complete snapshot. It compares source-only and target-only business keys, row counts, and optional configured aggregates, then writes detailed audit rows to `ubereats_databricks1.silver.pipeline_reconciliation_details`.
+
+The utility requires the caller to pass `source_is_full_snapshot=True`. Do not enable it for incremental batches: a target key absent from a batch may be valid historical data, not a stale record. The utility is non-destructive; it reports target-only keys and does not delete them. Before integrating it into a pipeline, document the source delivery contract and confirm whether the extract is a full snapshot. Configure aggregate comparisons only for stable, semantically comparable columns. These controls are implemented in repository code but have not been executed against a live Databricks/Delta workspace.
+
 ## 9. Notification Endpoint Security
 
 The SQL incremental pipeline export intentionally does not contain a live Logic App callback URL. Configure notifications during deployment using a secret-backed design, such as retrieving the callback URL from Azure Key Vault with an appropriately authorized managed identity. Do not commit callback signatures, SAS tokens, API keys, or other credentials to source control.
