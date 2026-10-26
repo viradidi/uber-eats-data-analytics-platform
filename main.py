@@ -500,7 +500,7 @@ def _write_json_atomically(file_path, data):
         ) as file:
             temporary_path = file.name
             json.dump(data, file, indent=2)
-            file.write("\\n")
+            file.write("\n")
             file.flush()
             os.fsync(file.fileno())
         os.replace(temporary_path, file_path)
