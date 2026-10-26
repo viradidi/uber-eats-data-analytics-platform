@@ -37,6 +37,21 @@ This repository preserves the project's source code, exported Azure Data Factory
 **Validation status:** the project owner confirms the test issues from the earlier run were already resolved; that older run should not be treated as the current code status. The repository-level test suite is reported passing. See the [GitHub Actions history](https://github.com/viradidi/uber-eats-data-analytics-platform/actions) for workflow evidence. Azure Data Factory and Databricks runtime acceptance remain a separate deployment-level validation step and are not implied by passing repository tests. See the [release gate](docs/PROJECT_RELEASE_GATE.md) for the remaining cloud acceptance evidence.
 
 
+## Engineering decisions to review
+
+The most useful way to evaluate this repository is to follow the engineering controls behind a pipeline run—not just the architecture diagram.
+
+| Engineering concern | What to inspect | Why it matters |
+|---|---|---|
+| Incremental correctness | [SQL incremental-load review](docs/SQL_INCREMENTAL_LOAD_REVIEW.md) and [source contract](docs/INCREMENTAL_SOURCE_CONTRACT.md) | Makes extraction boundaries, watermark semantics, late changes, and replay assumptions explicit |
+| Checkpoint safety | [Checkpoint concurrency contract](docs/CHECKPOINT_CONCURRENCY_CONTRACT.md) and [release gate](docs/PROJECT_RELEASE_GATE.md) | Separates successful extraction from the conditions required before committing progress |
+| Data quality and auditability | [Reconciliation SQL](docs/RECONCILIATION_AUDIT_QUERIES.sql) and [quality-trend SQL](docs/DATA_QUALITY_TRENDS_AND_INCIDENTS.sql) | Gives reviewers concrete queries for investigating mismatches, rejected records, and recorded failures |
+| Recovery | [Recovery and rerun runbook](docs/RECOVERY_AND_RERUN_RUNBOOK.md) | Defines evidence to preserve, safe rerun decisions, and acceptance checks after recovery |
+| Automated safeguards | [GitHub Actions workflow history](https://github.com/viradidi/uber-eats-data-analytics-platform/actions) and [project checklist](docs/PROJECT_CHECKLIST.md) | Shows repository-level validation and documents what static checks can—and cannot—prove |
+
+**How to read the evidence:** the code, exported resources, tests, and operational query pack are repository artifacts. A green repository test suite supports confidence in those checked behaviors; it does not independently prove a live Azure deployment, Spark execution, or successful recovery against production data. Those require environment-specific runtime evidence.
+
+
 ## Overview
 
 Data platforms must combine information from multiple sources while preserving data quality, supporting repeatable ingestion, and making data available for downstream processing.
