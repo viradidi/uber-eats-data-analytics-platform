@@ -147,6 +147,21 @@ class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
         self.assertIn("A retry can therefore create a second file", review)
         self.assertIn("does not guarantee idempotent Silver processing", review)
 
+    def test_sql_control_preflight_checks_metadata_and_duplicate_mappings(self):
+        preflight_path = ROOT / "docs" / "SQL_INCREMENTAL_CONTROL_PREFLIGHT.sql"
+        self.assertTrue(preflight_path.is_file())
+        preflight = preflight_path.read_text(encoding="utf-8")
+        for expected in (
+            "FROM dbo.pipeline_control",
+            "last_watermark_value IS NULL",
+            "table_name LIKE '%[^A-Za-z0-9_]%'",
+            "watermark_column LIKE '%[^A-Za-z0-9_]%'",
+            "GROUP BY control_id",
+            "GROUP BY table_name, watermark_column",
+            "NOT an authorization boundary",
+        ):
+            self.assertIn(expected, preflight)
+
     def test_control_table_metadata_is_treated_as_privileged_configuration(self):
         contract_path = ROOT / "docs" / "INCREMENTAL_SOURCE_CONTRACT.md"
         contract = contract_path.read_text(encoding="utf-8")
