@@ -123,17 +123,23 @@ if df_payments_table_row_count == 0:
 
 df_payments_table.write.format("delta").mode("overwrite").saveAsTable("ubereats_databricks1.silver.silver_payments")
 
-# Persist successful-run quality metrics after the Silver write succeeds.
+# Persist a quality record and reconcile the full-refresh row count.
 table_name = "ubereats_databricks1.silver.silver_payments"
 quality_table = "ubereats_databricks1.silver.pipeline_quality_results"
+source_rows = int(df_payments_table_row_count)
+prepared_rows = int(df_payments_table.count())
+target_rows_after = int(spark.table(table_name).count())
+reconciliation_passed = prepared_rows == target_rows_after
 quality_record = [{
     "run_id": str(__import__("uuid").uuid4()),
     "dataset_name": "payments",
-    "source_rows": int(df_payments_table_row_count),
-    "prepared_rows": int(df_payments_table.count()),
-    "target_rows_after": int(spark.table(table_name).count()),
-    "status": "SUCCEEDED",
+    "source_rows": source_rows,
+    "prepared_rows": prepared_rows,
+    "target_rows_after": target_rows_after,
+    "status": "SUCCEEDED" if reconciliation_passed else "FAILED_RECONCILIATION",
     "recorded_at_utc": str(spark.sql("SELECT current_timestamp() AS ts").first()["ts"]),
 }]
 spark.createDataFrame(quality_record).write.format("delta").mode("append").saveAsTable(quality_table)
 print("payments.quality.persisted_run_id=" + quality_record[0]["run_id"])
+if not reconciliation_passed:
+    raise RuntimeError("payments row-count reconciliation failed: prepared_rows=" + str(prepared_rows) + ", target_rows_after=" + str(target_rows_after))
