@@ -13,6 +13,8 @@ import tempfile
 # =========================================================
 
 API_KEY = os.getenv("API_KEY")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(BASE_DIR, "data")
 
 
 # =========================================================
@@ -58,11 +60,13 @@ def verify_api_key(
 # LOAD JSON FILE
 # =========================================================
 
+def _data_file_path(file_name):
+    """Resolve source fixtures relative to this module, not the process CWD."""
+    return os.path.join(DATA_DIR, file_name)
+
+
 def load_json_file(file_name):
-    file_path = os.path.join(
-        "data",
-        file_name
-    )
+    file_path = _data_file_path(file_name)
 
     try:
         with open(
@@ -559,10 +563,7 @@ def generate_payment_test_data(
 
     data.append(new_payment)
 
-    file_path = os.path.join(
-        "data",
-        "payments.json"
-    )
+    file_path = _data_file_path("payments.json")
 
     try:
         _write_json_atomically(file_path, data)
