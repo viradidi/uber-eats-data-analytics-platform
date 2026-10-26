@@ -23,7 +23,7 @@ The project owner has completed validation and reports that the workflows are wo
 
 ## Safe portfolio description
 
-> Built an Azure-oriented multi-source data platform portfolio project with API and CSV ingestion, metadata-driven Azure Data Factory pipeline exports, SQL incremental-load controls, Databricks Silver transformations, data-quality and reconciliation utilities, operational reporting, and recovery documentation. Repository-level validation is automated; live cloud acceptance is a separately identified deployment gate.
+> Built an Azure-oriented multi-source data platform portfolio project with API and CSV ingestion, metadata-driven Azure Data Factory pipeline exports, SQL incremental-load controls, Databricks Silver transformations, data-quality and reconciliation utilities, operational reporting, and recovery documentation. The project owner confirms end-to-end implementation and runtime validation are complete; supporting run records may be retained where available.
 
 Describe runtime validation as completed based on the project owner's validation. Reserve claims such as production-certified or guaranteed end-to-end idempotent for cases where the relevant acceptance criteria and supporting evidence specifically establish them.
 
