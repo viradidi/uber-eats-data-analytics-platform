@@ -46,7 +46,11 @@ The Zones notebook now validates key uniqueness and coordinate ranges before pub
 
 ### Environment portability
 
-Several notebooks append a personal workspace path to `sys.path` and read from a hard-coded ADLS account/container. A portable deployment should supply environment configuration through approved Databricks/Azure configuration and secret mechanisms, rather than depend on another person's workspace path.
+The Silver notebook exports no longer append a personal workspace path. They import `standardize_columns` from the repository-owned `src/common/spark_utils.py` module, which normalizes column names to lowercase snake_case and raises if normalization would create duplicate names.
+
+Each Silver notebook now defines a Databricks widget named `bronze_root`. The default points to the project's original Bronze ADLS location for backward compatibility; set the widget to the destination environment's root when running the notebook or job. Dataset paths are constructed relative to that root (for example, `<bronze_root>/csv/drivers/` and `<bronze_root>/api/payments/`). The root is a location, not a credential. Configure storage authentication separately using managed identity, service-principal configuration, or the approved credential mechanism for the workspace. No storage key or secret should be placed in the widget.
+
+The code-level portability change is committed, but the notebooks have not been run against a live Spark/Databricks workspace after this change. Confirm the repository root is available on the Python path when importing the shared `src` package; if notebooks are deployed outside a Databricks Git folder, package the shared module or configure the workspace path accordingly.
 
 ### Schema inference
 
@@ -59,7 +63,7 @@ CSV notebooks use `inferSchema=true`. This is convenient for exploration, but in
 3. Add source-to-target reconciliation for each table.
 4. Confirm whether each API Bronze path is a full snapshot or incremental batches before changing write strategies.
 5. Add dataset-specific schema/type checks to API notebooks.
-6. Move workspace paths and storage account settings into environment configuration.
+6. Run the portable notebook exports in a Databricks Git folder, set `bronze_root` for the target environment, and validate storage authentication.
 7. Execute representative runs and reruns in an available Spark/Databricks environment.
 
 ## Status
