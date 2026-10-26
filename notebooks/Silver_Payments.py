@@ -122,3 +122,18 @@ if df_payments_table_row_count == 0:
 # COMMAND ----------
 
 df_payments_table.write.format("delta").mode("overwrite").saveAsTable("ubereats_databricks1.silver.silver_payments")
+
+# Persist successful-run quality metrics after the Silver write succeeds.
+table_name = "ubereats_databricks1.silver.silver_payments"
+quality_table = "ubereats_databricks1.silver.pipeline_quality_results"
+quality_record = [{
+    "run_id": str(__import__("uuid").uuid4()),
+    "dataset_name": "payments",
+    "source_rows": int(df_payments_table_row_count),
+    "prepared_rows": int(df_payments_table.count()),
+    "target_rows_after": int(spark.table(table_name).count()),
+    "status": "SUCCEEDED",
+    "recorded_at_utc": str(spark.sql("SELECT current_timestamp() AS ts").first()["ts"]),
+}]
+spark.createDataFrame(quality_record).write.format("delta").mode("append").saveAsTable(quality_table)
+print("payments.quality.persisted_run_id=" + quality_record[0]["run_id"])
