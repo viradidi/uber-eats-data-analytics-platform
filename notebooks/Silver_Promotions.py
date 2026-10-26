@@ -99,3 +99,17 @@ else:
         .whenNotMatchedInsertAll()
         .execute()
     )
+
+# Persist a compact successful-run quality record for later monitoring.
+quality_table = "ubereats_databricks1.silver.pipeline_quality_results"
+quality_record = [{
+    "run_id": str(__import__("uuid").uuid4()),
+    "dataset_name": "promotions",
+    "source_rows": int(source_rows),
+    "prepared_rows": int(df_promotions.count()),
+    "target_rows_after": int(spark.table(table_name).count()),
+    "status": "SUCCEEDED",
+    "recorded_at_utc": str(spark.sql("SELECT current_timestamp() AS ts").first()["ts"]),
+}]
+spark.createDataFrame(quality_record).write.format("delta").mode("append").saveAsTable(quality_table)
+print(f"promotions.quality.persisted_run_id=" + quality_record[0]["run_id"])
