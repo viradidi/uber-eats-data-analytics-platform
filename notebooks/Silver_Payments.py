@@ -1,12 +1,16 @@
 # Databricks notebook source
 from pyspark.sql.functions import *
 from pyspark.sql.types  import *
-import sys
-sys.path.append("/Workspace/Users/sivana9908_gmail.com#ext#@sivana9908gmail.onmicrosoft.com/Uber-Eats-End-to-End-_Azure-Data-Engineering-Project")
 from src.common.spark_utils import standardize_columns
 
 
 # COMMAND ----------
+
+# Environment-specific storage configuration (override the widget per workspace/job).
+dbutils.widgets.text("bronze_root", "abfss://bronze@ubereaststorage.dfs.core.windows.net", "Bronze storage root")
+BRONZE_ROOT = dbutils.widgets.get("bronze_root").rstrip("/")
+
+
 
 # MAGIC %md
 # MAGIC %-reading data from adls datalake-%
@@ -18,7 +22,7 @@ df_payments = (
     spark.read
     .format("json")
     .option("multiLine","true")
-    .load("abfss://bronze@ubereaststorage.dfs.core.windows.net/api/payments/")
+    .load(f"{BRONZE_ROOT}/api/payments/")
 )
 df_payments_table= df_payments.select(explode("data").alias("payments")).select("payments.*")
 
