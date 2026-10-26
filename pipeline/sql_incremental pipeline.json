@@ -219,7 +219,7 @@
                     "type": "Script",
                     "dependsOn": [
                       {
-                        "activity": "Get max watermark_copy1",
+                        "activity": "Job_Silver_copy1",
                         "dependencyConditions": [
                           "Succeeded"
                         ]
