@@ -11,10 +11,7 @@ import random
 # API CONFIGURATION
 # =========================================================
 
-API_KEY = os.getenv(
-    "API_KEY",
-    "ubereats-demo-key-123"
-)
+API_KEY = os.getenv("API_KEY")
 
 
 # =========================================================
@@ -41,6 +38,13 @@ api_key_header = APIKeyHeader(
 def verify_api_key(
     api_key: str = Depends(api_key_header)
 ):
+    # Fail closed: never run with a public, hard-coded fallback key.
+    if not API_KEY:
+        raise HTTPException(
+            status_code=503,
+            detail="API authentication is not configured. Set API_KEY."
+        )
+
     if api_key != API_KEY:
         raise HTTPException(
             status_code=401,
