@@ -18,7 +18,8 @@ df_drivers_raw = (
     .load("abfss://bronze@ubereaststorage.dfs.core.windows.net/csv/drivers/")
 )
 
-print(f"drivers.source_rows={df_drivers_raw.count()}")
+source_rows = df_drivers_raw.count()
+print(f"drivers.source_rows={source_rows}")
 display(df_drivers_raw)
 df_drivers_raw.printSchema()
 
