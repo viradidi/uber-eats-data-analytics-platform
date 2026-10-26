@@ -192,6 +192,6 @@ quality_record = [{
 spark.createDataFrame(quality_record).write.format("delta").mode("append").saveAsTable(quality_table)
 print("ratings.quality.persisted_run_id=" + quality_record[0]["run_id"])
 if not reconciliation_passed:
-    error = RuntimeError("ratings row-count reconciliation failed: prepared_rows=" + str(prepared_rows) + ", target_rows_after=" + str(target_rows_after)))
+    error = RuntimeError("ratings row-count reconciliation failed: prepared_rows=" + str(prepared_rows) + ", target_rows_after=" + str(target_rows_after))
     log_pipeline_failure(spark, "ratings", "silver_reconciliation", error)
     raise error
