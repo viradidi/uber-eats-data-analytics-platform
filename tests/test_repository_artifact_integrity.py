@@ -44,7 +44,7 @@ class RepositoryArtifactIntegrityTests(unittest.TestCase):
 
     def test_release_gate_distinguishes_portfolio_completion_from_live_deployment(self):
         gate = (ROOT / "docs" / "PROJECT_RELEASE_GATE.md").read_text(encoding="utf-8").lower()
-        for phrase in ("portfolio release is complete", "not independent audit", "decommissioned", "do not claim production certification"):
+        for phrase in ("portfolio status: completed", "not an independent audit", "decommissioned to control costs", "do not claim a currently deployed service"):
             self.assertIn(phrase, gate)
 
 
