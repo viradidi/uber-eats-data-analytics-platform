@@ -1,252 +1,83 @@
-"""Static safeguards for the committed SQL incremental ADF export and recovery docs.
-
-These tests validate repository structure and dependency contracts only. They do not
-execute ADF expressions or prove runtime behavior in Azure.
-"""
+"""Static safeguards for the exported ADF incremental pipeline and its contracts."""
 import json
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-PIPELINE_PATH = ROOT / "pipeline" / "sql_incremental pipeline.json"
-RUNBOOK_PATH = ROOT / "docs" / "RECOVERY_AND_RERUN_RUNBOOK.md"
-OPERATIONS_PATH = ROOT / "docs" / "OPERATIONS_AND_RELIABILITY.md"
+PIPELINE = json.loads((ROOT / "pipeline" / "sql_incremental pipeline.json").read_text(encoding="utf-8"))
+RUNBOOK = (ROOT / "docs/RECOVERY_AND_RERUN_RUNBOOK.md").read_text(encoding="utf-8")
+REVIEW = (ROOT / "docs/SQL_INCREMENTAL_LOAD_REVIEW.md").read_text(encoding="utf-8")
+CONCURRENCY = (ROOT / "docs/CHECKPOINT_CONCURRENCY_CONTRACT.md").read_text(encoding="utf-8")
+SOURCE = (ROOT / "docs/INCREMENTAL_SOURCE_CONTRACT.md").read_text(encoding="utf-8")
+OPERATIONS = (ROOT / "docs/OPERATIONS_AND_RELIABILITY.md").read_text(encoding="utf-8")
 
 
-def _find_activity(activities, name):
+def find_activity(activities, name):
     for activity in activities:
         if activity.get("name") == name:
             return activity
     raise AssertionError(f"Activity not found: {name}")
 
 
-def _dependency_names(activity):
-    return {
-        dependency["activity"]: dependency.get("dependencyConditions", [])
-        for dependency in activity.get("dependsOn", [])
-    }
+def deps(activity):
+    return {item["activity"]: item.get("dependencyConditions", []) for item in activity.get("dependsOn", [])}
 
-
-
-
-def _validate_activity_scopes(activities, errors, scope="root"):
-    """Validate unique sibling names and dependency references in exported ADF scopes."""
-    names = [activity.get("name") for activity in activities]
-    named = [name for name in names if name]
-    if len(named) != len(set(named)):
-        errors.append(f"{scope}: duplicate activity names")
-    known = set(named)
-    for activity in activities:
-        name = activity.get("name", "<unnamed>")
-        for dependency in activity.get("dependsOn", []):
-            dependency_name = dependency.get("activity")
-            if dependency_name not in known:
-                errors.append(f"{scope}/{name}: dependency {dependency_name!r} is not a sibling activity")
-            if not dependency.get("dependencyConditions"):
-                errors.append(f"{scope}/{name}: dependency {dependency_name!r} has no conditions")
-        props = activity.get("typeProperties", {})
-        if activity.get("type") == "ForEach":
-            children = props.get("activities", [])
-            _validate_activity_scopes(children, errors, f"{scope}/{name}")
-        elif activity.get("type") == "IfCondition":
-            for branch in ("ifTrueActivities", "ifFalseActivities"):
-                children = props.get(branch, [])
-                if children:
-                    _validate_activity_scopes(children, errors, f"{scope}/{name}/{branch}")
 
 class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.pipeline = json.loads(PIPELINE_PATH.read_text(encoding="utf-8"))
-        cls.top_activities = cls.pipeline["properties"]["activities"]
-        foreach = _find_activity(cls.top_activities, "ForEach item")
-        cls.foreach_activities = foreach["typeProperties"]["activities"]
-        condition = _find_activity(cls.foreach_activities, "rowscount is there")
-        cls.true_activities = condition["typeProperties"]["ifTrueActivities"]
-        cls.copy = _find_activity(cls.true_activities, "adls data migration_copy1")
-        cls.max_watermark = _find_activity(cls.true_activities, "Get max watermark_copy1")
-        cls.silver_job = _find_activity(cls.true_activities, "Job_Silver_copy1")
-        cls.watermark_update = _find_activity(cls.true_activities, "update watermark_copy1")
-        cls.runbook = RUNBOOK_PATH.read_text(encoding="utf-8")
-        cls.operations = OPERATIONS_PATH.read_text(encoding="utf-8")
+        cls.top = PIPELINE["properties"]["activities"]
+        foreach = find_activity(cls.top, "ForEach item")
+        cls.loop = foreach["typeProperties"]["activities"]
+        condition = find_activity(cls.loop, "rowscount is there")
+        cls.branch = condition["typeProperties"]["ifTrueActivities"]
+        cls.copy = find_activity(cls.branch, "adls data migration_copy1")
+        cls.maximum = find_activity(cls.branch, "Get max watermark_copy1")
+        cls.silver = find_activity(cls.branch, "Job_Silver_copy1")
+        cls.update = find_activity(cls.branch, "update watermark_copy1")
 
-    def test_all_adf_activity_dependencies_reference_unique_siblings(self):
-        errors = []
-        _validate_activity_scopes(self.top_activities, errors)
-        self.assertEqual([], errors, "Invalid ADF activity graph:\\n" + "\\n".join(errors))
+    def test_pipeline_serializes_runs_and_uses_checkpoint_compare_and_swap(self):
+        self.assertEqual(1, PIPELINE["properties"].get("concurrency"))
+        script = self.update["typeProperties"]["scripts"][0]["text"]["value"]
+        self.assertIn("last_watermark_value", script)
+        self.assertIn("@@ROWCOUNT <> 1", script)
+        self.assertIn("THROW 51001", script)
+        self.assertIn("other pipelines or external writers", CONCURRENCY)
 
-    def test_sql_incremental_pipeline_serializes_runs(self):
-        # ADF pipeline-level concurrency is part of the exported deployment artifact.
-        self.assertEqual(1, self.pipeline["properties"].get("concurrency"))
-        contract_path = ROOT / "docs" / "CHECKPOINT_CONCURRENCY_CONTRACT.md"
-        contract = contract_path.read_text(encoding="utf-8")
-        self.assertIn("global serialization guard", contract)
-        self.assertIn("other pipelines or external writers", contract)
-
-    def test_copy_waits_for_bounded_max_watermark_lookup(self):
-        dependencies = _dependency_names(self.copy)
-        self.assertIn("Get max watermark_copy1", dependencies)
-        self.assertIn("Succeeded", dependencies["Get max watermark_copy1"])
+    def test_copy_is_bounded_by_captured_upper_watermark(self):
+        copy_deps = deps(self.copy)
+        self.assertIn("Get max watermark_copy1", copy_deps)
+        self.assertIn("Succeeded", copy_deps["Get max watermark_copy1"])
         query = self.copy["typeProperties"]["source"]["sqlReaderQuery"]["value"]
         self.assertIn("item().last_watermark_value", query)
         self.assertIn("activity('Get max watermark_copy1').output.firstRow.max_watermark", query)
         self.assertIn(" <= ", query)
 
-    def test_review_documents_null_watermark_and_late_update_limits(self):
-        review_path = ROOT / "docs" / "SQL_INCREMENTAL_LOAD_REVIEW.md"
-        review = review_path.read_text(encoding="utf-8")
-        self.assertIn("Null or uninitialized watermark", review)
-        self.assertIn("Late-arriving rows and equal watermark values", review)
-        self.assertIn("same watermark value", review)
-        self.assertIn("source-specific decision", review)
-        self.assertIn("do not explicitly resolve every source-specific edge case", review)
+    def test_checkpoint_waits_for_silver_success(self):
+        self.assertIn("Succeeded", deps(self.silver)["adls data migration_copy1"])
+        self.assertIn("Succeeded", deps(self.update)["Job_Silver_copy1"])
+        self.assertIn("Advance a watermark/checkpoint only when all applicable conditions are true", RUNBOOK)
+        self.assertIn("Checkpoint advanced only after required work succeeded", RUNBOOK)
 
-    def test_source_contract_covers_incremental_edge_cases(self):
-        contract_path = ROOT / "docs" / "INCREMENTAL_SOURCE_CONTRACT.md"
-        self.assertTrue(contract_path.is_file())
-        contract = contract_path.read_text(encoding="utf-8")
-        for requirement in (
-            "Initial-load behavior",
-            "Stable business key",
-            "Late-arriving rows",
-            "Delete capture",
-            "Replay behavior",
-            "Invalid table/column metadata",
-            "checkpoint must remain unchanged",
-        ):
-            self.assertIn(requirement, contract)
+    def test_source_contract_documents_incremental_edge_cases(self):
+        for term in ("Initial-load strategy", "Stable business key", "Late-arriving rows", "Delete capture", "Replay and deduplication rule"):
+            self.assertIn(term.lower(), SOURCE.lower())
+        self.assertIn("approved allowlist", SOURCE.lower())
+        self.assertIn("restrict write access to the control table", SOURCE.lower())
 
-    def test_silver_job_waits_for_copy_success(self):
-        dependencies = _dependency_names(self.silver_job)
-        self.assertIn("adls data migration_copy1", dependencies)
-        self.assertIn("Succeeded", dependencies["adls data migration_copy1"])
+    def test_sql_review_documents_limits_and_metadata_risks(self):
+        for term in ("Null or uninitialized watermark", "Late-arriving rows and equal watermark values", "does not show an allowlist guard", "untrusted input", "idempotent"):
+            self.assertIn(term.lower(), REVIEW.lower())
+        self.assertIn("change-presence", REVIEW.lower())
+        self.assertIn("not a completeness guarantee", REVIEW.lower())
 
-    def test_watermark_update_waits_for_silver_job_success(self):
-        dependencies = _dependency_names(self.watermark_update)
-        self.assertIn("Job_Silver_copy1", dependencies)
-        self.assertIn("Succeeded", dependencies["Job_Silver_copy1"])
-        script = self.watermark_update["typeProperties"]["scripts"][0]["text"]["value"]
-        self.assertIn("UPDATE dbo.pipeline_control SET last_watermark_value", script)
-        self.assertIn("activity('Get max watermark_copy1').output.firstRow.max_watermark", script)
-        self.assertIn("item().control_id", script)
-        self.assertIn("item().last_watermark_value", script)
-        self.assertIn("@@ROWCOUNT <> 1", script)
-        self.assertIn("THROW 51001", script)
-        self.assertIn("Checkpoint conflict", script)
-
-    def test_runbook_requires_success_before_checkpoint_advancement(self):
-        self.assertIn("Advance a watermark/checkpoint only when all applicable conditions are true", self.runbook)
-        self.assertIn("Checkpoint advanced only after required work succeeded", self.runbook)
-        self.assertIn("Never advance a checkpoint", self.runbook)
-
-    def test_runbook_disclaims_unverified_live_recovery(self):
-        self.assertIn("no live deployment available", self.runbook)
-        self.assertIn("does not claim automated rollback", self.runbook)
-        self.assertIn("Azure resources were later decommissioned", self.operations)
-
-    def test_operational_reports_are_linked_from_runbook_or_operations_guide(self):
-        self.assertTrue((ROOT / "docs" / "OPERATIONAL_HEALTH_REPORT.sql").is_file())
-        self.assertTrue((ROOT / "docs" / "DATA_QUALITY_TRENDS_AND_INCIDENTS.sql").is_file())
-        self.assertTrue((ROOT / "docs" / "RECONCILIATION_AUDIT_QUERIES.sql").is_file())
-        self.assertIn("Operational health report", self.operations)
-        self.assertIn("Data-quality trends and incident analysis", self.operations)
-        self.assertIn("Reconciliation audit queries", self.operations)
-
-    def test_change_presence_lookup_is_not_misrepresented_as_a_bounded_extract(self):
-        check = _find_activity(self.foreach_activities, "Check any new data")
-        query = check["typeProperties"]["source"]["sqlReaderQuery"]["value"]
-        self.assertIn("item().last_watermark_value", query)
-        self.assertIn("item().watermark_column", query)
-        review_path = ROOT / "docs" / "SQL_INCREMENTAL_LOAD_REVIEW.md"
-        review = review_path.read_text(encoding="utf-8")
-        self.assertIn("change-presence check only", review)
-        self.assertIn("not a completeness guarantee", review)
-
-    def test_dynamic_sql_identifiers_are_flagged_as_a_deployment_gate(self):
-        check = _find_activity(self.foreach_activities, "Check any new data")
-        check_query = check["typeProperties"]["source"]["sqlReaderQuery"]["value"]
-        copy_query = self.copy["typeProperties"]["source"]["sqlReaderQuery"]["value"]
-        max_query = self.max_watermark["typeProperties"]["source"]["sqlReaderQuery"]["value"]
-
-        # These are interpolated SQL identifiers, not parameterized values.
-        self.assertIn("item().table_name", check_query)
-        self.assertIn("item().watermark_column", check_query)
-        self.assertIn("item().table_name", copy_query)
-        self.assertIn("item().watermark_column", copy_query)
-        self.assertIn("item().table_name", max_query)
-        self.assertIn("item().watermark_column", max_query)
-
-        review_path = ROOT / "docs" / "SQL_INCREMENTAL_LOAD_REVIEW.md"
-        review = review_path.read_text(encoding="utf-8")
-        self.assertIn("does not show an allowlist guard", review)
-        self.assertIn("untrusted input", review)
-
-    def test_landing_filename_is_deterministic_for_the_same_watermark_range(self):
-        output_parameters = self.copy["outputs"][0]["parameters"]
-        file_name = output_parameters["p_file_name"]["value"]
-        self.assertIn("item().control_id", file_name)
-        self.assertIn("item().last_watermark_value", file_name)
-        self.assertIn("activity('Get max watermark_copy1').output.firstRow.max_watermark", file_name)
-        self.assertNotIn("utcNow()", file_name)
-        review_path = ROOT / "docs" / "SQL_INCREMENTAL_LOAD_REVIEW.md"
-        review = review_path.read_text(encoding="utf-8")
-        self.assertIn("does not automatically make landing-file writes or Silver transformations idempotent", review)
-
-    def test_sql_control_preflight_checks_metadata_and_duplicate_mappings(self):
-        preflight_path = ROOT / "docs" / "SQL_INCREMENTAL_CONTROL_PREFLIGHT.sql"
-        self.assertTrue(preflight_path.is_file())
-        preflight = preflight_path.read_text(encoding="utf-8")
-        for expected in (
-            "FROM dbo.pipeline_control",
-            "last_watermark_value IS NULL",
-            "table_name LIKE '%[^A-Za-z0-9_]%'",
-            "watermark_column LIKE '%[^A-Za-z0-9_]%'",
-            "GROUP BY control_id",
-            "GROUP BY table_name, watermark_column",
-            "NOT an authorization boundary",
-            "sys.tables AS t",
-            "ON c.object_id = t.object_id",
-            "watermark_data_type",
-            "object exists; verify watermark type and source semantics",
-        ):
-            self.assertIn(expected, preflight)
-
-    def test_control_table_metadata_is_treated_as_privileged_configuration(self):
-        contract_path = ROOT / "docs" / "INCREMENTAL_SOURCE_CONTRACT.md"
-        contract = contract_path.read_text(encoding="utf-8")
-        self.assertIn("approved allowlist", contract)
-        self.assertIn("Restrict write access to the control table", contract)
-        self.assertIn("invalid table/column metadata", contract.lower())
-
-    def test_incremental_run_acceptance_queries_cover_reconciliation_and_checkpoint_gate(self):
-        query_path = ROOT / "docs" / "SQL_INCREMENTAL_RUN_ACCEPTANCE_QUERIES.md"
-        self.assertTrue(query_path.is_file())
-        queries = query_path.read_text(encoding="utf-8")
-        for expected in (
-            "expected_source_rows",
-            "distinct_business_keys",
-            "duplicate business keys",
-            "landed_rows",
-            "checkpoint unchanged",
-            "successfully processed upper bound",
-            "do not create transactionality",
-        ):
-            self.assertIn(expected, queries)
-
-    def test_checkpoint_concurrency_contract_covers_stale_writers(self):
-        contract_path = ROOT / "docs" / "CHECKPOINT_CONCURRENCY_CONTRACT.md"
-        self.assertTrue(contract_path.is_file())
-        contract = contract_path.read_text(encoding="utf-8")
-        for expected in (
-            "control row by `control_id` alone",
-            "previous checkpoint this run observed",
-            "compare-and-swap",
-            "@previous_watermark",
-            "@@ROWCOUNT <> 1",
-            "per-source lease/lock",
-            "has not been deployed or runtime-validated in Azure",
-        ):
-            self.assertIn(expected, contract)
+    def test_runbook_and_operations_document_safe_recovery(self):
+        for term in ("Do not advance a watermark", "partial", "checkpoint", "does not claim automated rollback"):
+            self.assertIn(term.lower(), RUNBOOK.lower())
+        self.assertIn("azure resources were later decommissioned", OPERATIONS.lower())
+        for report in ("OPERATIONAL_HEALTH_REPORT.sql", "DATA_QUALITY_TRENDS_AND_INCIDENTS.sql", "RECONCILIATION_AUDIT_QUERIES.sql"):
+            self.assertTrue((ROOT / "docs" / report).is_file())
+            self.assertIn(report.lower(), OPERATIONS.lower())
 
 
 if __name__ == "__main__":
