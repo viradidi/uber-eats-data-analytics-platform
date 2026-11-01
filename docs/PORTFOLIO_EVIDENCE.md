@@ -2,72 +2,99 @@
 
 ## Purpose
 
-This guide lists the evidence that makes the project's reported end-to-end validation easy for a hiring manager or reviewer to assess. The implementation owner reports that the workflows and checks have been validated successfully. Evidence should make that validation inspectable without overstating what a screenshot, unit test, or exported configuration proves.
+This guide helps a hiring manager or technical reviewer inspect the engineering work in this repository and understand what was validated.
 
-**Do not redeploy Azure resources just to produce portfolio evidence.** Use existing retained run history, logs, test output, screenshots, and sanitized result files. If an artifact was not retained, mark it unavailable rather than fabricating it.
+The project owner confirms that the platform was completed end to end and ran successfully in its original Azure environment. Azure resources were later decommissioned to control costs. The repository therefore represents a completed project with a historical execution record, not a currently running hosted service.
 
-## Evidence to retain or link
+Keep three kinds of evidence distinct:
 
-| Priority | Evidence | What it should show | Suggested location |
+- **Repository evidence** — source code, exported pipeline/configuration files, notebooks, SQL, tests, and documentation committed here.
+- **Historical runtime evidence** — retained run records, screenshots, logs, or outputs from the original Azure/Databricks environment, if available.
+- **Owner-reported execution history** — the project owner's confirmation that the end-to-end implementation ran successfully. This is useful context, but it is not a substitute for a retained run record that an external reviewer can independently inspect.
+
+Do not invent run IDs, metrics, screenshots, dashboard states, or test outcomes. Do not redeploy Azure resources solely to recreate portfolio evidence.
+
+## Evidence map
+
+| Engineering claim | Evidence a reviewer can inspect | What it establishes | What it does not establish by itself |
 |---|---|---|---|
-| 1 — Required | Automated test result | A green GitHub Actions run or saved test output showing the exact workflow/command, result, and date/commit | Link the successful [Actions run](https://github.com/viradidi/uber-eats-data-analytics-platform/actions) from the README or add a sanitized capture under `docs/evidence/` |
-| 1 — Required | Successful orchestration run | ADF pipeline name, run ID, start/end time, final status, and the key activities that completed | `docs/evidence/adf-successful-run.png` or a short sanitized run record |
-| 1 — Required | Successful transformation run | Databricks job/notebook name, run ID, final status, target layer/table, and processed-row summary where available | `docs/evidence/databricks-successful-run.png` or a sanitized run record |
-| 1 — Required | Reconciliation result | Source-versus-target counts or agreed reconciliation checks, plus the pass/fail outcome; include the relevant query or output | Sanitized output under `docs/evidence/`, paired with the existing reconciliation SQL |
-| 2 — Strongly recommended | Monitoring / data-quality view | Real metrics or alerts such as run status, failed/rejected rows, freshness, row counts, or quality trends, with the time window visible | `docs/evidence/monitoring-dashboard.png` |
-| 2 — Strongly recommended | Recovery / rerun proof | The failure or controlled test condition, the recovery action, the rerun outcome, and evidence that replay did not create unintended duplicates or advance state prematurely | `docs/evidence/recovery-rerun.md` with redacted log excerpts or screenshots |
-| 2 — Strongly recommended | Incremental-load proof | Initial load followed by a second run with unchanged data and/or a changed source record; show expected inserted/updated counts and checkpoint behavior | `docs/evidence/incremental-load.md` |
-| 3 — Useful | Data-output sample | Small, sanitized Bronze/Silver or curated output sample showing schema and representative transformed rows | `docs/evidence/sample-output.csv` or `.json` |
-| 3 — Useful | Deployment/configuration proof | Relevant exported resource names and parameterized configuration; redact connection details and secrets | Link to the committed `pipeline/`, `dataset/`, `linkedService/`, and `notebooks/` assets |
+| Multi-source ingestion is implemented | FastAPI source API, ADF pipeline and dataset definitions, SQL/CSV/API ingestion assets | The ingestion design and implementation artifacts are present in the repository | That a live Azure pipeline is currently deployed |
+| Data is landed in the lake | ADLS-related linked services, datasets, pipeline activities, and landing conventions | The configured landing path and orchestration intent | Current storage contents or live resource availability |
+| Spark transformations are implemented | Databricks/PySpark notebooks and shared utilities | Transformation logic, standardization, and processing structure | A current Databricks job run |
+| Incremental extraction is controlled | SQL extraction query, control/checkpoint logic, and [SQL incremental-load review](SQL_INCREMENTAL_LOAD_REVIEW.md) | Bounded watermark extraction and the documented checkpoint design | Correct handling of every source's late-arriving updates or deletes without the source contract being met |
+| Concurrent checkpoint writes are guarded | ADF concurrency setting, compare-and-swap update logic, and [checkpoint concurrency contract](CHECKPOINT_CONCURRENCY_CONTRACT.md) | The implemented serialization and optimistic checkpoint guard | Protection from unrelated pipelines or external writers that bypass the same control |
+| Data quality and operational handling are considered | Quality/reconciliation utilities, operational SQL, failure logging, and runbooks | The available controls and documented response procedures | A specific quality threshold or recovery scenario passing unless its result is retained |
+| Repository changes are validated automatically | The validation workflow definition and test suite | The automated validation workflow and test definitions | A successful run for a particular commit unless the corresponding Actions run is inspected |
 
-## Minimum evidence pack
+## Recommended reviewer path
 
-If only a few artifacts can be included, prioritize these four:
+A reviewer can follow this sequence without access to the retired cloud environment:
 
-1. **Green automated validation** — a direct link to the exact successful GitHub Actions run, not only a badge.
-2. **Successful ADF run** — the pipeline run details and status.
-3. **Successful Databricks run** — the job/notebook run details and status.
-4. **Reconciliation result** — the actual outcome from the relevant reconciliation checks.
+1. Start with the [README](../README.md) for scope, architecture, setup, and project status.
+2. Inspect the [architecture diagram](../architecture/uber-eats-end-to-end-architecture.svg) and its [technical explanation](../architecture/architecture.md).
+3. Trace an ingestion path through the ADF pipeline, datasets, linked services, and API implementation.
+4. Review the Databricks notebooks and shared PySpark utilities.
+5. Follow the SQL incremental-load and checkpoint contracts:
+   - [SQL incremental-load review](SQL_INCREMENTAL_LOAD_REVIEW.md)
+   - [Incremental source contract](INCREMENTAL_SOURCE_CONTRACT.md)
+   - [Checkpoint concurrency contract](CHECKPOINT_CONCURRENCY_CONTRACT.md)
+6. Review [operations and reliability](OPERATIONS_AND_RELIABILITY.md) and the [recovery and rerun runbook](RECOVERY_AND_RERUN_RUNBOOK.md).
+7. Inspect the validation workflow and tests, then distinguish automated repository checks from historical cloud execution.
 
-The repository already contains implementation artifacts and engineering documentation. These runtime artifacts complement that material; they do not replace code review or explain every design decision.
+## Historical runtime evidence
+
+If original artifacts were retained, these are the most useful items to include. Add only real, sanitized records.
+
+| Priority | Artifact | Useful details |
+|---|---|---|
+| High | ADF successful pipeline run | Pipeline name, run ID, timestamp/timezone, final status, and completed activities |
+| High | Databricks successful job/notebook run | Job or notebook name, run ID, timestamp, final status, target table/layer, and row counts if recorded |
+| High | Reconciliation output | Actual source/target counts or checks, expected result, observed result, and query/version |
+| High | GitHub Actions run | Direct URL to the successful run, commit SHA, workflow name, and conclusion |
+| Medium | Incremental-load scenario | Initial and subsequent run details, source changes, expected/observed counts, and checkpoint before/after |
+| Medium | Recovery/rerun scenario | Failure condition, recovery action, rerun result, and duplicate/checkpoint observations |
+| Medium | Data-quality or monitoring output | Actual metrics, rejected/quarantined rows, freshness, time window, and outcome |
+| Optional | Sanitized output sample | Representative synthetic or approved rows and schema, with sensitive fields removed |
+
+A generic [GitHub Actions page](https://github.com/viradidi/uber-eats-data-analytics-platform/actions) is a starting point for locating workflow runs; link to a specific successful run only after verifying that run and its commit.
+
+If no historical runtime artifact was retained, say so plainly. The project owner's confirmation of successful execution can be stated as project history, but it must not be presented as independently verified evidence.
 
 ## Evidence record template
 
-Copy this template for each important validation scenario and fill it with actual values:
+Copy this template for each scenario for which actual evidence exists:
 
-- **Scenario:** 
-- **Environment:** local / test / Azure / Databricks (specify actual environment)
-- **Date and time (with timezone):** 
-- **Commit or version:** 
-- **Pipeline / job / test command:** 
-- **Run ID or workflow URL:** 
-- **Expected outcome:** 
-- **Observed outcome:** 
-- **Rows read / written / updated / rejected (if applicable):** 
-- **Reconciliation result:** 
-- **Recovery or checkpoint behavior observed (if applicable):** 
-- **Evidence file or link:** 
-- **Limitations / notes:** 
+- **Scenario:**
+- **Environment:**
+- **Date/time and timezone:**
+- **Commit or version:**
+- **Pipeline, job, notebook, or test command:**
+- **Run ID or direct workflow URL:**
+- **Expected outcome:**
+- **Observed outcome:**
+- **Rows read/written/updated/rejected (if recorded):**
+- **Reconciliation result:**
+- **Checkpoint before/after (if applicable):**
+- **Evidence file or link:**
+- **Limitations or notes:**
+
+Do not fill unknown values with estimates. Use “not retained” or “not recorded” where appropriate.
 
 ## Capture and redaction rules
 
-- Show the actual run status and relevant context; avoid cropped screenshots that hide whether the run succeeded.
-- Include the run ID, workflow URL, timestamp, or commit where available so the evidence can be traced.
-- Redact tokens, API keys, passwords, connection strings, tenant/subscription identifiers if private, customer data, and any personal or sensitive records.
-- Use synthetic or approved sample rows only. Never publish real customer or payment data.
-- Prefer a direct link to the authoritative GitHub Actions run when possible; screenshots are supporting context, not a substitute for the underlying run.
-- Distinguish **repository tests** from **live service execution**. A green unit-test run does not prove that ADF or Databricks executed, and an exported JSON definition does not prove a deployed resource is running.
-- Do not describe a failure/recovery test as passed unless its expected outcome and observed result were recorded.
-- If Azure resources have been removed to control cost, retain previously captured evidence if available; do not recreate resources solely for a screenshot.
+- Preserve enough context to identify the environment, run, status, and timestamp.
+- Prefer direct links to authoritative run records; use screenshots as supporting material.
+- Redact API keys, tokens, passwords, connection strings, private tenant/subscription identifiers, and personal or customer data.
+- Use synthetic or explicitly approved sample data. Never publish real customer or payment records.
+- Do not treat a green unit-test run as proof of live ADF or Databricks execution.
+- Do not treat exported JSON, notebook source, or a diagram as proof that a resource is currently deployed.
+- Do not claim a recovery test, reconciliation, or performance target passed unless the actual result was recorded.
+- Preserve historical evidence if available, but do not recreate cloud infrastructure solely for a screenshot.
 
-## Reviewer interpretation
+## How to describe the project accurately
 
-The strongest evidence chain is:
+Suggested portfolio wording:
 
-1. A source change or controlled input is identified.
-2. The orchestration and transformation runs complete.
-3. Data-quality and reconciliation checks report the expected outcome.
-4. Monitoring or run logs expose the result.
-5. A rerun/recovery scenario demonstrates the documented behavior.
+> Built and validated an end-to-end Azure-oriented data engineering platform integrating API, CSV, and SQL sources through Azure Data Factory, ADLS Gen2, and Databricks/PySpark. Implemented metadata-driven ingestion, bounded incremental extraction, guarded checkpoint updates, transformation utilities, data-quality and reconciliation controls, and operational recovery documentation. The project ran successfully in its original environment; Azure resources were subsequently decommissioned to manage costs. Source code, configuration exports, tests, and engineering documentation remain available in the repository.
 
-Use only the steps that were actually exercised. The project owner reports successful validation; this checklist identifies the artifacts that make that validation easier for an external reviewer to verify.
+Use this wording as a concise project summary, not as a claim that the cloud deployment is currently live. Tailor any quantified impact or performance claims only when measured results are available.
