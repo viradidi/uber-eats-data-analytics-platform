@@ -2,82 +2,37 @@
 
 ## Business purpose
 
-Bring operational data from different source systems into a structured data workflow so it can be prepared for consistent analytics and reporting.
+Bring operational data from API, CSV, and relational SQL sources into a structured data workflow for downstream analytics preparation.
 
-## Logical architecture
+## Canonical architecture
 
-```mermaid
-flowchart TB
-    subgraph SOURCES["1. Operational Data Sources"]
-        API["REST API<br/>Payments, deliveries,<br/>ratings and order status"]
-        CSV["CSV Files<br/>Drivers, promotions<br/>and delivery zones"]
-        SQL["Relational Source<br/>Incremental extraction"]
-    end
+The canonical visual architecture is the [end-to-end architecture diagram](uber-eats-end-to-end-architecture.svg). This document is a concise reading guide to that diagram; it does not define a separate downstream analytics-serving platform.
 
-    subgraph INGESTION["2. Ingestion and Orchestration"]
-        ADF["Azure Data Factory<br/>Pipelines and orchestration"]
-        APIING["API ingestion"]
-        FILEING["File ingestion"]
-        SQLING["SQL incremental ingestion"]
-    end
+![Uber Eats end-to-end data platform](uber-eats-end-to-end-architecture.svg)
 
-    subgraph STORAGE["3. Cloud Data Storage"]
-        LAKE["Azure Data Lake Storage<br/>Landing and data storage"]
-    end
+## End-to-end flow
 
-    subgraph TRANSFORM["4. Transformation"]
-        DBX["Azure Databricks<br/>Notebook-based processing"]
-        SILVER["Silver Layer<br/>Cleansed and structured data"]
-    end
+1. **Source systems:** REST API resources (payments, deliveries, ratings, and order status), CSV datasets (drivers, promotions, and delivery zones), and a relational SQL source.
+2. **Extract and orchestrate:** Azure Data Factory coordinates the configured API, CSV, and SQL ingestion patterns using pipeline, dataset, linked-service, and metadata exports.
+3. **Land:** source data is written to the configured Azure Data Lake Storage Gen2 landing area.
+4. **Normalize:** Azure Databricks and PySpark notebook exports process landed datasets and prepare Silver-layer outputs.
+5. **Validate:** implemented schema, required-field, key, domain, quality, quarantine, and reconciliation controls validate data according to each dataset's processing path.
+6. **Load and operate:** successful Silver outputs are published; SQL incremental progress is advanced only after the required downstream processing succeeds. Operational SQL, failure logging, and runbooks support investigation and recovery.
 
-    subgraph CONSUMPTION["5. Analytics Consumption"]
-        ANALYTICS["Analytics-ready datasets"]
-        REPORTS["Reporting and<br/>business analysis"]
-    end
+## Metadata and control plane
 
-    API --> APIING
-    CSV --> FILEING
-    SQL --> SQLING
-
-    APIING --> ADF
-    FILEING --> ADF
-    SQLING --> ADF
-
-    ADF --> LAKE
-    LAKE --> DBX
-    DBX --> SILVER
-    SILVER --> ANALYTICS
-    ANALYTICS --> REPORTS
-
-    classDef source fill:#e8f1ff,stroke:#3973ac,color:#142d4e
-    classDef orchestration fill:#e9e7ff,stroke:#7164c8,color:#282052
-    classDef storage fill:#e1f5ee,stroke:#24866b,color:#124d3d
-    classDef transformation fill:#fff0dc,stroke:#c78227,color:#68400d
-    classDef consumption fill:#f0e8f9,stroke:#8b62ad,color:#44275b
-
-    class API,CSV,SQL source
-    class ADF,APIING,FILEING,SQLING orchestration
-    class LAKE storage
-    class DBX,SILVER transformation
-    class ANALYTICS,REPORTS consumption
-```
-
-## How to read the architecture
-
-1. **Sources:** Operational records arrive through APIs, files, and relational data sources.
-2. **Ingestion:** Azure Data Factory organizes the configured ingestion workflows.
-3. **Storage:** Azure Data Lake Storage provides the cloud storage layer.
-4. **Transformation:** Databricks notebooks process data into a structured Silver layer.
-5. **Consumption:** The resulting datasets provide a foundation for downstream analytics and reporting.
+The data flow is supported by API/CSV metadata, ADF datasets and linked services, integration-runtime configuration, SQL watermark/checkpoint state, and environment-specific runtime configuration and secrets.
 
 ## Engineering considerations
 
-- Incremental extraction must define reliable extraction boundaries.
-- Reprocessing should avoid unintended duplicate records.
-- Data-quality checks and reconciliation help establish output correctness.
-- Failures need a documented recovery approach.
-- Monitoring and security depend on the deployed configuration and available execution evidence.
+- Incremental extraction uses a bounded lower/upper watermark interval, but source cursor semantics determine whether late updates, equal values, and deletes can be captured reliably.
+- Pipeline concurrency and compare-and-swap checkpoint updates protect specific concurrency boundaries; they do not coordinate unrelated writers or guarantee idempotent writes by themselves.
+- Data-quality checks, quarantine, and reconciliation help detect invalid or inconsistent outputs.
+- Recovery requires inspecting partial writes and checkpoint state before replaying a batch.
+- Credentials belong in secure runtime configuration, not committed source files.
 
-## Architecture boundary
+See [the detailed architecture explanation](architecture.md), the [incremental source contract](../docs/INCREMENTAL_SOURCE_CONTRACT.md), and the [recovery runbook](../docs/RECOVERY_AND_RERUN_RUNBOOK.md).
 
-This diagram represents the **logical architecture** of the project, not proof that every component is deployed and connected in a live production environment. Refer to the repository's pipeline definitions, notebooks, and execution evidence for implementation details.
+## Deployment boundary
+
+This is a logical view of the completed project. The project owner confirms successful end-to-end execution in its original Azure environment; those resources were later decommissioned to control costs. The diagram and exported definitions do not imply that the Azure resources are currently deployed or live.
