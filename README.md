@@ -1,454 +1,238 @@
-
 # Uber Eats Data Engineering Platform
 
-**An end-to-end, metadata-driven Azure data platform for restaurant-delivery analytics.** This project brings together REST API, CSV, and SQL ingestion patterns; Azure Data Factory orchestration; Azure Data Lake Storage Gen2; Databricks/Spark transformations; and engineering controls for data quality, reconciliation, incremental correctness, and recovery.
+An end-to-end, Azure-oriented data engineering project demonstrating multi-source ingestion, orchestration, lake storage, Spark transformations, incremental-load controls, data quality, and recovery practices using restaurant-delivery domain data.
 
-[Explore the architecture](architecture/uber-eats-end-to-end-architecture.svg) · [Review engineering evidence](#engineering-evidence-and-operational-readiness) · [Portfolio evidence checklist](docs/PORTFOLIO_EVIDENCE.md) · [Inspect tests and workflows](https://github.com/viradidi/uber-eats-data-analytics-platform/actions) · [Project checklist](docs/PROJECT_CHECKLIST.md)
+**Project owner:** Isaiah Nyakundi  
+**Focus:** Data Engineering · Cloud Data Platforms · Analytics Engineering  
+**Repository:** https://github.com/viradidi/uber-eats-data-analytics-platform
 
-![Project status](https://img.shields.io/badge/status-completed%20and%20validated-24549a)
-![Tests](https://img.shields.io/badge/tests-passing-brightgreen)
-![Platform](https://img.shields.io/badge/platform-Microsoft%20Azure-0078D4)
-![Processing](https://img.shields.io/badge/processing-Python%20%7C%20SQL%20%7C%20PySpark-3776AB)
+> **Project status:** Completed and successfully validated end to end by the project owner. The Azure resources used during implementation were subsequently decommissioned to control costs. The repository preserves the source code, exported configurations, notebooks, tests, and engineering documentation. The cloud environment is therefore not represented as currently deployed or continuously available.
 
-> **Project focus:** Multi-source ingestion, metadata-driven configuration, incremental loading, and cloud data-platform design.  
-> **Owner:** Isaiah Nyakundi · [GitHub](https://github.com/viradidi) · [Portfolio](https://viradidi.github.io/)
+---
 
-This repository preserves the project's source code, exported Azure Data Factory resources, API and file metadata, sample domain data, and Databricks notebook exports. The diagrams describe the solution represented by those artifacts; the live status of Azure resources depends on the deployment environment.
+## 1. Project overview
 
-## Project highlights
+Restaurant-delivery platforms generate data across operational systems: payments, deliveries, order statuses, ratings, drivers, promotions, and delivery zones. These datasets arrive through different interfaces and require consistent ingestion, storage, transformation, and operational controls.
 
-- **Multi-source ingestion:** REST API, CSV files, and SQL incremental-extraction patterns.
-- **Metadata-driven orchestration:** reusable Azure Data Factory pipeline, dataset, linked-service, and configuration artifacts.
-- **Lakehouse transformation:** ADLS Gen2 storage integration and Databricks/Spark Silver-layer notebook implementations.
-- **Incremental-load reliability:** explicit source contracts, watermark/checkpoint considerations, and concurrency safeguards.
-- **Data quality and auditability:** reconciliation SQL, operational health reporting, and quality-trend/incident queries.
-- **Recovery-minded operations:** documented rerun procedures, failure evidence, and checkpoint advancement gates.
+This project brings together three ingestion patterns:
 
-## Reviewer quick start
+- **REST API:** operational resources exposed through a Python FastAPI mock source.
+- **CSV files:** file-based datasets such as drivers, promotions, and delivery zones.
+- **SQL:** an incremental extraction pattern using source watermarks and a control table.
 
-For a focused review, follow this path:
-1. **Understand the design:** [architecture diagram](architecture/uber-eats-end-to-end-architecture.svg) and [architecture notes](architecture/architecture.md).
-2. **Inspect implementation artifacts:** [ADF pipelines](pipeline/), [notebook exports](notebooks/), and [source/configuration files](dataset/).
-3. **Evaluate incremental correctness:** [SQL incremental-load review](docs/SQL_INCREMENTAL_LOAD_REVIEW.md) and [source contract](docs/INCREMENTAL_SOURCE_CONTRACT.md).
-4. **Review reliability controls:** [checkpoint concurrency contract](docs/CHECKPOINT_CONCURRENCY_CONTRACT.md), [reconciliation queries](docs/RECONCILIATION_AUDIT_QUERIES.sql), and [recovery runbook](docs/RECOVERY_AND_RERUN_RUNBOOK.md).
-5. **Check automated validation:** [GitHub Actions](https://github.com/viradidi/uber-eats-data-analytics-platform/actions) and [project checklist](docs/PROJECT_CHECKLIST.md).
+Azure Data Factory coordinates the ingestion workflows. Data is landed in Azure Data Lake Storage Gen2 and processed through Azure Databricks/Spark Silver-layer notebook exports.
 
-### Verification status
+The project also includes engineering controls and supporting documentation for incremental-load correctness, checkpoint handling, data quality, reconciliation, security considerations, and recovery.
 
-| Area | What is available | Verification boundary |
-|---|---|---|
-| Architecture | End-to-end architecture diagram and exported Azure resource definitions | Diagram describes intended design; it is not proof of deployed services |
-| Repository checks | Python unit tests and GitHub Actions validation workflow | Unit tests have passed for the updated project according to the project owner; use the linked Actions history for the corresponding run evidence |
-| Data quality and reconciliation | Quality helpers, SQL audit queries, and reconciliation documentation | Project owner reports end-to-end validation; review the associated test/run evidence and scope |
-| Monitoring and recovery | Operational reports, incident/quality trend queries, and rerun runbook | Project owner reports validation completed; production monitoring coverage depends on the target environment |
-| Azure / Databricks execution | ADF and Databricks artifacts and runtime validation | Project owner reports the implementation has been validated; deployment claims should match the actual environment and retained run evidence |
-
-**Project status: COMPLETED.** The project owner confirms that end-to-end implementation, testing, monitoring, deployment, and recovery validation are complete and working. This is the project's completion status; the fact that cloud resources may not currently be running does not make the completed work pending. Use the [GitHub Actions history](https://github.com/viradidi/uber-eats-data-analytics-platform/actions) for repository workflow evidence, and retain environment-specific run records when presenting Azure Data Factory or Databricks execution. Automated repository tests and cloud runtime evidence demonstrate different scopes; neither should be used as a substitute for the other.
-
-
-## Engineering decisions to review
-
-The most useful way to evaluate this repository is to follow the engineering controls behind a pipeline run—not just the architecture diagram.
-
-| Engineering concern | What to inspect | Why it matters |
-|---|---|---|
-| Incremental correctness | [SQL incremental-load review](docs/SQL_INCREMENTAL_LOAD_REVIEW.md) and [source contract](docs/INCREMENTAL_SOURCE_CONTRACT.md) | Makes extraction boundaries, watermark semantics, late changes, and replay assumptions explicit |
-| Checkpoint safety | [Checkpoint concurrency contract](docs/CHECKPOINT_CONCURRENCY_CONTRACT.md) and [release gate](docs/PROJECT_RELEASE_GATE.md) | Separates successful extraction from the conditions required before committing progress |
-| Data quality and auditability | [Reconciliation SQL](docs/RECONCILIATION_AUDIT_QUERIES.sql) and [quality-trend SQL](docs/DATA_QUALITY_TRENDS_AND_INCIDENTS.sql) | Gives reviewers concrete queries for investigating mismatches, rejected records, and recorded failures |
-| Recovery | [Recovery and rerun runbook](docs/RECOVERY_AND_RERUN_RUNBOOK.md) | Defines evidence to preserve, safe rerun decisions, and acceptance checks after recovery |
-| Automated safeguards | [GitHub Actions workflow history](https://github.com/viradidi/uber-eats-data-analytics-platform/actions) and [project checklist](docs/PROJECT_CHECKLIST.md) | Shows repository-level validation and documents what static checks can—and cannot—prove |
-
-**How to read the evidence:** the code, exported resources, tests, and operational query pack are reviewable artifacts. Repository checks support the behaviors they cover; environment-specific run records are the strongest way to substantiate claims about live orchestration, Spark execution, monitoring, and recovery.
-
-
-## Overview
-
-Data platforms must combine information from multiple sources while preserving data quality, supporting repeatable ingestion, and making data available for downstream processing.
-
-This project brings together restaurant-delivery domain data, including payments, deliveries, order statuses, ratings, drivers, promotions, and delivery zones. It demonstrates how different source patterns can be organized into an Azure-oriented data engineering workflow.
-
-The repository contains Python API application code, source sample data, metadata configurations, Azure Data Factory resource definitions, SQL-related assets, and Databricks notebook exports.
-
-## Business Problem
-
-A delivery platform needs a consistent way to ingest and process data originating from different systems.
-
-Typical engineering challenges include:
-
-- Ingesting data from REST API endpoints and CSV files.
-- Supporting incremental extraction from SQL sources.
-- Coordinating ingestion through reusable pipeline definitions.
-- Organizing data in cloud storage for downstream processing.
-- Applying transformations to delivery, payment, order-status, rating, and related datasets.
-- Maintaining configuration and metadata separately from pipeline logic.
-- Making the workflow understandable and reproducible for other engineers.
-
-This project demonstrates technical patterns relevant to those challenges.
-
-## Architecture
-
-### End-to-end platform overview
+## 2. Architecture
 
 ![Uber Eats end-to-end Azure data platform architecture](architecture/uber-eats-end-to-end-architecture.svg)
 
-The overview shows the three source patterns—REST API, CSV, and SQL—feeding Azure Data Factory orchestration and Azure Data Lake Storage, followed by Databricks Silver transformations and analytics-ready outputs. Metadata, control state, and secret management are supporting concerns rather than business-data layers.
+### High-level data flow
 
-### Logical component flow
+1. **Sources:** REST API resources, CSV files, and a relational SQL source.
+2. **Ingestion:** API, CSV, and SQL ingestion patterns are represented by separate Azure Data Factory pipeline exports.
+3. **Configuration:** metadata, datasets, linked services, and integration-runtime definitions support orchestration.
+4. **Storage:** Azure Data Lake Storage Gen2 provides the lake storage integration and landing area.
+5. **Transformation:** Azure Databricks notebook exports implement Silver-layer processing using Spark.
+6. **Operational controls:** SQL reports, quality/reconciliation utilities, checkpoint logic, and runbooks support validation and recovery.
 
-The Mermaid view below complements the visual with repository-level component names. Exact runtime connectivity and deployed Azure resources depend on environment configuration.
+The diagram and exported definitions describe the implemented project architecture. They are not a claim that the Azure resources remain deployed today.
 
-```mermaid
-flowchart TD
-    subgraph SOURCES["Source Systems"]
-        API["REST API"]
-        CSV["CSV Files"]
-        SQL["SQL Database"]
-    end
+For component-level detail, see [Architecture documentation](architecture/architecture.md).
 
-    subgraph INGESTION["Ingestion and Orchestration"]
-        FASTAPI["Python FastAPI Application"]
-        APIP["API Initial-Load Pipeline"]
-        CSVP["CSV Initial-Load Pipeline"]
-        SQLP["SQL Incremental-Load Pipeline"]
-        META["Metadata and Control Configuration"]
-    end
+## 3. Technology stack
 
-    subgraph AZURE["Azure Data Platform"]
-        ADF["Azure Data Factory"]
-        ADLS["Azure Data Lake Storage Gen2"]
-        KV["Azure Key Vault"]
-    end
-
-    subgraph TRANSFORM["Transformation"]
-        DBX["Azure Databricks"]
-        SILVER["Silver Transformation Notebooks"]
-    end
-
-    API --> FASTAPI
-    FASTAPI --> APIP
-    CSV --> CSVP
-    SQL --> SQLP
-
-    META -.-> ADF
-    APIP --> ADF
-    CSVP --> ADF
-    SQLP --> ADF
-
-    ADF --> ADLS
-    ADLS --> DBX
-    DBX --> SILVER
-
-    KV -. "Secret management configuration" .-> ADF
-
-    classDef source fill:#e8f1ff,stroke:#3973ac,color:#14243a
-    classDef orchestration fill:#fff0d9,stroke:#c27b22,color:#3d2b13
-    classDef storage fill:#e1f5e8,stroke:#37885a,color:#163c26
-    classDef transform fill:#eee5ff,stroke:#8055bd,color:#302044
-
-    class API,CSV,SQL source
-    class FASTAPI,APIP,CSVP,SQLP,META,ADF orchestration
-    class ADLS,KV storage
-    class DBX,SILVER transform
-```
-
-**Diagram interpretation**
-
-- **Sources:** REST API resources, CSV files, and a SQL source.
-- **Ingestion:** Python API code and separate pipeline definitions for API, CSV, and SQL ingestion patterns.
-- **Orchestration:** Azure Data Factory resource definitions and metadata configuration.
-- **Storage:** Azure Data Lake Storage integration.
-- **Transformation:** Databricks notebooks for Silver-layer processing.
-
-The diagram documents the completed project's architecture. Runtime resources do not need to remain deployed continuously for the project to remain complete.
-
-See [`architecture/architecture.md`](architecture/architecture.md) for component responsibilities, data-flow details, and deployment considerations.
-
-
-## Engineering Evidence and Operational Readiness
-
-This repository includes operational artifacts for reviewing and recovering the pipeline—not only ingestion and transformation code:
-
-- [Incremental source contract](docs/INCREMENTAL_SOURCE_CONTRACT.md): per-table requirements for keys, watermarks, late-arriving changes, deletes, replay, and reconciliation.
-- [SQL incremental-load review](docs/SQL_INCREMENTAL_LOAD_REVIEW.md): bounded extraction behavior, checkpoint ordering, and known correctness limitations.
-- [Recovery and rerun runbook](docs/RECOVERY_AND_RERUN_RUNBOOK.md): failure triage, safe reruns, and checkpoint advancement gates.
-- [Operations and reliability guide](docs/OPERATIONS_AND_RELIABILITY.md): operational reports, audit records, and recovery practices.
-- [Operational health SQL](docs/OPERATIONAL_HEALTH_REPORT.sql), [quality trends SQL](docs/DATA_QUALITY_TRENDS_AND_INCIDENTS.sql), and [reconciliation audit SQL](docs/RECONCILIATION_AUDIT_QUERIES.sql).
-- [Project completion and evidence checklist](docs/PROJECT_CHECKLIST.md).
-- [Portfolio evidence pack](docs/PORTFOLIO_EVIDENCE.md): the specific run records, test results, monitoring captures, reconciliation outputs, and recovery proof that make validation reviewable.
-
-The GitHub Actions workflow checks repository JSON/notebook validity, Python syntax, notebook portability, sample-data quality, API-key configuration, and static recovery contracts. These repository checks complement the runtime validation completed by the project owner.
-
-### Validation scope
-
-The project owner confirms successful end-to-end validation. The implementation and validation are complete. Automated repository checks and runtime validation cover different scopes; retain existing run logs and outputs as supporting evidence where available, but do not treat evidence-retention as an unfinished implementation task.
-
-## Technology Stack
-
-| Technology | Role |
+| Technology | Role in the project |
 |---|---|
-| Python | API application and ingestion-related logic |
-| FastAPI | REST API application framework |
-| Azure Data Factory | Pipeline orchestration and ingestion configuration |
-| Azure Data Lake Storage Gen2 | Cloud storage integration |
-| Azure SQL / SQL source | Relational source and incremental-loading patterns |
-| Azure Databricks | Distributed data processing environment |
-| PySpark / Spark | Notebook-based transformations, where used |
-| JSON | Pipeline, dataset, linked-service, and metadata configuration |
-| CSV | File-based source data |
-| Git and GitHub | Version control and project documentation |
+| Python | API application and supporting utilities |
+| FastAPI | Mock REST API source |
+| Azure Data Factory | Ingestion orchestration and pipeline configuration |
+| Azure Data Lake Storage Gen2 | Data lake storage integration |
+| Azure Databricks | Distributed transformation environment |
+| Apache Spark / PySpark | Silver-layer notebook processing |
+| SQL | Relational source extraction, control logic, reconciliation, and operational queries |
+| JSON / CSV | Resource configuration, metadata, and source fixtures |
+| GitHub Actions | Automated repository validation |
 
-The table describes the technologies used in the completed project. Cloud resources may be stopped or removed after validation to control costs; that does not change the project's completed status.
+## 4. Engineering work demonstrated
 
-## Data Domains
+### Multi-source ingestion
 
-The repository contains assets associated with:
+The repository contains separate ingestion patterns for API resources, CSV files, and SQL-based incremental extraction. The FastAPI application provides paginated endpoints, timestamp-based filtering, API-key authentication, watermark information, and a controlled payment test-data endpoint.
 
-- Deliveries
-- Payments
-- Order statuses
-- Ratings
-- Drivers
-- Promotions
-- Delivery zones
+### Metadata-driven orchestration
 
-The API metadata configuration references the `payments`, `deliveries`, `ratings`, and `order-status` resources.
+Azure Data Factory exports define pipeline, dataset, linked-service, and integration-runtime resources. Metadata separates source and destination configuration from parts of the pipeline logic and supports reusable ingestion patterns.
 
-The CSV metadata configuration references `drivers.csv`, `promotions.csv`, and `zones.csv`.
+### Incremental extraction and checkpoint control
 
-## Ingestion Patterns
+The SQL incremental-load design uses a lower watermark and a captured upper watermark to define a bounded extraction interval. The exported pipeline orders checkpoint advancement after the required downstream Silver job succeeds. It also includes pipeline concurrency configuration and a compare-and-swap-style checkpoint update.
 
-### 1. REST API ingestion
+These controls reduce specific failure and concurrency risks, but a watermark alone does not guarantee complete change capture. Correctness still depends on each source's update semantics, initial-load strategy, late-arriving data behavior, delete handling, and replay-safe destination writes.
 
-Relevant assets include:
+See:
+- [SQL incremental-load review](docs/SQL_INCREMENTAL_LOAD_REVIEW.md)
+- [Incremental source contract](docs/INCREMENTAL_SOURCE_CONTRACT.md)
+- [Checkpoint concurrency contract](docs/CHECKPOINT_CONCURRENCY_CONTRACT.md)
 
-- `main.py`
-- `api_metadata_v2 (2).json`
-- `dataset/DS_api_metadata.json`
-- `dataset/ds_api_src_control.json`
-- `pipeline/api_src_inital load.json`
+### Transformation and data quality
 
-The API configuration describes several delivery-domain resources. The exported pipeline definition documents the intended API ingestion workflow.
+Databricks notebook exports cover delivery-domain datasets in the Silver layer. The repository also contains shared Spark utilities, quality checks, reconciliation queries, and operational SQL reports.
 
-### 2. CSV ingestion
+### Recovery and operational thinking
 
-Relevant assets include:
+The project documents failure triage, rerun decisions, checkpoint safety, reconciliation, and evidence preservation. These materials make failure handling and operational trade-offs part of the design rather than treating a successful ingestion as the only measure of pipeline correctness.
 
-- `drivers.csv`
-- `promotions.csv`
-- `zones.csv`
-- `csv_metadata_proper (2).json`
-- `pipeline/csv_initial load.json`
+See the [recovery and rerun runbook](docs/RECOVERY_AND_RERUN_RUNBOOK.md) and [operations and reliability guide](docs/OPERATIONS_AND_RELIABILITY.md).
 
-The CSV metadata maps source files to logical destination folders.
+## 5. Repository guide
 
-### 3. SQL incremental ingestion
+| Path | Contents |
+|---|---|
+| `main.py` | FastAPI mock source application |
+| `data/` | Synthetic JSON source data and watermark fixtures |
+| `pipeline/` | Azure Data Factory pipeline exports |
+| `dataset/` | Dataset definitions |
+| `linkedService/` | Linked-service configuration exports |
+| `factory/`, `integrationRuntime/`, `routing/` | Additional Azure Data Factory resource exports |
+| `notebooks/` | Databricks notebook exports for Silver transformations |
+| `src/common/` | Shared Spark utilities |
+| `architecture/` | Architecture diagram and documentation |
+| `docs/` | Source contracts, design reviews, runbooks, reconciliation, and project handoff material |
+| `.github/workflows/` | GitHub Actions validation workflow |
+| `tests/` | Automated repository and application tests |
 
-Relevant assets include:
+## 6. Run the local API
 
-- `pipeline/sql_incremental pipeline.json`
-- SQL dataset and linked-service definitions
-- SQL migration and incremental-loading documentation
-
-The repository includes configuration and documentation for an incremental SQL ingestion pattern. Confirm the watermark, checkpoint, and restart behavior against the actual pipeline implementation before describing it as production-ready.
-
-## Transformation Layer
-
-The `notebooks/` directory contains Databricks notebook exports for datasets such as:
-
-- Deliveries
-- Drivers
-- Order statuses
-- Payments
-- Promotions
-- Ratings
-- Zones
-
-Both `.py` and `.ipynb` formats are present for several notebooks.
-
-These artifacts represent the Silver transformation layer. Review the notebook logic to establish the exact cleansing rules, schema enforcement, deduplication behavior, and write strategy.
-
-## Repository Structure
-
-```text
-.
-├── architecture/
-│   └── architecture.md
-├── data/
-│   ├── deliveries.json
-│   ├── order_status.json
-│   ├── payments.json
-│   ├── ratings.json
-│   └── watermarks.json
-├── dataset/
-├── docs/
-├── factory/
-├── integrationRuntime/
-├── linkedService/
-├── notebooks/
-├── pipeline/
-├── routing/
-├── main.py
-├── requirements.txt
-├── publish_config.json
-├── api_metadata_v2 (2).json
-├── csv_metadata_proper (2).json
-├── drivers.csv
-├── promotions.csv
-└── zones.csv
-```
-
-This is a representative overview. Refer to the repository tree for the complete list of files.
-
-## Getting Started
+The local FastAPI application provides a mock source for exploring the API ingestion pattern. Running this component locally does not deploy the Azure Data Factory, ADLS, or Databricks resources.
 
 ### Prerequisites
 
-Depending on which components you want to inspect or run, you may need:
-
-- Python
+- Python 3.10+ (the repository CI workflow uses Python 3.11)
 - Git
-- An Azure subscription with the required permissions
-- Azure Data Factory
-- Azure Data Lake Storage Gen2
-- Azure Databricks
-- Access to the configured SQL source
-- Any required API source configuration
 
-Cloud services may incur charges. Review pricing and resource usage before deploying.
-
-### 1. Clone the repository
+### Clone and install
 
 ```bash
 git clone https://github.com/viradidi/uber-eats-data-analytics-platform.git
 cd uber-eats-data-analytics-platform
-```
 
-### 2. Install Python dependencies
-
-Create and activate a virtual environment appropriate for your operating system.
-
-```bash
 python -m venv .venv
 ```
 
-Windows CMD:
+Activate the environment:
 
+**Windows CMD**
 ```bat
 .venv\Scripts\activate
+```
+
+**PowerShell**
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+**macOS / Linux**
+```bash
+source .venv/bin/activate
 ```
 
 Install dependencies:
 
 ```bash
 python -m pip install --upgrade pip
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
-The current `requirements.txt` contains FastAPI and Uvicorn. Additional dependencies may be needed for individual scripts or notebooks.
+### Configure the API key
 
-### 3. Configure credentials securely
+The API intentionally fails closed if `API_KEY` is not configured. Set a local development value in your terminal; do not commit real credentials.
 
-Do not commit credentials, tokens, passwords, storage account keys, or private connection strings.
-
-The FastAPI mock source requires an `API_KEY` environment variable; the application intentionally has no built-in default key.
-
-Windows CMD (for the current terminal session):
-
+**Windows CMD**
 ```bat
-set API_KEY=replace-with-a-long-random-secret
-uvicorn main:app --host 127.0.0.1 --port 10000
+set API_KEY=replace-with-a-local-development-secret
 ```
 
-PowerShell:
-
+**PowerShell**
 ```powershell
-$env:API_KEY = "replace-with-a-long-random-secret"
-uvicorn main:app --host 127.0.0.1 --port 10000
+$env:API_KEY = "replace-with-a-local-development-secret"
 ```
 
-For cloud deployment, use Azure Key Vault or an approved secret-management mechanism and configure the application environment securely. Never commit the real key. Configure other resource names and connection details for your environment.
+**macOS / Linux**
+```bash
+export API_KEY="replace-with-a-local-development-secret"
+```
 
-### 4. Run repository-level validation
-
-From the repository root, install the declared Python dependencies and run the committed standard-library test suite:
+Start the API:
 
 ```bash
-python -m pip install -r requirements.txt
+uvicorn main:app --host 127.0.0.1 --port 10000
+```
+
+The interactive API documentation is available at `http://127.0.0.1:10000/docs`.
+
+Authenticated endpoints require the `X-API-Key` header. The application includes `/payments`, `/deliveries`, `/ratings`, `/order-status`, `/watermarks`, and `/payments/generate-test-data`. The test-data endpoint modifies the local payments JSON fixture and is intended for controlled demonstrations, not concurrent production writes.
+
+## 7. Run automated tests
+
+From the repository root:
+
+```bash
 python -m unittest discover -s tests -v
 ```
 
-The suite checks committed CSV fixtures, API timestamp and pagination behavior, API-key fail-closed behavior, payment-ID generation, atomic file replacement, path resolution, README link contracts, and static recovery contracts. It does not execute Azure Data Factory, Spark/Delta notebooks, or a deployed API service.
+The GitHub Actions workflow also checks JSON and notebook validity, Python syntax, notebook code-cell syntax, notebook portability, dependency installation, the unit-test suite, and API security configuration.
 
-The API's `POST /payments/generate-test-data` endpoint is a demonstration utility that mutates the local `data/payments.json` fixture. Atomic replacement protects against partial-file writes, but the file-backed generator is not a concurrent, multi-worker production write service and local container filesystems may be ephemeral. Keep it restricted to controlled demos; use a durable transactional store and explicit concurrency control for a real service.
+These automated checks validate the repository behaviors they cover. They do not, by themselves, execute Azure Data Factory pipelines or prove live Databricks/Spark runtime behavior.
 
-### 5. Inspect the Azure Data Factory resources
+See the [GitHub Actions workflow history](https://github.com/viradidi/uber-eats-data-analytics-platform/actions).
 
-Review the JSON files in:
+## 8. Validation status and deployment boundary
 
-- `factory/`
-- `pipeline/`
-- `dataset/`
-- `linkedService/`
-- `integrationRuntime/`
-- `routing/`
+The project owner confirms that the end-to-end implementation and validation were completed successfully. The cloud environment was later decommissioned to avoid ongoing costs.
 
-These files represent exported resource definitions. Validate linked services, integration runtimes, dataset references, parameters, and dependencies before importing or publishing them to an Azure environment.
+The following distinction is important when reviewing the repository:
 
-### 6. Inspect Databricks notebooks
+| What remains available | What is not currently implied |
+|---|---|
+| Application source code and synthetic fixtures | A continuously running API deployment |
+| Exported Azure Data Factory resource definitions | A currently deployed ADF factory |
+| Databricks notebook exports and shared utilities | A currently available Databricks workspace or live job |
+| Automated tests and GitHub Actions workflow | Proof that every cloud service is executing now |
+| Architecture, source contracts, SQL reviews, and runbooks | Independent production certification or an ongoing production SLA |
 
-Open the notebook exports in `notebooks/` and review their source configuration, transformation logic, dependencies, and target locations before execution.
+Historical end-to-end validation is the project owner's reported completion status. Current cloud availability is a separate matter. Where retained run IDs, logs, screenshots, or reconciliation outputs are available, they can provide additional evidence of the historical execution.
 
-The Silver notebook exports use a Databricks widget named `bronze_root` to configure the Bronze storage root. Its default preserves the original project location; override it for another environment before running the notebook/job. Configure storage authentication separately through your approved Azure/Databricks identity or secret mechanism—do not put credentials in the widget. The shared column-standardization helper now lives in `src/common/spark_utils.py`, replacing a personal workspace-path dependency.
+## 9. Security and responsible use
 
-These changes improve portability at the code/configuration level. They do not establish that the notebooks have been executed successfully in a live Spark workspace; validate catalog/schema names, storage permissions, and runtime behavior in the target environment.
+- Keep API keys, passwords, tokens, and connection strings out of source control.
+- Use managed identities and an approved secret store such as Azure Key Vault for cloud workloads where supported.
+- Apply least-privilege access to storage, SQL, orchestration, and compute resources.
+- Treat exported linked-service definitions as configuration artifacts and review them before reuse.
+- Use synthetic or approved sample data; do not publish real customer or payment information.
+- Review the SQL incremental-load source contract before enabling a new source table.
 
-## Security and Data Handling
+## 10. Further technical documentation
 
-- Credentials should be supplied at runtime, not hard-coded into source files.
-- Azure Key Vault integration should use appropriate identity and access controls.
-- Storage and SQL access should follow least-privilege principles.
-- Public sample data should be synthetic or explicitly approved for redistribution.
-- Do not publish private datasets, customer records, or environment-specific secrets.
-- Review exported linked-service JSON files before reusing them.
-
-## Validation and Operational Considerations
-
-Before adapting this portfolio project for a production workload, confirm the target environment's requirements for:
-
-- Schema and data-quality rules.
-- Required-field and uniqueness constraints.
-- Incremental extraction and watermark correctness.
-- Idempotent writes and duplicate handling.
-- Retry, failure, and restart behavior.
-- Source-to-target reconciliation.
-- Logging and pipeline monitoring.
-- Permissions and secret rotation.
-- Deployment and recovery procedures.
-
-The project owner confirms the implementation and validation are complete. The repository documents the scope of its automated checks and the runtime scenarios validated by the owner; this distinction describes evidence scope, not unfinished work.
-
-## Implementation Status and Scope
-
-This is an implemented portfolio project with API application code, source data, metadata and exported Azure Data Factory resources, SQL incremental-ingestion configuration, and Databricks Silver notebook artifacts. The repository is designed to demonstrate the architecture and implementation patterns across these components.
-
-The repository contains exported cloud configuration, which is distinct from a currently running Azure deployment. Runtime behavior depends on valid linked services, integration runtimes, secrets, resource names, and workspace-specific paths. Describe deployment and execution evidence separately from source-code availability; do not infer live cloud status from checked-in JSON alone.
-
-## Project Handoff and Completion Status
-
-**Portfolio handoff: ready.** The project owner reports that the implementation has been validated end to end. The repository includes source code, exported orchestration resources, notebook implementations, quality/reconciliation utilities, operational SQL, recovery guidance, and automated repository checks.
-
-For reviewers and hiring teams, the most useful next step is to follow the implementation path above and inspect the evidence behind the engineering decisions. When describing results publicly, keep claims tied to the validation actually performed and retain relevant workflow/run records. Repository CI validates committed files and static contracts; runtime logs substantiate environment-specific execution. See [Final Handoff](docs/FINAL_HANDOFF.md), the [project checklist](docs/PROJECT_CHECKLIST.md), and the [project release gate](docs/PROJECT_RELEASE_GATE.md) for the validation scope and supporting detail.
-
-## Author
-
-**Isaiah Nyakundi**
-
-Data Engineering | Analytics Engineering | Cloud Data Platforms
-
-GitHub: [@viradidi](https://github.com/viradidi)
-
-Portfolio: [viradidi.github.io](https://viradidi.github.io/)
+- [Architecture and component responsibilities](architecture/architecture.md)
+- [SQL incremental-load review](docs/SQL_INCREMENTAL_LOAD_REVIEW.md)
+- [Incremental source contract](docs/INCREMENTAL_SOURCE_CONTRACT.md)
+- [Checkpoint concurrency contract](docs/CHECKPOINT_CONCURRENCY_CONTRACT.md)
+- [Recovery and rerun runbook](docs/RECOVERY_AND_RERUN_RUNBOOK.md)
+- [Operations and reliability guide](docs/OPERATIONS_AND_RELIABILITY.md)
+- [Reconciliation audit queries](docs/RECONCILIATION_AUDIT_QUERIES.sql)
+- [Data quality trends and incidents](docs/DATA_QUALITY_TRENDS_AND_INCIDENTS.sql)
+- [Final project handoff](docs/FINAL_HANDOFF.md)
+- [Portfolio evidence pack](docs/PORTFOLIO_EVIDENCE.md)
 
 ---
 
-*This is a portfolio data platform built around Azure-oriented services and restaurant-delivery sample data. The repository documents the implementation artifacts; live deployment status is environment-dependent.*
+## About the author
+
+**Isaiah Nyakundi**  
+Data Engineer · Cloud Engineer · Analytics Engineer
+
+- GitHub: https://github.com/viradidi
+- Portfolio: https://viradidi.github.io/
+
