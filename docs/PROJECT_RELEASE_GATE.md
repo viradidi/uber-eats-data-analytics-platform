@@ -2,50 +2,46 @@
 
 ## Release decision
 
-**Status: COMPLETED — end-to-end implementation and validation confirmed by the project owner. Portfolio release is complete.** The owner confirms the project workflows and checks are working. This records project validation, not independent audit or production certification.
+**Portfolio status: COMPLETED.** The project owner confirms that the end-to-end implementation ran successfully in its original Azure environment. The Azure resources were subsequently decommissioned to control costs; no live deployment is currently available.
 
-The project owner confirms the workflows and checks are working. Implementation and validation are complete. Existing test output, pipeline run IDs, and reconciliation results may be retained as supporting reviewer evidence; evidence collection is not an outstanding release gate.
+This is owner-reported execution history. It is not an independent audit, production certification, or proof that the environment is still running. Repository tests validate committed behaviors and static contracts; they do not execute ADF or Databricks in Azure.
 
-## What is in scope and represented in the repository
+## Delivered scope
 
-- FastAPI mock source API and sample domain data.
+- FastAPI mock source API and synthetic domain data.
 - Exported Azure Data Factory definitions for API, CSV, and SQL ingestion patterns.
-- SQL incremental extraction configuration with bounded upper watermark, deterministic landing-batch naming, serialized pipeline runs, and a prior-checkpoint comparison before checkpoint advancement.
-- Databricks Silver notebook exports and shared Spark utilities.
-- Sample-data quality checks, static ADF/recovery contract checks, reconciliation utilities, operational SQL reports, and recovery documentation.
+- ADLS Gen2 landing integration and Databricks Silver notebook exports.
+- SQL bounded-watermark extraction, serialized pipeline configuration, and compare-and-swap-style checkpoint update.
+- Shared PySpark utilities, data-quality and reconciliation helpers, operational SQL reports, CI checks, and recovery documentation.
 
-## Completed acceptance gates
+## Evidence and validation boundaries
 
-| Gate | Evidence required | Current disposition |
+| Area | What is present | Evidence boundary |
 |---|---|---|
-| Repository integrity | Tests run locally/CI; JSON and notebook exports parse; links resolve | Passing repository test suite; project owner reports checks are passing |
-| API and fixtures | Endpoint tests, malformed-source behavior, fixture quality checks | Covered by committed tests; project owner reports validation passed |
-| ADF export | Dependency graph, parameter references, linked services, datasets, expressions, and SQL metadata reviewed | Static review artifacts exist; deployment validation completed by project owner |
-| SQL incremental correctness | Per-source key/watermark contract, initial-load strategy, late/equal timestamp behavior, delete semantics | Reviewed and validated by project owner for enabled sources |
-| Checkpoint safety | Only advance after successful Silver processing; stale checkpoint conflict fails visibly | Represented in the export and validated by project owner in the target environment |
-| Replay safety | Re-run the same batch; prove landing behavior and Silver upsert/deduplication produce no duplicate business keys | Deterministic filename is implemented; replay behavior validated by project owner for the tested workflows |
-| Silver transformations | Execute notebooks on representative fixtures; verify schemas, key constraints, quarantine, reconciliation, and target writes | Notebook exports and static tests exist; Spark runtime execution validated by project owner |
-| Recovery | Inject copy failure and Silver failure; verify checkpoint does not advance prematurely; rerun successfully | Runbook exists; failure/recovery scenarios validated by project owner |
-| Security | Scan for secrets; validate least privilege, allowlisted SQL metadata, and runtime identity | Documentation and environment-specific security review completed by project owner |
-| Operations | Capture run IDs, counts, quality outcomes, reconciliation, and failure evidence | Operational SQL/report artifacts exist; operational behavior validated by project owner |
+| Repository integrity | JSON/notebook exports, Python source, automated tests, GitHub Actions workflow | A specific CI run must be checked for its commit and conclusion |
+| API behavior | FastAPI implementation and endpoint/security tests | Local tests do not prove an Azure-hosted API deployment |
+| ADF orchestration | Exported pipeline, dataset, and linked-service definitions | Export inspection is not a current ADF runtime execution |
+| Incremental SQL | Bounded extraction query, watermark control, preflight and source contracts | Correctness depends on source-specific cursor semantics and deployment safeguards |
+| Databricks/Silver | Notebook exports, shared utilities, validation and reconciliation code | Notebook source and syntax checks do not prove current Spark runtime execution |
+| Historical end-to-end run | Project owner confirms successful end-to-end execution before resource teardown | Detailed run IDs, row counts, and scenario-specific logs should only be claimed where retained |
+| Replay and recovery | Runbooks and static dependency tests | Do not claim universal exactly-once or replay safety without scenario-specific evidence |
 
-## Optional evidence preservation
+## Deployment gates before reuse
 
-The release is complete. The following are optional evidence-preservation steps and do not block completion; they can be done without recreating Azure resources:
+Before redeploying or enabling a source in a new environment:
 
-1. From the repository root, run the project's documented test command and save the terminal output.
-2. Parse all committed JSON exports and check for unresolved merge markers, accidental credentials, and broken relative README links.
-3. Review the API route tests, fixture-quality tests, and `tests/test_recovery_contract.py` as separate layers; report the actual pass/fail counts.
-4. Inspect the ADF export against `docs/SQL_INCREMENTAL_CONTROL_PREFLIGHT.sql` and the per-source contract. Treat source table/column allowlisting and SQL value quoting as deployment gates, not documentation-only fixes.
-5. Review each Silver notebook's input/output contract and ensure the runbook clearly distinguishes what is statically tested from what needs Spark execution.
-6. Keep the README aligned with the validated status and distinguish functional validation from any acceptance criteria not exercised.
+1. Validate the source table, business key, cursor type/precision, timezone, initial-load behavior, late visibility, equal cursor values, and delete semantics.
+2. Enforce an approved allowlist for dynamic SQL identifiers and restrict control-table write access.
+3. Confirm typed watermark serialization and null-checkpoint handling.
+4. Verify landing write behavior and replay-safe Silver merge/deduplication semantics.
+5. Test copy failure, Silver failure, checkpoint conflict, reconciliation mismatch, and safe rerun in the target environment.
+6. Configure identities, least-privilege permissions, and secret-backed connection settings.
+7. Retain actual run IDs, commit SHAs, counts, reconciliation results, and test outputs for any claims made.
 
-## Validation evidence to retain (optional)
+These are redeployment acceptance gates, not a request to recreate cloud resources solely for portfolio presentation.
 
-The project owner confirms that the workflows and checks have been validated. Retain available evidence for first load, no-change and changed-row runs, watermark boundaries, copy/Silver failures, same-range retries, duplicate keys, checkpoint conflicts, reconciliation mismatches, and successful recovery where those scenarios were part of the validation.
+## Portfolio claims
 
-## Claims guidance
+Safe description: **an Azure-oriented end-to-end data engineering platform integrating API, CSV, and SQL sources through ADF, ADLS Gen2, and Databricks/PySpark, with incremental-load controls, quality/reconciliation utilities, and operational recovery documentation. The project ran successfully in its original environment; Azure resources were later decommissioned to manage costs.**
 
-Safe description: **an Azure-oriented end-to-end data-platform portfolio project with exported orchestration, API and file ingestion, SQL incremental-load design, Silver notebook implementations, quality/reconciliation utilities, and operational runbooks.**
-
-Do not claim production certification or universal end-to-end idempotency beyond the scope of the scenarios actually validated.
+Do not claim a currently deployed service, independent production certification, guaranteed exactly-once processing, or unmeasured performance outcomes.
