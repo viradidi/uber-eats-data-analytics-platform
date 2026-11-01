@@ -1,84 +1,157 @@
 # Incremental Source Contract
 
-## Purpose
+## 1. Purpose
 
-Complete this contract for each SQL source table before enabling incremental extraction for production-like use. The exported ADF pipeline uses a strict lower watermark bound and a captured upper bound; that pattern is correct only when the source's change semantics support it.
+Complete this contract for every SQL source table before enabling incremental extraction. The project's exported Azure Data Factory (ADF) pattern uses a strict lower watermark boundary and a captured upper boundary:
 
-This is a design and deployment gate. It does not claim the current Azure pipeline has been changed or runtime-tested.
+```sql
+watermark_column > last_watermark_value
+AND watermark_column <= captured_max_watermark
+```
 
-## Table contract
+This pattern is appropriate only when the source's change semantics support it. A watermark is a progress cursor; it is not automatically a complete change-data-capture mechanism.
 
-Copy this section once per source table and replace every placeholder.
+This document defines the source-onboarding requirements and acceptance criteria. It does not claim that a new Azure deployment has been created or runtime-tested.
+
+## 2. Source-table contract
+
+Copy and complete this table for each source table. Replace every placeholder with a verified source-specific decision.
 
 | Field | Required decision |
 |---|---|
-| Source table | `<schema.table>` |
+| Source system and table | `<system.schema.table>` |
+| Business purpose / owner | `<purpose and accountable owner>` |
 | Stable business key | `<single key or composite key>` |
-| Watermark column | `<column>` |
-| Watermark data type and precision | `<datetime2 precision / integer / other>` |
-| Initial-load behavior | `<explicit full load / approved type-safe starting value>` |
-| Does every relevant update change the watermark? | `<yes/no, with source evidence>` |
-| Can multiple rows share a watermark value? | `<yes/no>` |
-| Can late-arriving rows have a watermark <= the checkpoint? | `<yes/no/unknown>` |
-| Delete capture | `<CDC / soft-delete column / separate feed / not captured>` |
-| Expected change volume | `<typical and peak>` |
-| Replay behavior | `<overwrite deterministic range / merge by key / deduplicate>` |
-| Reconciliation rule | `<counts plus key/field checks>` |
-| Owner / approval | `<responsible person or team>` |
+| Watermark column or change cursor | `<column / sequence / CDC position>` |
+| Cursor data type and precision | `<datetime2 precision / integer / other>` |
+| Timezone and timestamp semantics | `<UTC/local/unspecified; event time or modification time>` |
+| Initial-load strategy | `<full load / approved type-safe starting position>` |
+| Do inserts always receive a new cursor value? | `<yes/no; explain>` |
+| Does every relevant update advance the cursor? | `<yes/no; explain>` |
+| Can multiple rows share one cursor value? | `<yes/no; tie-breaker>` |
+| Can a row become visible behind the checkpoint? | `<yes/no/unknown; explain>` |
+| Delete capture | `<CDC / tombstone / soft delete / separate feed / not captured>` |
+| Expected change volume and frequency | `<typical and peak>` |
+| Destination write strategy | `<merge by key / replace deterministic range / other>` |
+| Replay and deduplication rule | `<how repeated input is handled>` |
+| Reconciliation rule | `<counts, keys, field checks, tolerances>` |
+| Retention / source-history limits | `<retention window and implications>` |
+| Approval | `<responsible person or team and date>` |
 
-Do not leave an unknown source behavior implicit. If it is unknown, record it as a limitation and do not claim reliable change capture for that case.
+Do not leave unknown source behavior implicit. Record uncertainty as a limitation and do not claim reliable change capture for that case.
 
-## Select the extraction strategy
+## 3. Choose the change-capture strategy
 
 ### Strategy A — Monotonic, immutable watermark
 
-Use the current `watermark_column > last_watermark_value AND watermark_column <= captured_max_watermark` pattern only if the source contract guarantees that new eligible rows always receive a watermark greater than the committed checkpoint and relevant changes cannot occur without moving that watermark.
+Use the current strict-lower-bound pattern only when the source guarantees that each newly eligible row has a cursor greater than the committed checkpoint, and relevant changes cannot occur without advancing that cursor.
 
-A stable upper bound limits the current extraction window. It does not solve missed updates that retain an old watermark or late rows that arrive at/below the checkpoint.
+A captured upper bound makes the current batch finite. It does not recover an update that retains an old timestamp or a row that becomes visible with a cursor at or below the checkpoint.
 
-### Strategy B — Mutable records with a reliable modified timestamp
+### Strategy B — Mutable records with a reliable modification timestamp
 
-If every relevant update changes a source-modified timestamp, consider a controlled overlap window and idempotent upsert into the target. Document the overlap duration, timezone/precision, merge key, tie-breaking rule, and reconciliation. The checkpoint should advance only to a successfully processed boundary. An overlap alone is insufficient without replay-safe writes.
+If every relevant update advances a reliable source-modified timestamp, a controlled overlap window may be appropriate:
 
-### Strategy C — Timestamps are not sufficient
+1. Read from a position earlier than the committed checkpoint by the agreed overlap duration.
+2. Bound the extraction with a captured upper position.
+3. Deduplicate and merge into the destination using a stable business key.
+4. Advance the checkpoint only after the required downstream work and validation succeed.
 
-If source updates do not reliably advance the timestamp, or late visibility can occur behind the checkpoint, use a stronger change mechanism where available: database change tracking/CDC, a monotonic change sequence, or a composite cursor supported by the source. A composite cursor must use a stable tie-breaker and lexicographic boundary logic; simply adding a key to the selected columns does not solve the boundary problem.
+Document the overlap duration, timestamp precision and timezone, key semantics, tie-breaking behavior, destination merge rules, and reconciliation checks. An overlap is useful only when repeated records can be processed safely.
+
+### Strategy C — Timestamp is not a reliable change cursor
+
+If updates do not reliably advance the timestamp, or records can become visible behind the committed position, prefer a stronger source mechanism where available:
+
+- Database change data capture (CDC).
+- Database change tracking.
+- A monotonic source change sequence.
+- A composite cursor with deterministic tie-breaking and lexicographic boundary predicates.
+
+A composite cursor must be supported by the source query and checkpoint design. Merely selecting an additional key column does not solve equal-timestamp boundary gaps.
 
 ### Deletes
 
-A query over rows with a greater watermark cannot discover hard deletes unless the source exposes deletion events, tombstones, CDC, or a separate reconciliation mechanism. State explicitly whether deletes are out of scope.
+A query selecting rows above a watermark cannot detect hard deletes unless the source exposes deletion events, tombstones, CDC, soft-delete attributes, or a separate reconciliation process. State whether deletes are captured, how they are applied downstream, or whether they are explicitly out of scope.
 
-## Control-table and SQL safety
+## 4. Control-table and SQL safety
 
-The exported pipeline interpolates `table_name` and `watermark_column` from `pipeline_control` into SQL text. Before enabling a table:
+The exported pipeline interpolates `table_name` and `watermark_column` from `pipeline_control` into SQL text. Treat these values as privileged configuration.
+
+Before enabling a source:
 
 - Restrict write access to the control table.
-- Validate schema/table and column identifiers against an approved allowlist or metadata registry.
-- Ensure the watermark value is serialized according to its declared SQL type and precision.
-- Reject missing control fields rather than silently substituting a universal sentinel.
-- Verify the configured business key and watermark column exist in the source.
+- Validate schema, table, and column identifiers against an approved allowlist or metadata registry.
+- Verify the configured table, watermark, and business key exist in the source.
+- Serialize watermark values using the declared SQL type, precision, and timezone semantics.
+- Reject missing or invalid control fields; do not silently substitute a universal sentinel.
+- Use typed SQL parameters for values where supported. Value parameters do not generally parameterize identifiers, so identifiers still require allowlist validation.
+- Define a safe initial-load path for each cursor type.
 
-Identifiers generally cannot be protected by ordinary value parameterization; use an allowlist for dynamically selected table/column names.
+## 5. Checkpoint and destination contract
 
-## Required recovery tests
+Document and verify these behaviors together:
 
-For each table, define expected results and run these tests in an available test environment before calling the strategy runtime-verified:
+| Concern | Required behavior |
+|---|---|
+| Checkpoint ownership | Identify the process allowed to advance the source cursor |
+| Checkpoint commit point | Advance only after the required copy, transformation, and validation steps succeed |
+| Concurrent updates | Detect stale checkpoint state; define behavior when another writer changes it |
+| Partial writes | Identify how incomplete landing or target writes are detected and repaired |
+| Replay | Reprocessing the same logical interval must not create unintended duplicates or corrupt target state |
+| Deduplication | Define deterministic winner selection when keys or cursor values repeat |
+| Atomicity boundary | State which operations are transactional and which require reconciliation |
+| Observability | Record source interval, run ID, row counts, checkpoint before/after, and failure details |
+
+The ADF pipeline's concurrency setting and compare-and-swap-style update help protect the checkpoint update under the conditions they cover. They do not create a universal lock against external writers, and they do not make storage or Spark writes transactional or idempotent by themselves.
+
+## 6. Required acceptance tests
+
+For each source table, define expected results and execute these tests in an available environment before describing the source strategy as runtime-verified:
 
 1. Initial load with an empty or uninitialized control row.
-2. No-change run (must not write an incorrect checkpoint).
-3. Normal bounded extraction with expected lower/upper boundary rows.
-4. Multiple source rows with the same watermark value.
-5. Row inserted after the upper watermark was captured.
-6. Late-arriving row with a watermark equal to or below the checkpoint, if the source can produce it.
-7. Update to an existing business key.
-8. Copy succeeds but downstream transformation fails; checkpoint must remain unchanged.
-9. Rerun the same logical interval; target records and landing artifacts must follow the documented replay policy.
-10. Source delete, if delete capture is in scope.
-11. Invalid table/column metadata is rejected before dynamic SQL executes.
-12. Reconciliation confirms expected keys, fields, and counts for the processed scope.
+2. No-change run; confirm that the checkpoint does not move incorrectly.
+3. Normal bounded extraction, including records at the lower and upper boundaries.
+4. Multiple source rows sharing the same watermark value.
+5. A row inserted after the upper watermark has been captured.
+6. A late-visible row whose cursor is equal to or below the committed checkpoint, if possible for the source.
+7. An update to an existing business key.
+8. A downstream transformation failure after successful copy; confirm the checkpoint remains unchanged.
+9. Replay of the same logical interval; verify landing and destination behavior.
+10. A stale checkpoint / concurrent update conflict.
+11. Invalid table or column metadata; confirm rejection before dynamic SQL executes.
+12. Source-to-landing and source-to-target reconciliation for the processed scope.
+13. Delete capture and downstream application, if deletes are in scope.
 
-Record the run ID, test input, expected outcome, actual outcome, and evidence location. Repository-level static tests do not replace these source/runtime tests.
+For every test, preserve the run ID, source scenario, expected result, actual result, checkpoint before and after, reconciliation output, and evidence location. Mark a test as not run if no runtime evidence is available. Repository static checks do not substitute for source-specific runtime tests.
 
-## Current project status
+## 7. Source onboarding decision
 
-The committed ADF export has a bounded upper watermark and success dependencies from copy to Silver processing to checkpoint update. The current export does not explicitly handle null starting watermarks, does not show an allowlist guard for dynamic identifiers, and does not by itself guarantee capture of late/equal-watermark updates or replay-safe landing writes. Azure runtime validation is pending because the Azure for Students subscription is unavailable.
+A source is ready for incremental onboarding only when:
+
+- The business key and change cursor are defined.
+- Initial-load and null-checkpoint behavior are explicit.
+- Timestamp precision, timezone, and tie behavior are understood.
+- Late-arriving changes and deletes are addressed or explicitly excluded.
+- Dynamic identifiers are validated.
+- Destination writes are replay-safe.
+- Checkpoint ownership and commit conditions are defined.
+- Reconciliation and operational recovery are documented.
+- Required acceptance tests have passed and evidence is retained.
+
+If one of these conditions is unknown, record the limitation, identify an owner, and do not present the source as having proven reliable incremental capture.
+
+## 8. Current project implementation and status
+
+The committed ADF SQL incremental pipeline export includes a captured upper watermark, a strict lower watermark predicate, success dependencies from copy to the Silver job to checkpoint update, a compare-and-swap-style checkpoint predicate, and pipeline concurrency set to one.
+
+The export does not explicitly show a null-safe initial-load branch or an allowlist guard for dynamic SQL identifiers. The strict lower bound does not automatically capture late/equal-watermark changes, and the deterministic landing path does not by itself prove replay-safe writes.
+
+The project owner confirms that the completed platform was successfully executed end to end. The Azure resources used during that execution were later decommissioned to control costs. The current repository can be reviewed and its available automated checks can be run, but there is no currently deployed Azure environment in this project to use for a new live acceptance cycle. Do not confuse decommissioning with an incomplete project, or describe historical owner-confirmed execution as a new independent runtime test.
+
+## 9. Related documentation
+
+- [SQL Incremental Load Engineering Review](SQL_INCREMENTAL_LOAD_REVIEW.md)
+- [Checkpoint Concurrency Contract](CHECKPOINT_CONCURRENCY_CONTRACT.md)
+- [Recovery and Rerun Runbook](RECOVERY_AND_RERUN_RUNBOOK.md)
+- [Reconciliation Audit Queries](RECONCILIATION_AUDIT_QUERIES.sql)
