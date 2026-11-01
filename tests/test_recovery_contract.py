@@ -42,7 +42,7 @@ class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
         self.assertIn("last_watermark_value", script)
         self.assertIn("@@ROWCOUNT <> 1", script)
         self.assertIn("THROW 51001", script)
-        self.assertIn("other pipelines or external writers", CONCURRENCY)
+        self.assertIn("does not protect the control table from other pipelines", CONCURRENCY)
 
     def test_copy_is_bounded_by_captured_upper_watermark(self):
         copy_deps = deps(self.copy)
@@ -60,7 +60,7 @@ class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
         self.assertIn("Checkpoint advanced only after required work succeeded", RUNBOOK)
 
     def test_source_contract_documents_incremental_edge_cases(self):
-        for term in ("Initial-load strategy", "Stable business key", "Late-arriving rows", "Delete capture", "Replay and deduplication rule"):
+        for term in ("Initial-load strategy", "Stable business key", "late-visible row", "Delete capture", "Replay and deduplication rule"):
             self.assertIn(term.lower(), SOURCE.lower())
         self.assertIn("approved allowlist", SOURCE.lower())
         self.assertIn("restrict write access to the control table", SOURCE.lower())
@@ -68,11 +68,11 @@ class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
     def test_sql_review_documents_limits_and_metadata_risks(self):
         for term in ("Null or uninitialized watermark", "Late-arriving rows and equal watermark values", "does not show an allowlist guard", "untrusted input", "idempotent"):
             self.assertIn(term.lower(), REVIEW.lower())
-        self.assertIn("change-presence", REVIEW.lower())
-        self.assertIn("not a completeness guarantee", REVIEW.lower())
+        self.assertIn("counts source rows whose watermark is greater", REVIEW.lower())
+        self.assertIn("does not, by itself, guarantee", REVIEW.lower())
 
     def test_runbook_and_operations_document_safe_recovery(self):
-        for term in ("Do not advance a watermark", "partial", "checkpoint", "does not claim automated rollback"):
+        for term in ("do not edit it merely to make a run progress", "partial", "checkpoint", "does not claim automated rollback"):
             self.assertIn(term.lower(), RUNBOOK.lower())
         self.assertIn("azure resources were later decommissioned", OPERATIONS.lower())
         for report in ("OPERATIONAL_HEALTH_REPORT.sql", "DATA_QUALITY_TRENDS_AND_INCIDENTS.sql", "RECONCILIATION_AUDIT_QUERIES.sql"):
