@@ -14,6 +14,19 @@ Keep three kinds of evidence distinct:
 
 Do not invent run IDs, metrics, screenshots, dashboard states, or test outcomes. Do not redeploy Azure resources solely to recreate portfolio evidence.
 
+## What the project demonstrates
+
+The strongest interview discussion areas are the engineering decisions behind the implementation:
+
+1. **Ingestion design:** coordinating API, CSV, and relational SQL inputs through a common orchestration and landing approach.
+2. **Metadata-driven processing:** separating source configuration and control state from pipeline activity definitions.
+3. **Incremental extraction:** using a captured upper watermark to bound an extraction window, then advancing state only after the downstream processing dependency succeeds.
+4. **Concurrency control:** combining pipeline-level serialization with a compare-and-swap checkpoint update, while recognizing the limits of each control.
+5. **Data processing:** applying PySpark transformations and shared standardization utilities in the lake processing layer.
+6. **Operational readiness:** providing quality, reconciliation, failure logging, recovery, and rerun guidance rather than treating a successful ingestion as the whole solution.
+
+Be prepared to explain the trade-offs and limitations as well as the implementation. In particular, discuss late-arriving rows, equal or non-monotonic cursors, deletes, replay safety, dynamic SQL identifier validation, and the difference between repository tests and cloud-runtime validation.
+
 ## Evidence map
 
 | Engineering claim | Evidence a reviewer can inspect | What it establishes | What it does not establish by itself |
@@ -40,6 +53,21 @@ A reviewer can follow this sequence without access to the retired cloud environm
    - [Checkpoint concurrency contract](CHECKPOINT_CONCURRENCY_CONTRACT.md)
 6. Review [operations and reliability](OPERATIONS_AND_RELIABILITY.md) and the [recovery and rerun runbook](RECOVERY_AND_RERUN_RUNBOOK.md).
 7. Inspect the validation workflow and tests, then distinguish automated repository checks from historical cloud execution.
+
+## Interview discussion prompts
+
+Use these prompts to test whether the implementation can be explained clearly in a technical interview:
+
+- Why use a captured upper watermark instead of extracting only with a lower-bound predicate?
+- What happens if a source row becomes visible late with a cursor value at or below the committed checkpoint?
+- Why is checkpoint advancement dependent on successful downstream processing?
+- What does pipeline concurrency set to one protect, and what does it not protect?
+- How does compare-and-swap detect a stale checkpoint update?
+- Why does a deterministic landing filename not, by itself, guarantee idempotent processing?
+- How would you extend the design to support deletes, CDC, schema evolution, and replay-safe merges?
+- Which checks run in CI, and which require a live Azure integration environment?
+
+Answers should refer to the actual repository implementation and its documented boundaries, not imply that every proposed extension is already implemented.
 
 ## Historical runtime evidence
 
