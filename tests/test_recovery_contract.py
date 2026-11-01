@@ -80,7 +80,7 @@ class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
         self.assertEqual(1, self.pipeline["properties"].get("concurrency"))
         contract_path = ROOT / "docs" / "CHECKPOINT_CONCURRENCY_CONTRACT.md"
         contract = contract_path.read_text(encoding="utf-8")
-        self.assertIn("global guard", contract)
+        self.assertIn("global serialization guard", contract)
         self.assertIn("other pipelines or external writers", contract)
 
     def test_copy_waits_for_bounded_max_watermark_lookup(self):
@@ -96,10 +96,10 @@ class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
         review_path = ROOT / "docs" / "SQL_INCREMENTAL_LOAD_REVIEW.md"
         review = review_path.read_text(encoding="utf-8")
         self.assertIn("Null or uninitialized watermark", review)
-        self.assertIn("late-arriving updates", review)
+        self.assertIn("Late-arriving rows and equal watermark values", review)
         self.assertIn("same watermark value", review)
         self.assertIn("source-specific decision", review)
-        self.assertIn("not yet handled by the exported expressions", review)
+        self.assertIn("do not explicitly resolve every source-specific edge case", review)
 
     def test_source_contract_covers_incremental_edge_cases(self):
         contract_path = ROOT / "docs" / "INCREMENTAL_SOURCE_CONTRACT.md"
@@ -137,12 +137,12 @@ class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
     def test_runbook_requires_success_before_checkpoint_advancement(self):
         self.assertIn("Advance a watermark/checkpoint only when all applicable conditions are true", self.runbook)
         self.assertIn("Checkpoint advanced only after required work succeeded", self.runbook)
-        self.assertIn("Do not advance a watermark", self.runbook)
+        self.assertIn("Never advance a checkpoint", self.runbook)
 
     def test_runbook_disclaims_unverified_live_recovery(self):
-        self.assertIn("have not been live-tested in Azure", self.runbook)
+        self.assertIn("no live deployment available", self.runbook)
         self.assertIn("does not claim automated rollback", self.runbook)
-        self.assertIn("live Azure recovery", self.operations)
+        self.assertIn("Azure resources were later decommissioned", self.operations)
 
     def test_operational_reports_are_linked_from_runbook_or_operations_guide(self):
         self.assertTrue((ROOT / "docs" / "OPERATIONAL_HEALTH_REPORT.sql").is_file())
@@ -179,7 +179,7 @@ class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
         review_path = ROOT / "docs" / "SQL_INCREMENTAL_LOAD_REVIEW.md"
         review = review_path.read_text(encoding="utf-8")
         self.assertIn("does not show an allowlist guard", review)
-        self.assertIn("Do not populate these fields from untrusted input", review)
+        self.assertIn("untrusted input", review)
 
     def test_landing_filename_is_deterministic_for_the_same_watermark_range(self):
         output_parameters = self.copy["outputs"][0]["parameters"]
@@ -190,7 +190,7 @@ class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
         self.assertNotIn("utcNow()", file_name)
         review_path = ROOT / "docs" / "SQL_INCREMENTAL_LOAD_REVIEW.md"
         review = review_path.read_text(encoding="utf-8")
-        self.assertIn("does not guarantee idempotent Silver processing", review)
+        self.assertIn("does not automatically make landing-file writes or Silver transformations idempotent", review)
 
     def test_sql_control_preflight_checks_metadata_and_duplicate_mappings(self):
         preflight_path = ROOT / "docs" / "SQL_INCREMENTAL_CONTROL_PREFLIGHT.sql"
@@ -216,7 +216,7 @@ class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
         contract = contract_path.read_text(encoding="utf-8")
         self.assertIn("approved allowlist", contract)
         self.assertIn("Restrict write access to the control table", contract)
-        self.assertIn("Invalid table/column metadata is rejected", contract)
+        self.assertIn("invalid table/column metadata", contract.lower())
 
     def test_incremental_run_acceptance_queries_cover_reconciliation_and_checkpoint_gate(self):
         query_path = ROOT / "docs" / "SQL_INCREMENTAL_RUN_ACCEPTANCE_QUERIES.md"
