@@ -9,11 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class RepositoryArtifactIntegrityTests(unittest.TestCase):
     def test_every_committed_json_file_parses(self):
-        """Catch malformed exported ADF/config JSON before import or review."""
-        json_files = sorted(
-            path for path in ROOT.rglob("*.json")
-            if ".git" not in path.parts and "__pycache__" not in path.parts
-        )
+        json_files = sorted(path for path in ROOT.rglob("*.json") if ".git" not in path.parts and "__pycache__" not in path.parts)
         self.assertTrue(json_files, "Expected committed JSON artifacts to validate")
         failures = []
         for path in json_files:
@@ -21,12 +17,10 @@ class RepositoryArtifactIntegrityTests(unittest.TestCase):
                 json.loads(path.read_text(encoding="utf-8"))
             except (OSError, UnicodeError, json.JSONDecodeError) as exc:
                 failures.append(f"{path.relative_to(ROOT)}: {exc}")
-        self.assertEqual([], failures, "Invalid JSON artifacts:\\n" + "\\n".join(failures))
+        self.assertEqual([], failures, "Invalid JSON artifacts:\n" + "\n".join(failures))
 
     def test_text_artifacts_have_no_unresolved_merge_markers(self):
-        """Catch accidental conflict markers in committed project artifacts."""
         suffixes = {".md", ".py", ".json", ".yml", ".yaml", ".sql", ".txt", ".toml", ".svg"}
-        markers = ("<<<<<<< ", ">>>>>>> ")
         failures = []
         for path in ROOT.rglob("*"):
             if not path.is_file() or path.suffix.lower() not in suffixes:
@@ -39,24 +33,18 @@ class RepositoryArtifactIntegrityTests(unittest.TestCase):
                 failures.append(f"{path.relative_to(ROOT)}: could not read: {exc}")
                 continue
             for line_number, line in enumerate(lines, start=1):
-                if any(line.startswith(marker) for marker in markers):
+                if line.startswith(("<<<<<<< ", ">>>>>>> ")):
                     failures.append(f"{path.relative_to(ROOT)}:{line_number}: {line}")
-        self.assertEqual([], failures, "Unresolved merge markers found:\\n" + "\\n".join(failures))
+        self.assertEqual([], failures, "Unresolved merge markers found:\n" + "\n".join(failures))
 
-    def test_readme_links_the_single_release_gate(self):
+    def test_readme_links_the_release_gate(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
-        release_gate = ROOT / "docs" / "PROJECT_RELEASE_GATE.md"
-        self.assertTrue(release_gate.is_file())
-        self.assertIn("docs/PROJECT_RELEASE_GATE.md", readme)
+        self.assertTrue((ROOT / "docs" / "PROJECT_RELEASE_GATE.md").is_file())
+        self.assertIn("PROJECT_RELEASE_GATE.md", readme)
 
-    def test_release_gate_distinguishes_static_and_cloud_validation(self):
-        gate = (ROOT / "docs" / "PROJECT_RELEASE_GATE.md").read_text(encoding="utf-8")
-        for phrase in (
-            "live-cloud release is not certified",
-            "end-to-end replay safety is not yet proven",
-            "No-cost finalization workflow",
-            "Do not claim a currently deployed",
-        ):
+    def test_release_gate_distinguishes_portfolio_completion_from_live_deployment(self):
+        gate = (ROOT / "docs" / "PROJECT_RELEASE_GATE.md").read_text(encoding="utf-8").lower()
+        for phrase in ("portfolio release is complete", "not independent audit", "decommissioned", "do not claim production certification"):
             self.assertIn(phrase, gate)
 
 
