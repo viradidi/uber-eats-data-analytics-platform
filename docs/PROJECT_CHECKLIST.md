@@ -7,8 +7,8 @@ Use this checklist to track delivered artifacts and validation. **Current status
 - [x] Project README created
 - [x] Logical architecture documented
 - [x] Verify all README links
-- [ ] Add an approved architecture screenshot if useful
-- [ ] Record the source and licensing of any reused material
+- [x] Canonical architecture diagram committed as an SVG; an additional screenshot is optional and not a release requirement
+- [ ] Record the source and licensing of any reused material (complete only if third-party material is introduced)
 
 ## Ingestion
 
@@ -74,6 +74,8 @@ Use this checklist to track delivered artifacts and validation. **Current status
 ## Release
 
 - [x] Verify the README renders correctly on GitHub
+- [x] Align the secondary architecture overview with the canonical SVG and detailed architecture document
+- [x] Align project status language across README, architecture, portfolio evidence, and final handoff
 - [ ] Add the repository to the portfolio website (optional external publishing task)
 
 
