@@ -24,10 +24,10 @@ class ReadmeContractTests(unittest.TestCase):
                 missing.append(target)
         self.assertEqual([], missing, "Broken local README links: " + ", ".join(missing))
 
-    def test_readme_describes_completed_work_and_validation_boundaries(self):
+    def test_readme_describes_current_architecture_and_validation_boundary(self):
         content = README.read_text(encoding="utf-8")
-        self.assertIn("## Engineering work demonstrated", content)
-        self.assertIn("## Validation status and deployment boundary", content)
+        self.assertIn("## 4. Engineering work demonstrated", content)
+        self.assertIn("## 8. Validation status and deployment boundary", content)
         self.assertIn("do not, by themselves, execute Azure Data Factory pipelines", content)
         self.assertIn("docs/FINAL_HANDOFF.md", content)
         self.assertIn("docs/PORTFOLIO_EVIDENCE.md", content)
