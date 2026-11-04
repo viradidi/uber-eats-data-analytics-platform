@@ -129,7 +129,9 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
         source = source_path.read_text(encoding="utf-8")
         self.assertNotIn("/Workspace/Users/", source)
         self.assertIn('dbutils.widgets.text("endpoint_name"', source)
+        self.assertIn('{"bronze_root": bronze_root}', source)
         self.assertIn('dbutils.widgets.text("notebook_root"', source)
+        self.assertIn('{"bronze_root": bronze_root}', source)
         for endpoint, notebook in (
             ("payments", "Silver_Payments"),
             ("deliveries", "Silver_Deliveries"),
