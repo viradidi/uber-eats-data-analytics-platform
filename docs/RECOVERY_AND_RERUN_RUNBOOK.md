@@ -38,12 +38,12 @@ The exported ADF definition is `pipeline/sql_incremental pipeline.json`. It read
 1. Inspect the affected control row: source schema/table, watermark column, and last committed watermark.
 2. Before redeployment, apply and verify the [datetime2(7) control-checkpoint migration](../sql/migrations/20261104_widen_pipeline_checkpoint_to_datetime2_7.sql). It widens the checkpoint type without resetting its value; it has not been run in the retired environment.
 3. Confirm the ADF `Validate SQL source metadata` activity succeeds for the configured schema/table/column and supported datetime type. It fails before the count/copy queries when metadata is absent, unsupported, or contains unsafe identifier characters.
-5. Confirm the source table and watermark column exist and that their data type, precision, and timezone semantics match the pipeline configuration. The `Validate SQL watermark nulls` activity must report no source rows with a null cursor; otherwise, resolve or quarantine those rows before rerun.
-6. Establish the intended extraction interval. The implemented bounded pattern is conceptually `watermark > previous_checkpoint AND watermark <= captured_upper_bound`.
-7. Inspect the run to establish whether the copy/landing activity completed and whether the downstream Silver job succeeded.
-8. Reconcile the landed and curated data against the expected source range using stable business keys and comparable fields.
-9. Advance the checkpoint only after the intended data has been persisted and all required downstream success conditions have been met.
-10. If replay is needed, use a bounded range where supported. For sources that can expose late updates or repeated cursor values, use a deliberately designed overlap/replay strategy together with idempotent destination handling. Do not widen the range blindly.
+4. Confirm the source table and watermark column exist and that their data type, precision, and timezone semantics match the pipeline configuration. The `Validate SQL watermark nulls` activity must report no source rows with a null cursor; otherwise, resolve or quarantine those rows before rerun.
+5. Establish the intended extraction interval. The implemented bounded pattern is conceptually `watermark > previous_checkpoint AND watermark <= captured_upper_bound`.
+6. Inspect the run to establish whether the copy/landing activity completed and whether the downstream Silver job succeeded.
+7. Reconcile the landed and curated data against the expected source range using stable business keys and comparable fields.
+8. Advance the checkpoint only after the intended data has been persisted and all required downstream success conditions have been met.
+9. If replay is needed, use a bounded range where supported. For sources that can expose late updates or repeated cursor values, use a deliberately designed overlap/replay strategy together with idempotent destination handling. Do not widen the range blindly.
 
 ### Checkpoint concurrency safeguards
 
