@@ -1,12 +1,12 @@
 # Databricks notebook source
+"""Publish the Uber Eats Gold analytics layer from validated Silver tables."""
+
 import sys
 
 dbutils.widgets.text("project_root", "/Workspace/Shared/UberEats", "Workspace package root")
 PROJECT_ROOT = dbutils.widgets.get("project_root").strip().rstrip("/")
 if PROJECT_ROOT and PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
-
-"""Publish the Uber Eats Gold analytics layer from validated Silver tables."""
 
 from datetime import datetime, timezone
 import json
