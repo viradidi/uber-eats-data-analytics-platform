@@ -40,10 +40,11 @@ The exported ADF definition is `pipeline/sql_incremental pipeline.json`. It read
 3. Confirm the ADF `Validate SQL source metadata` activity succeeds for the configured schema/table/column and supported datetime type. It fails before the count/copy queries when metadata is absent, unsupported, or contains unsafe identifier characters.
 4. Confirm the source table and watermark column exist and that their data type, precision, and timezone semantics match the pipeline configuration. The `Validate SQL watermark nulls` activity must report no source rows with a null cursor; otherwise, resolve or quarantine those rows before rerun.
 5. Establish the intended extraction interval. The implemented bounded pattern is conceptually `watermark > previous_checkpoint AND watermark <= captured_upper_bound`.
-6. Inspect the run to establish whether the copy/landing activity completed and whether the downstream Silver job succeeded.
-7. Reconcile the landed and curated data against the expected source range using stable business keys and comparable fields.
-8. Advance the checkpoint only after the intended data has been persisted and all required downstream success conditions have been met.
-9. If replay is needed, use a bounded range where supported. For sources that can expose late updates or repeated cursor values, use a deliberately designed overlap/replay strategy together with idempotent destination handling. Do not widen the range blindly.
+6. Inspect the run to establish whether the copy/landing activity completed and whether the downstream Silver job succeeded. The ADF activity invokes Databricks job ID `121055824417886`; its job definition/notebook is not included in this repository.
+7. Before retrying or replaying, inspect that workspace job's actual notebook and configuration. Establish its input-file selection, target table, business key, and overwrite/append/merge behavior. If the job definition is unavailable, treat replay safety as unverified rather than assuming the deterministic landing filename makes the target write idempotent.
+8. Reconcile the landed and curated data against the expected source range using stable business keys and comparable fields. For a replay acceptance test, process the same captured lower/upper interval twice and compare landing objects, target key counts, duplicate keys, field values, and reconciliation outcomes.
+9. Advance the checkpoint only after the intended data has been persisted and all required downstream success conditions have been met.
+10. If replay is needed, use a bounded range where supported. For sources that can expose late updates or repeated cursor values, use a deliberately designed overlap/replay strategy together with verified idempotent destination handling. Do not widen the range blindly.
 
 ### Checkpoint concurrency safeguards
 
