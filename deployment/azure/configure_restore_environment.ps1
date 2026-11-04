@@ -37,7 +37,7 @@ param(
     [string]$ApiBaseUrl,
 
     [Parameter(Mandatory = $false)]
-    [ValidatePattern("^[A-Za-z0-9_-]{1,64}$")]
+    [ValidatePattern("^[A-Za-z0-9][A-Za-z0-9-]{1,61}[A-Za-z0-9]$")]
     [string]$DataFactoryName = "ubereatssri",
 
     [Parameter(Mandatory = $false)]
@@ -122,7 +122,12 @@ $adls = Read-RepoJson "linkedService/AzureDataLakeStorage1.json"
 $adls.properties.typeProperties.url = $adlsUrl
 Write-RepoJson "linkedService/AzureDataLakeStorage1.json" $adls
 
-$factory = Read-RepoJson "factory/ubereatssri.json"
+$factoryFiles = @(Get-ChildItem -LiteralPath (Get-RepoPath "factory") -Filter "*.json" -File)
+if ($factoryFiles.Count -ne 1) {
+    throw "Expected exactly one Data Factory export under factory/. Found $($factoryFiles.Count)."
+}
+$factoryRelativePath = "factory/$($factoryFiles[0].Name)"
+$factory = Read-RepoJson $factoryRelativePath
 $factory.name = $DataFactoryName
 $factory.location = $AzureRegion
 if (-not $factory.properties.globalParameters) {
@@ -141,7 +146,16 @@ $factory.properties.globalParameters.key_vault_uri = @{
     value = $keyVaultBase.TrimEnd("/")
 }
 $factory.identity = @{ type = "SystemAssigned" }
-Write-RepoJson "factory/ubereatssri.json" $factory
+Write-RepoJson $factoryRelativePath $factory
+$targetFactoryRelativePath = "factory/$DataFactoryName.json"
+if ($factoryRelativePath -ne $targetFactoryRelativePath) {
+    $targetFactoryPath = Get-RepoPath $targetFactoryRelativePath
+    if (Test-Path -LiteralPath $targetFactoryPath) {
+        throw "A factory export already exists at '$targetFactoryRelativePath'. Resolve the duplicate before continuing."
+    }
+    Move-Item -LiteralPath (Get-RepoPath $factoryRelativePath) -Destination $targetFactoryPath
+    Write-Host "Renamed factory export to $targetFactoryRelativePath"
+}
 
 # Source and control SQL endpoints may be the same server/database or separate.
 Set-SqlLinkedService "linkedService/ls_sql_database.json" $SourceSqlServerFqdn $SourceSqlDatabase
