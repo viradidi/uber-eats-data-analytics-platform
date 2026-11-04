@@ -3,6 +3,7 @@ from pyspark.sql.functions import *
 from pyspark.sql.types  import *
 from src.common.spark_utils import standardize_columns
 from src.common.quality_events import log_pipeline_failure, quarantine_rejected_rows
+from src.common.incremental import deduplicate_replayed_snapshot_rows
 
 
 # COMMAND ----------
@@ -36,6 +37,9 @@ try:
         df_deliveries
         .select(explode(col("data")).alias("status_data"))
         .select("status_data.*")
+    )
+    df_deliveries_table = deduplicate_replayed_snapshot_rows(
+        df_deliveries_table, key_columns=["delivery_id"], version_column="updated_at", dataset_name="deliveries"
     )
     
     display(df_deliveries_table)
