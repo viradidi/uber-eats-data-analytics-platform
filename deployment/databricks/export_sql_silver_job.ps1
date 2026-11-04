@@ -51,7 +51,7 @@ function Protect-JobConfiguration {
     if ($Value -is [System.Collections.IDictionary]) {
         $protected = [ordered]@{}
         foreach ($key in $Value.Keys) {
-            if ([string]$key -match "(?i)(password|token|secret|api_key|private.?key|authorization|connection.?string|credential)") {
+            if ([string]$key -match "(?i)(password|(^|[._-])token$|access[._-]?token|refresh[._-]?token|api[._-]?key|client[._-]?secret|secret_value|(^|[._-])secret$|private[._-]?key|authorization|connection[._-]?string|credential)") {
                 $protected[$key] = "<REDACTED>"
             }
             else {
@@ -66,6 +66,9 @@ function Protect-JobConfiguration {
             $protectedItems += ,(Protect-JobConfiguration -Value $item)
         }
         return ,$protectedItems
+    }
+    if ($Value -is [string]) {
+        return ($Value -replace "(?i)(https?://)[^/@:]+:[^/@]+@", "$1<REDACTED>@")
     }
     return $Value
 }
@@ -215,7 +218,7 @@ $protectedPages | ConvertTo-Json -Depth 100 | Set-Content -LiteralPath $jobExpor
 # Identify likely literal credentials in exported notebook/script sources. Do not
 # alter code automatically; inspect every flagged file before sharing.
 $secretPatterns = @(
-    '(?i)(password|client_secret|api_key|access_token|refresh_token)\s*[:=]\s*["''][^"'']+["'']',
+    '(?i)(password|secret|client_secret|api_key|access_token|refresh_token)\s*[:=]\s*["''][^"'']+["'']',
     '(?i)(authorization|bearer)\s*[:=]\s*["''][^"'']+["'']',
     '(?i)(jdbc:[^"'']*(?:password|pwd)=)[^;"'']+'
 )
