@@ -73,16 +73,9 @@ class SqlIncrementalHardeningContractTests(unittest.TestCase):
 
     def test_bounded_window_and_checkpoint_success_dependency_are_preserved(self):
         copy_query = self.copy["typeProperties"]["source"]["sqlReaderQuery"]["value"]
-        update = find_activity(
-            self.activities[-1]["typeProperties"]["ifTrueActivities"]
-            if self.activities[-1].get("name") == "rowscount is there"
-            else find_activity(self.activities, "rowscount is there")["typeProperties"]["ifTrueActivities"],
-            "update watermark_copy1",
-        )
-        silver = find_activity(
-            find_activity(self.activities, "rowscount is there")["typeProperties"]["ifTrueActivities"],
-            "Job_Silver_copy1",
-        )
+        branch = find_activity(self.activities, "rowscount is there")["typeProperties"]["ifTrueActivities"]
+        update = find_activity(branch, "update watermark_copy1")
+        silver = find_activity(branch, "Job_Silver_copy1")
         self.assertIn(" > ", copy_query)
         self.assertIn(" <= ", copy_query)
         update_deps = {d["activity"]: d["dependencyConditions"] for d in update["dependsOn"]}
