@@ -268,7 +268,7 @@
                     "value": "@item().endpoint_name",
                     "type": "Expression"
                   },
-                  "notebook_root": "../notebooks",
+                  "notebook_root": "/Shared/UberEats/notebooks",
                   "bronze_root": {
                     "value": "@pipeline().globalParameters.bronze_root",
                     "type": "Expression"
