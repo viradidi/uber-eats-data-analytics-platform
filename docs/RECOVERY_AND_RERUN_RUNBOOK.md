@@ -70,6 +70,18 @@ The bounded upper watermark helps define a finite extraction window, but it does
 
 A successful notebook task alone is not proof of correctness. Verify durable audit records and target data for the processed scope.
 
+### Cumulative API snapshot replay
+
+The API ingestion pipeline writes timestamped endpoint files, and the API Silver notebooks read the whole endpoint folder. Before publishing, those notebooks now call `src/common/incremental.py` to collapse repeated snapshots:
+
+- Payments, deliveries, and ratings retain the record with the greatest source `updated_at` per business key.
+- Order-status events use `(order_id, status_timestamp)` as their event key and collapse only exact repeats.
+- Conflicting payloads with the same key and source version, null keys, or invalid versions fail before the Silver overwrite.
+
+When investigating a failure, preserve the landing files and inspect the rejection message. Do not delete old snapshots to make the run pass. Correct the source conflict or approved version contract, rerun the endpoint processing, and verify the Silver target key counts and business fields.
+
+This protection applies to accumulated API snapshots. The SQL incremental pipeline still has a strict lower watermark and does not automatically recover equal/older late-arriving cursor values or hard deletes. Use its source contract and a verified source-specific overlap/CDC/reconciliation strategy; do not assume API snapshot deduplication solves the SQL cursor problem.
+
 ## 5. Checkpoint advancement gate
 
 Advance a watermark/checkpoint only when all applicable conditions are true:
