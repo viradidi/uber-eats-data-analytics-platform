@@ -61,6 +61,23 @@ class SqlIncrementalHardeningContractTests(unittest.TestCase):
             self.assertIn(token, query)
         self.assertIn("SQL source metadata is invalid", self.gate["typeProperties"]["ifFalseActivities"][0]["typeProperties"]["message"])
 
+    def test_null_watermark_rows_fail_before_incremental_count(self):
+        null_check = find_activity(self.activities, "Validate SQL watermark nulls")
+        null_gate = find_activity(self.activities, "SQL watermark values are valid")
+        query = null_check["typeProperties"]["source"]["sqlReaderQuery"]["value"]
+        self.assertIn("IS NULL", query)
+        self.assertIn("item().schema_name", query)
+        self.assertIn("item().table_name", query)
+        self.assertIn("item().watermark_column", query)
+        self.assertEqual(
+            ["SQL watermark values are valid"],
+            [item["activity"] for item in self.check.get("dependsOn", [])],
+        )
+        self.assertEqual(
+            "SQL_SOURCE_NULL_WATERMARK",
+            null_gate["typeProperties"]["ifFalseActivities"][0]["typeProperties"]["errorCode"],
+        )
+
     def test_source_extraction_honors_schema_and_bracket_quotes_validated_identifiers(self):
         count_query = self.check["typeProperties"]["source"]["sqlReaderQuery"]["value"]
         copy_query = self.copy["typeProperties"]["source"]["sqlReaderQuery"]["value"]
