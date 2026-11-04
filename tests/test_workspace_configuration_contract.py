@@ -304,6 +304,7 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
         self.assertIn('dbutils.widgets.text("endpoint_name"', source)
         self.assertIn('{"bronze_root": bronze_root}', source)
         self.assertIn('dbutils.widgets.text("notebook_root"', source)
+        self.assertIn('dbutils.widgets.text("notebook_root", "/Shared/UberEats/notebooks"', source)
         for endpoint, notebook in (
             ("payments", "Silver_Payments"),
             ("deliveries", "Silver_Deliveries"),
@@ -325,6 +326,10 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
             if activity["name"] == "Job_api"
         )
         self.assertIn("endpoint_name", job["typeProperties"]["baseParameters"])
+        self.assertEqual(
+            "/Shared/UberEats/notebooks",
+            job["typeProperties"]["baseParameters"]["notebook_root"],
+        )
         self.assertEqual("DatabricksNotebook", job["type"])
         self.assertEqual(
             "/Shared/UberEats/routing/api-dispacher-notebook",
