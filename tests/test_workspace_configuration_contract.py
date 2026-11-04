@@ -26,7 +26,7 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
                 source = path.read_text(encoding="utf-8")
                 if path.suffix.lower() == ".ipynb":
                     notebook = json.loads(source)
-                    source = "\\n".join(
+                    source = "\n".join(
                         "".join(cell.get("source", []))
                         for cell in notebook.get("cells", [])
                     )
