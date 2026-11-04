@@ -42,7 +42,7 @@ The three Databricks linked services currently reference the historic workspace:
 
 Replace these values when using a different workspace and verify managed-identity access.
 
-The linked-service cluster runtime is now aligned on **Databricks Runtime 16.4 LTS / Photon / Scala 2.12**. The local PySpark test requirement is aligned to Spark 3.5.2. This alignment applies to the ADF linked-service cluster definitions; it does not update compute configured inside independently managed Jobs. Export and inspect those job definitions too.
+The linked-service cluster runtime is now aligned on **Databricks Runtime 16.4 LTS / Photon / Scala 2.12**. The local PySpark test requirement is aligned to Spark 3.5.2. Microsoft lists 16.4 LTS support through May 9, 2028; the previous 13.3 LTS support end date was August 22, 2026. See [Azure Databricks runtime versions and compatibility](https://learn.microsoft.com/en-us/azure/databricks/release-notes/runtime/). This alignment applies to the ADF linked-service cluster definitions; it does not update compute configured inside independently managed Jobs. Export and inspect those job definitions too.
 
 ADF invokes these existing job IDs:
 
@@ -94,7 +94,16 @@ The routing notebook has been made portable: it now takes a `notebook_root` widg
 
 The repository contains a factory export named `ubereatssri` in `eastus` and a linked self-hosted Integration Runtime reference to a separate historic factory path. Confirm the actual restored Data Factory name, resource group, region, system-assigned identity, and Integration Runtime topology. Reapply role assignments and SQL/Key Vault/ADLS permissions to the new principal IDs; historical principal IDs are not reusable deployment inputs.
 
-## 7. Pre-run configuration checklist
+## 7. Repeatable source-file staging
+
+Two scripts now reduce manual file preparation:
+
+- `deployment/azure/stage_bronze_metadata.ps1` creates the ADLS filesystem/metadata directory if needed, uploads the two metadata files with Azure CLI login authentication, and verifies the remote files.
+- `deployment/azure/stage_csv_files.ps1` copies `drivers.csv`, `promotions.csv`, and `zones.csv` to an already accessible destination and verifies each copy by SHA-256.
+
+Neither script creates the Windows share, installs/registers a self-hosted Integration Runtime, or configures Azure permissions. Those remain environment setup steps.
+
+## 8. Pre-run configuration checklist
 
 - [ ] Confirm Azure subscription, resource group, region, budget and resource names.
 - [ ] Confirm SQL source/control server and database; restore source/control tables.
