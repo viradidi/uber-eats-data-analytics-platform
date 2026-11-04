@@ -25,7 +25,7 @@ The upper bound therefore makes the extraction window finite and repeatable. It 
 
 The exported pipeline defines this dependency chain inside the per-control-row processing flow:
 
-1. **Read active control configuration** — `Lookup_SQL_Control` reads only rows from `dbo.pipeline_control` where `is_active = 1`. `Count active SQL control rows` and `Require active SQL control rows` fail with `SQL_NO_ACTIVE_CONTROL_ROWS` if none are enabled, preventing the master pipeline from treating an empty SQL branch as a successful refresh before Gold publication.
+1. **Read active control configuration** — `Lookup_SQL_Control` reads only rows from `dbo.pipeline_control` where `is_active = 1`. `Require active SQL control rows` checks the length of that exact filtered lookup result and fails with `SQL_NO_ACTIVE_CONTROL_ROWS` if it is empty, preventing the master pipeline from treating an empty SQL branch as a successful refresh before Gold publication.
 2. **Validate source metadata** — `Validate SQL source metadata` checks that the configured `schema_name`, `table_name`, and `watermark_column` exist, use a supported datetime type, and satisfy the simple identifier contract.
 3. **Reject null source cursors** — `Validate SQL watermark nulls` fails the run if any source row has a null value in the configured watermark column.
 4. **Check for new data** — `Check any new data` counts source rows whose watermark is greater than the stored lower watermark.
