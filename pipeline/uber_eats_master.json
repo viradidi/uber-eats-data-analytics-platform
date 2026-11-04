@@ -95,7 +95,7 @@
         },
         "userProperties": [],
         "typeProperties": {
-          "notebookPath": "/Shared/UberEats/Gold_Analytics",
+          "notebookPath": "/Shared/UberEats/notebooks/Gold_Analytics",
           "baseParameters": {
             "pipeline_run_id": {
               "value": "@pipeline().RunId",
