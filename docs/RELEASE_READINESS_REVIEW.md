@@ -64,7 +64,7 @@ Complete [Incremental Source Contract](INCREMENTAL_SOURCE_CONTRACT.md) for every
 
 ### P1 — Prepare the restored environment
 
-Back up the SQL control database, apply/verify the ADF control-table bootstrap if needed, and apply/verify the `datetime2(7)` migration. Restore the required Azure SQL, ADLS Gen2, ADF, and Databricks resources; configure identities, secrets, network access, and least-privilege permissions. Run `deployment/azure/configure_restore_environment.ps1` with approved endpoints, review the local diff, publish the configured ADF definitions, and run `deployment/databricks/import_workspace_assets.ps1` to import the notebook set and make `src.gold` and shared utilities available under `/Shared/UberEats/src`.
+Back up the SQL control database, apply/verify the ADF control-table bootstrap if needed, and apply/verify the `datetime2(7)` migration. Restore the required Azure SQL, ADLS Gen2, ADF, and Databricks resources; configure identities, secrets, network access, and least-privilege permissions. Run `deployment/azure/configure_restore_environment.ps1` with approved endpoints, review the local diff, run `deployment/azure/deploy_adf_resources.ps1` to publish the factory/linked services/datasets/pipelines, and run `deployment/databricks/import_workspace_assets.ps1` to import the notebook set and make `src.gold` and shared utilities available under `/Shared/UberEats/src`.
 
 ### P2 — Run one consolidated acceptance cycle
 
