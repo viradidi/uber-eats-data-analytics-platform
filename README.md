@@ -246,6 +246,7 @@ Historical end-to-end validation is the project owner's reported completion stat
 - [ADLS metadata and CSV staging scripts](deployment/azure/)
 - [Databricks workspace import script](deployment/databricks/import_workspace_assets.ps1)
 - [Restored environment configuration script](deployment/azure/configure_restore_environment.ps1)
+- [ADF REST deployment script](deployment/azure/deploy_adf_resources.ps1)
 
 ---
 
