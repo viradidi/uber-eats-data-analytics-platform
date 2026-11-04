@@ -236,6 +236,7 @@ Historical end-to-end validation is the project owner's reported completion stat
 - [Reconciliation audit queries](docs/RECONCILIATION_AUDIT_QUERIES.sql)
 - [Data quality trends and incidents](docs/DATA_QUALITY_TRENDS_AND_INCIDENTS.sql)
 - [Final project handoff](docs/FINAL_HANDOFF.md)
+- [Databricks notebook export consistency](docs/NOTEBOOK_EXPORT_CONSISTENCY.md)
 - [Portfolio evidence pack](docs/PORTFOLIO_EVIDENCE.md)
 - [Project release gate](docs/PROJECT_RELEASE_GATE.md)
 - [Consolidated release-readiness review](docs/RELEASE_READINESS_REVIEW.md)

@@ -91,8 +91,9 @@ foreach ($directory in $directories) {
 }
 
 # Import exactly one canonical notebook source for each workspace notebook path.
-# The paired .py/.ipynb exports are alternate serializations; importing both
-# would make the final result depend on import order.
+# For paired exports, the .py Databricks SOURCE file is canonical; CI enforces
+# cell-level parity with the companion .ipynb kept for Jupyter review.
+# Importing both formats would make the final workspace state depend on import order.
 $notebooks = @(
     @{ Source = "notebooks/Silver_Deliveries.py"; Name = "Silver_Deliveries"; Format = "SOURCE" },
     @{ Source = "notebooks/Silver_Drivers.py"; Name = "Silver_Drivers"; Format = "SOURCE" },
