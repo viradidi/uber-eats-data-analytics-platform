@@ -117,7 +117,38 @@ Two scripts now reduce manual file preparation:
 
 Neither staging script configures Azure role assignments or SQL/Databricks permissions; those must be applied to the restored identities. Use `deployment/databricks/import_workspace_assets.ps1` to import notebooks and shared Python modules after authenticating the Databricks CLI.
 
-## 9. Pre-run configuration checklist
+## 9. Repeatable ADF deployment
+
+After the resource group and the external dependencies exist, the repository can deploy the factory and its exported ADF child resources through the Azure Data Factory REST API.
+
+Install the required PowerShell modules, authenticate to the intended tenant/subscription, configure local resource values, and review the changed exports:
+
+```powershell
+Install-Module Az.Accounts, Az.Resources -Scope CurrentUser
+Connect-AzAccount
+Set-AzContext -SubscriptionId <SUBSCRIPTION_ID>
+
+.\\deployment\\azure\\configure_restore_environment.ps1 <required-restore-parameters>
+git diff
+```
+
+Deploy or update the Data Factory, linked services, datasets, and pipelines in dependency order:
+
+```powershell
+.\\deployment\\azure\\deploy_adf_resources.ps1 `
+  -SubscriptionId <SUBSCRIPTION_ID> `
+  -ResourceGroupName <RESOURCE_GROUP> `
+  -FactoryName <DATA_FACTORY_NAME> -WhatIf
+
+.\\deployment\\azure\\deploy_adf_resources.ps1 `
+  -SubscriptionId <SUBSCRIPTION_ID> `
+  -ResourceGroupName <RESOURCE_GROUP> `
+  -FactoryName <DATA_FACTORY_NAME>
+```
+
+The first call is a dry run. The second performs REST create/update calls and reads back the deployed inventory. It deliberately does not start the master pipeline, create source databases/storage/Databricks/Key Vault resources, set permissions, or create secret values. Review any ADF deployment errors before proceeding.
+
+## 10. Pre-run configuration checklist
 
 - [ ] Confirm Azure subscription, resource group, region, budget and resource names.
 - [ ] Run configure_restore_environment.ps1 with approved endpoint values and review the resulting local diff.
