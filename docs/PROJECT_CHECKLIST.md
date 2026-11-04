@@ -102,6 +102,8 @@ Drivers, Promotions, and Zones now identify duplicate business-key groups, persi
 
 ## Consolidated release-readiness view
 
+See the [consolidated release-readiness review](RELEASE_READINESS_REVIEW.md) and [restored Azure acceptance plan](RESTORED_AZURE_ACCEPTANCE_PLAN.md) for the current go/no-go decision and end-to-end execution sequence.
+
 ### Repository artifacts available
 - [x] SQL incremental pipeline reviewed for dependency ordering and watermark boundary limitations
 - [x] Per-source incremental contract and recovery runbook documented
@@ -118,6 +120,7 @@ Drivers, Promotions, and Zones now identify duplicate business-key groups, persi
 - [x] Execute ADF pipeline validation and controlled recovery scenarios in the original target Azure environment (owner-confirmed historical execution); rerun the newer ADF SQL guards and checkpoint transaction after redeployment
 - [x] Execute the original Spark/Delta notebooks and audit SQL against the target Databricks environment (owner-confirmed historical execution); run the newer Gold scope and changed Silver/SQL paths after redeployment
 - [ ] Complete and retain the source-specific incremental contract for every enabled SQL table before claiming reliable late-arrival, update, or delete capture
+- [ ] Export and review Databricks SQL Silver job `121055824417886`; verify its input selection, target write mode, business keys, and same-interval replay behavior using [the review procedure](EXTERNAL_SQL_SILVER_JOB_REVIEW.md)
 - [ ] Collect and retain any available successful-run, failure, retry, and reconciliation artifacts; otherwise record the evidence as not retained rather than reconstructing it
 - [x] Complete final README link/render review (portfolio-site listing remains optional)
 
@@ -132,7 +135,7 @@ A checked repository artifact means the relevant code or documentation is presen
 - [x] Add local Spark tests and static ADF dependency-contract tests to CI.
 - [x] Add Gold run-audit design and run-evidence retention guidance.
 - [x] Fix generated API test payments to populate both payment_timestamp and updated_at as required by the Payments Silver contract.
-- [x] Run the local PySpark tests in GitHub Actions and review the actual workflow result: [94 tests passed in run 41845381270](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41846175735).
+- [x] Run the local PySpark tests in GitHub Actions and review the actual workflow result: [94 tests passed in run 41846175735](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41846175735).
 - [ ] Import Gold_Analytics into the target Databricks workspace and make src.gold available to the notebook.
 - [ ] Publish and run the master ADF pipeline in the restored environment.
 - [ ] Verify all five Gold tables, output counts, gold_run_audit rows, and reconciliation results.
