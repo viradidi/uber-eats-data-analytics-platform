@@ -60,7 +60,7 @@ For component-level detail, see [Architecture documentation](architecture/archit
 
 ### Multi-source ingestion
 
-The repository contains separate ingestion patterns for API resources, CSV files, and SQL-based incremental extraction. The FastAPI application provides paginated endpoints, timestamp-based filtering, API-key authentication, watermark information, and a controlled payment test-data endpoint.
+The repository contains separate ingestion patterns for API resources, CSV files staged in ADLS Gen2, and SQL-based incremental extraction. The FastAPI application provides paginated endpoints, timestamp-based filtering, API-key authentication, watermark information, and a controlled payment test-data endpoint.
 
 ### Metadata-driven orchestration
 
@@ -100,7 +100,7 @@ See the [recovery and rerun runbook](docs/RECOVERY_AND_RERUN_RUNBOOK.md) and [op
 | `pipeline/` | Azure Data Factory pipeline exports |
 | `dataset/` | Dataset definitions |
 | `linkedService/` | Linked-service configuration exports |
-| `factory/`, `integrationRuntime/`, `routing/` | Additional Azure Data Factory resource exports |
+| `factory/`, `routing/` | Additional Azure Data Factory resource exports and notebook routing |
 | `notebooks/` | Databricks notebook exports for Silver and Gold transformations |
 | `src/gold/` | Reusable Spark transformations for Gold analytics |
 | `reports/` | Business analytics SQL reporting pack |
