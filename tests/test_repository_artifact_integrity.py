@@ -80,6 +80,35 @@ class RepositoryArtifactIntegrityTests(unittest.TestCase):
 
         self.assertEqual([], missing, "Unresolved ADF resource references:\\n" + "\\n".join(missing))
 
+    def test_workflow_parses_deployment_powershell_scripts(self):
+        workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
+        self.assertIn("Parse PowerShell deployment scripts", workflow)
+        self.assertIn("shell: pwsh", workflow)
+        self.assertIn("[System.Management.Automation.Language.Parser]::ParseFile", workflow)
+        self.assertIn("Get-ChildItem -Path deployment -Filter", workflow)
+
+    def test_adf_deploy_script_reads_back_factory_and_each_child_resource(self):
+        script = (
+            ROOT / "deployment/azure/deploy_adf_resources.ps1"
+        ).read_text(encoding="utf-8")
+        self.assertIn(
+            "$factoryResponse = Invoke-AzRestMethod -Path $factoryPath -Method GET",
+            script,
+        )
+        self.assertIn(
+            'Invoke-AdfGet -RelativePath "linkedservices/$([uri]::EscapeDataString($resource.name))"',
+            script,
+        )
+        self.assertIn(
+            'Invoke-AdfGet -RelativePath "datasets/$([uri]::EscapeDataString($resource.name))"',
+            script,
+        )
+        self.assertIn(
+            'Invoke-AdfGet -RelativePath "pipelines/$([uri]::EscapeDataString($resource.name))"',
+            script,
+        )
+        self.assertIn("WhatIf completed. No Azure resources were written", script)
+
     def test_readme_links_the_release_gate(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         self.assertTrue((ROOT / "docs" / "PROJECT_RELEASE_GATE.md").is_file())
