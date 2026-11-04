@@ -410,7 +410,9 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
         self.assertNotIn("/Workspace/Users/", source)
         self.assertNotIn("sivana", source.lower())
         self.assertIn('dbutils.widgets.text("notebook_root"', source)
-        self.assertIn('dbutils.notebook.run(f"{notebook_root}/{target_notebook}"', source)
+        self.assertIn("dbutils.notebook.run(", source)
+        self.assertIn('f"{notebook_root}/{target_notebook}"', source)
+        self.assertIn('{"bronze_root": bronze_root}', source)
 
 
 if __name__ == "__main__":
