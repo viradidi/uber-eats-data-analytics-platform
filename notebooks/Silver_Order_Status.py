@@ -3,6 +3,7 @@ from pyspark.sql.functions import *
 from pyspark.sql.types  import *
 from src.common.spark_utils import standardize_columns
 from src.common.quality_events import log_pipeline_failure, quarantine_rejected_rows
+from src.common.incremental import deduplicate_replayed_snapshot_rows
 
 
 # COMMAND ----------
@@ -35,6 +36,12 @@ try:
         df_order_status
         .select(explode(col("data")).alias("status_data"))
         .select("status_data.*")
+    )
+    df_order_status_table = deduplicate_replayed_snapshot_rows(
+        df_order_status_table,
+        key_columns=["order_id", "status_timestamp"],
+        version_column=None,
+        dataset_name="order_status",
     )
     
     display(df_order_status_table)
