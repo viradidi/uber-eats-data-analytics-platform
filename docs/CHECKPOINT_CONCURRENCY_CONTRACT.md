@@ -14,9 +14,10 @@ The exported SQL incremental pipeline includes:
 
 - `properties.concurrency: 1`, which limits concurrent runs of this pipeline when deployed and honored by Azure Data Factory.
 - A checkpoint update predicate matching both `control_id` and the previous `last_watermark_value`.
-- A SQL error (51001) when the update affects anything other than exactly one row.
+- The checkpoint Script activity executes its compare-and-swap update inside a SQL transaction with `XACT_ABORT`, `TRY/CATCH`, and rollback on error.
+- A SQL error (51001) when the update affects anything other than exactly one row; the transaction rolls back rather than leaving a multi-row update partially applied.
 
-This is a compare-and-swap-style optimistic concurrency check: the update succeeds only if the control row still contains the value observed by the run.
+This is a compare-and-swap-style optimistic concurrency check: the update succeeds only if exactly one control row still contains the value observed by the run.
 
 The pipeline-level concurrency setting is a global serialization guard for this pipeline. It is not a per-source lock and does not protect the control table from other pipelines, manual updates, or external writers. The compare-and-swap predicate helps detect a stale value at commit time, but it does not prevent duplicate work or make downstream writes transactional.
 
