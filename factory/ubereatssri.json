@@ -9,6 +9,14 @@
       "bronze_root": {
         "type": "string",
         "value": "abfss://bronze@ubereatsrisstorage.dfs.core.windows.net"
+      },
+      "api_base_url": {
+        "type": "string",
+        "value": "https://ubereats-mock-api.onrender.com"
+      },
+      "key_vault_uri": {
+        "type": "string",
+        "value": "https://ubereatskeyvalut.vault.azure.net"
       }
     }
   },
