@@ -34,7 +34,7 @@ The exported pipeline defines this dependency chain inside the per-control-row p
 7. **Run Silver processing** — `Job_Silver_copy1` starts the configured Databricks job after the copy succeeds.
 8. **Commit the checkpoint** — `update watermark_copy1` updates `pipeline_control.last_watermark_value` to the captured maximum only after the Silver job succeeds.
 
-The checkpoint update also compares the current control-row watermark with the prior value read by the run. It raises SQL error 51001 if the update affects anything other than one row. The exported pipeline declares `concurrency: 1`, which serializes runs of this pipeline when deployed and honored by ADF.
+The checkpoint update also compares the current control-row watermark with the prior value read by the run. It now executes inside a SQL transaction with `XACT_ABORT` and `TRY/CATCH`; if the update affects anything other than one row, it raises SQL error 51001 and rolls the transaction back. Errors raised during the update also reach the catch block and trigger rollback. The exported pipeline declares `concurrency: 1`, which serializes runs of this pipeline when deployed and honored by ADF.
 
 The source count, maximum-watermark, and copy queries honor `schema_name` and bracket-quote identifiers after the preflight. The preflight compares metadata values as escaped SQL string literals and only accepts simple identifier characters before those values are used as query identifiers.
 
@@ -158,7 +158,7 @@ The committed pipeline definition contains:
 - A strict lower watermark and captured upper watermark for bounded extraction.
 - A dependency from the copy activity to the Databricks Silver job.
 - A dependency from successful Silver processing to checkpoint update.
-- A compare-and-swap-style checkpoint predicate with a visible SQL error on an unexpected update row count.
+- A transactional compare-and-swap checkpoint update that rolls back when the affected-row count is not exactly one and raises SQL error 51001.
 - Pipeline concurrency set to one.
 - A deterministic landing filename derived from the control ID and watermark interval.
 
