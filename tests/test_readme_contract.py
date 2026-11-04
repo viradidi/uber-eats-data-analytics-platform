@@ -29,6 +29,8 @@ class ReadmeContractTests(unittest.TestCase):
         self.assertIn("## 4. Engineering work demonstrated", content)
         self.assertIn("## 8. Validation status and deployment boundary", content)
         self.assertIn("do not, by themselves, execute Azure Data Factory pipelines", content)
+        self.assertIn("local-mode PySpark tests", content)
+        self.assertIn("they do not execute Azure Data Factory", content)
         self.assertIn("docs/FINAL_HANDOFF.md", content)
         self.assertIn("docs/PORTFOLIO_EVIDENCE.md", content)
 

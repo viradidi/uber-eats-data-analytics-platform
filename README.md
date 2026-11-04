@@ -189,7 +189,7 @@ python -m unittest discover -s tests -v
 
 The GitHub Actions workflow also checks JSON and notebook validity, Python syntax, notebook code-cell syntax, Silver/Gold notebook portability, ADF orchestration contracts, API behavior, and the Gold transformations through local-mode PySpark tests. It uploads the test log as a 90-day workflow artifact.
 
-The local Spark tests execute PySpark transformations against in-memory synthetic DataFrames. ADF tests inspect the exported JSON and dependency ordering; they do not execute Azure Data Factory. Neither test type proves a live Databricks workspace run.
+The local Spark tests execute PySpark transformations against in-memory synthetic DataFrames. ADF tests inspect the exported JSON and dependency ordering; these checks do not, by themselves, execute Azure Data Factory pipelines. They do not execute the deployed ADF service, and neither test type proves a live Databricks workspace run.
 
 See the [GitHub Actions workflow history](https://github.com/viradidi/uber-eats-data-analytics-platform/actions).
 
