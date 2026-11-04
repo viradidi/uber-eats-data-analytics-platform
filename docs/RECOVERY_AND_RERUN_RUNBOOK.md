@@ -35,8 +35,10 @@ If the cause is unavailable infrastructure, missing credentials, or an inaccessi
 
 The exported ADF definition is `pipeline/sql_incremental pipeline.json`. It reads control metadata from `pipeline_control` and uses configured source-table and watermark metadata.
 
-1. Inspect the affected control row: source table, watermark column, and last committed watermark.
-2. Confirm the source table and watermark column exist and that their data type, precision, and timezone semantics match the pipeline configuration.
+1. Inspect the affected control row: source schema/table, watermark column, and last committed watermark.
+2. Before redeployment, apply and verify the [datetime2(7) control-checkpoint migration](../sql/migrations/20261104_widen_pipeline_checkpoint_to_datetime2_7.sql). It widens the checkpoint type without resetting its value; it has not been run in the retired environment.
+3. Confirm the ADF `Validate SQL source metadata` activity succeeds for the configured schema/table/column and supported datetime type. It fails before the count/copy queries when metadata is absent, unsupported, or contains unsafe identifier characters.
+4. Confirm the source table and watermark column exist and that their data type, precision, and timezone semantics match the pipeline configuration.
 3. Establish the intended extraction interval. The implemented bounded pattern is conceptually `watermark > previous_checkpoint AND watermark <= captured_upper_bound`.
 4. Inspect the run to establish whether the copy/landing activity completed and whether the downstream Silver job succeeded.
 5. Reconcile the landed and curated data against the expected source range using stable business keys and comparable fields.
