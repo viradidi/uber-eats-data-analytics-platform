@@ -141,7 +141,7 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
             activity for activity in foreach["typeProperties"]["activities"]
             if activity["name"] == "Job_api"
         )
-        self.assertIn("endpoint_name", job["typeProperties"]["jobParameters"])
+        self.assertIn("endpoint_name", job["typeProperties"]["baseParameters"])
         self.assertEqual("DatabricksNotebook", job["type"])
         self.assertEqual(
             "/Shared/UberEats/routing/api-dispacher-notebook",
