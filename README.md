@@ -238,6 +238,9 @@ Historical end-to-end validation is the project owner's reported completion stat
 - [Final project handoff](docs/FINAL_HANDOFF.md)
 - [Portfolio evidence pack](docs/PORTFOLIO_EVIDENCE.md)
 - [Project release gate](docs/PROJECT_RELEASE_GATE.md)
+- [Consolidated release-readiness review](docs/RELEASE_READINESS_REVIEW.md)
+- [External SQL Silver job review](docs/EXTERNAL_SQL_SILVER_JOB_REVIEW.md)
+- [Restored Azure acceptance plan](docs/RESTORED_AZURE_ACCEPTANCE_PLAN.md)
 
 ---
 
