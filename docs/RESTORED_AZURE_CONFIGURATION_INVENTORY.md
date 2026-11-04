@@ -66,28 +66,20 @@ The Gold notebook is invoked at `/Shared/UberEats/Gold_Analytics`. Deploy that n
 
 Do not put API keys, tokens, or passwords in GitHub. The existing secret version is an environment-specific reference, not a portable secret.
 
-## 5. CSV source share and Integration Runtime
+## 5. CSV source staging in ADLS Gen2
 
-The CSV source is not currently read from the repository working tree or ADLS. It uses:
+The CSV source path has been changed to remove the retired Windows File Server and self-hosted Integration Runtime dependency.
 
-- `linkedService/FileServer1.json`
-- Historic UNC share: `\\DESKTOP-P63LGSO\UberEats`
-- Historic user: `DESKTOP-P63LGSO\admin`
-- Dataset `DS_source_csv`
-- Pipeline copy activity `onpremise migration_copy1`
-- `integrationRuntime2`, which is a linked self-hosted Integration Runtime referencing another Data Factory resource ID under subscription `3c895dcc-8ce9-4539-89c2-029fbf7ff343`, resource group `rg_ubereat`, factory `ubereatadf`, and runtime `integrationRuntime1`.
+- ADF dataset `DS_source_csv` now reads from the `AzureDataLakeStorage1` linked service.
+- Source filesystem: `bronze`.
+- Source folder: `csv_source`.
+- The metadata file `csv_metadata_proper (2).json` still maps the three filenames to the existing Silver landing folders: `csv/drivers`, `csv/promotions`, and `csv/zones`.
+- The ADF CSV copy activity now uses `AzureBlobFSReadSettings` rather than `FileServerReadSettings`.
+- The three source files remain the committed `drivers.csv`, `promotions.csv`, and `zones.csv`.
 
-The committed CSV inputs are `drivers.csv`, `promotions.csv`, and `zones.csv`. Their presence in GitHub does not automatically make them available to the File Server linked service.
+Use `deployment/azure/stage_csv_files.ps1` to create the filesystem/folder if necessary, upload the committed files, download each file for SHA-256 comparison, and fail on any mismatch. The script uses Azure CLI login authentication; it does not place credentials in the repository.
 
-Before the CSV pipeline can run:
-
-1. Decide the machine/share that will host the CSV inputs.
-2. Install/register a self-hosted Integration Runtime reachable from that share, or deliberately redesign the source to use an approved cloud landing location.
-3. Recreate the share and upload the three committed CSV files.
-4. Recreate the File Server linked service with the new UNC path and credentials using ADF's credential flow. Do not reuse the old encrypted credential blob.
-5. Confirm `integrationRuntime2` points to an existing, reachable self-hosted Integration Runtime. The linked factory/resource-group path differs from the committed factory name, so this must be resolved deliberately rather than copied blindly.
-
-The routing notebook has been made portable: it now takes a `notebook_root` widget and uses a relative sibling notebooks path instead of the former personal workspace path. Preserve the `routing/` and `notebooks/` folder relationship when importing it, or override `notebook_root` for the restored workspace.
+The legacy File Server linked service and self-hosted Integration Runtime export files have been removed from the deployment artifacts because the active CSV pipeline no longer uses them. No desktop share or SHIR installation is required for the CSV ingestion path.
 
 ## 6. Factory and resource identities
 
