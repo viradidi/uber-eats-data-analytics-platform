@@ -49,6 +49,30 @@ class SqlIncrementalHardeningContractTests(unittest.TestCase):
         self.assertIn("WHERE is_active = 1", PREFLIGHT)
         self.assertIn("WHERE pc.is_active = 1", PREFLIGHT)
 
+    def test_duplicate_active_control_metadata_fails_before_loop(self):
+        lookup = find_activity(self.top, "Validate active SQL control metadata")
+        gate = find_activity(self.top, "Active SQL control metadata is unique")
+        query = lookup["typeProperties"]["source"]["sqlReaderQuery"]
+        self.assertIn("GROUP BY control_id", query)
+        self.assertIn("control_id IS NULL", query)
+        self.assertIn("GROUP BY schema_name, table_name, watermark_column", query)
+        self.assertIn("WHERE is_active = 1", query)
+        self.assertEqual(
+            ["Validate active SQL control metadata"],
+            [item["activity"] for item in gate["dependsOn"]],
+        )
+        fail = gate["typeProperties"]["ifFalseActivities"][0]
+        self.assertEqual("Fail", fail["type"])
+        self.assertEqual(
+            "SQL_DUPLICATE_ACTIVE_CONTROL_METADATA",
+            fail["typeProperties"]["errorCode"],
+        )
+        active_gate = find_activity(self.top, "Require active SQL control rows")
+        self.assertEqual(
+            ["Active SQL control metadata is unique"],
+            [item["activity"] for item in active_gate["dependsOn"]],
+        )
+
     def test_pipeline_fails_when_no_sql_control_rows_are_active(self):
         gate = find_activity(self.top, "Require active SQL control rows")
         loop = find_activity(self.top, "ForEach item")
