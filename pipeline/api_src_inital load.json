@@ -29,11 +29,43 @@
         }
       },
       {
+        "name": "Require active API endpoint rows",
+        "type": "IfCondition",
+        "dependsOn": [
+          {
+            "activity": "lookup_api_control",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "userProperties": [],
+        "typeProperties": {
+          "expression": {
+            "value": "@greater(length(activity('lookup_api_control').output.value), 0)",
+            "type": "Expression"
+          },
+          "ifTrueActivities": [],
+          "ifFalseActivities": [
+            {
+              "name": "Fail when no API endpoint rows are active",
+              "type": "Fail",
+              "dependsOn": [],
+              "userProperties": [],
+              "typeProperties": {
+                "message": "No active API endpoint rows were found in dbo.api_pipeline_control. Enable the documented API resources before running Gold analytics.",
+                "errorCode": "API_NO_ACTIVE_ENDPOINTS"
+              }
+            }
+          ]
+        }
+      },
+      {
         "name": "foreach_api_endpoint",
         "type": "ForEach",
         "dependsOn": [
           {
-            "activity": "lookup_api_control",
+            "activity": "Require active API endpoint rows",
             "dependencyConditions": [
               "Succeeded"
             ]
@@ -168,7 +200,7 @@
                   {
                     "type": "Query",
                     "text": {
-                      "value": "@concat(\n    'UPDATE dbo.api_pipeline_control ',\n    'SET last_watermark_value = ''',\n    activity('Web_Get_API_Watermarks').output[item().endpoint_name],\n    ''', updated_at = GETDATE(), ',\n    'last_run_end = GETDATE(), ',\n    'last_run_status = ''SUCCESS'' ',\n    'WHERE control_id = ',\n    item().control_id\n)",
+                      "value": "@concat(\n    'UPDATE dbo.api_pipeline_control ',\n    'SET last_watermark_value = ''',\n    activity('Web_Get_Api_Watermarks').output[item().endpoint_name],\n    ''', updated_at = GETDATE(), ',\n    'last_run_end = GETDATE(), ',\n    'last_run_status = ''SUCCESS'' ',\n    'WHERE control_id = ',\n    item().control_id\n)",
                       "type": "Expression"
                     }
                   }
