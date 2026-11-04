@@ -25,7 +25,7 @@ The upper bound therefore makes the extraction window finite and repeatable. It 
 
 The exported pipeline defines this dependency chain inside the per-control-row processing flow:
 
-1. **Read and validate active control configuration** — `Lookup_SQL_Control` reads only rows from `dbo.pipeline_control` where `is_active = 1`. `Validate active SQL control metadata` rejects null/duplicate control IDs and duplicate `(schema_name, table_name, watermark_column)` mappings; `Active SQL control metadata is unique` fails with `SQL_DUPLICATE_ACTIVE_CONTROL_METADATA` before the loop. `Require active SQL control rows` checks the length of the filtered lookup result and fails with `SQL_NO_ACTIVE_CONTROL_ROWS` if it is empty, preventing the master pipeline from treating an empty SQL branch as a successful refresh before Gold publication.
+1. **Read and validate active control configuration** — `Lookup_SQL_Control` reads only rows from `dbo.pipeline_control` where `is_active = 1`. `Validate active SQL control metadata` rejects null/duplicate `control_id` values across the full control table and duplicate active `(schema_name, table_name, watermark_column)` mappings; `Active SQL control metadata is unique` fails with `SQL_DUPLICATE_ACTIVE_CONTROL_METADATA` before the loop. `Require active SQL control rows` checks the length of the filtered lookup result and fails with `SQL_NO_ACTIVE_CONTROL_ROWS` if it is empty, preventing the master pipeline from treating an empty SQL branch as a successful refresh before Gold publication.
 2. **Validate source metadata** — `Validate SQL source metadata` checks that the configured `schema_name`, `table_name`, and `watermark_column` exist, use a supported datetime type, and satisfy the simple identifier contract.
 3. **Reject null source cursors** — `Validate SQL watermark nulls` fails the run if any source row has a null value in the configured watermark column.
 4. **Check for new data** — `Check any new data` counts source rows whose watermark is greater than the stored lower watermark.
@@ -91,7 +91,7 @@ Validate these details for every source type. Prefer typed parameters or a store
 
 ### 4.7 Landing-file replay and destination idempotency
 
-The landing filename is derived from the control ID and lower/upper watermark values. This provides a deterministic identity for the same logical extraction interval and avoids assigning a fresh timestamp-based filename on every attempt.
+The landing filename is derived from the control ID and lower/upper watermark values and ends in `.csv`. The `DelimitedTextWriteSettings.fileExtension` is also `.csv`, so the dynamic dataset filename and sink format agree. This provides a deterministic identity for the same logical extraction interval and avoids assigning a fresh timestamp-based filename on every attempt.
 
 A deterministic filename does not prove that the ADLS sink safely overwrites an existing object, nor does it guarantee that downstream Silver processing is idempotent. Confirm the sink's write/overwrite behavior and define the downstream merge, deduplication, or replacement strategy before claiming end-to-end idempotency.
 
@@ -160,7 +160,7 @@ The committed pipeline definition contains:
 - A dependency from successful Silver processing to checkpoint update.
 - A transactional compare-and-swap checkpoint update that rolls back when the affected-row count is not exactly one and raises SQL error 51001.
 - Pipeline concurrency set to one.
-- A deterministic landing filename derived from the control ID and watermark interval.
+- A deterministic `.csv` landing filename derived from the control ID and watermark interval, with the delimited sink extension configured to `.csv` as well.
 
 The control dataset now declares `last_watermark_value` as `datetime2(7)`. A preserving migration script widens the physical control column from datetime-family types to `datetime2(7)` without resetting its value or changing nullability. The migration must be run in the target SQL environment before deployment; it has not been run against the decommissioned environment.
 
