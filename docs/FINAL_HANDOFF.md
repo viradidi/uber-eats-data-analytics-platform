@@ -39,6 +39,7 @@ Start with the [README](../README.md), then use these documents for deeper revie
 11. [External SQL Silver job review](EXTERNAL_SQL_SILVER_JOB_REVIEW.md)
 12. [Restored Azure acceptance plan](RESTORED_AZURE_ACCEPTANCE_PLAN.md)
 13. [Restored Azure configuration inventory](RESTORED_AZURE_CONFIGURATION_INVENTORY.md)
+14. [Databricks workspace import script](../deployment/databricks/import_workspace_assets.ps1)
 
 ## Validation and evidence boundaries
 
@@ -75,4 +76,4 @@ Describe successful execution as project-owner-confirmed history. Reserve claims
 
 The source code, exported resource definitions, sample fixtures, tests, and documentation remain reviewable in GitHub. There is no requirement to recreate Azure resources just to keep the portfolio online or to produce screenshots.
 
-If the project is redeployed in the future, use a budgeted environment, least-privilege identities, secret management, explicit source contracts, and the documented release gates. Import the Gold notebook and make the src.gold package available to its cluster, verify the master pipeline's child-pipeline references and notebook path, run ADF/Databricks end to end, reconcile Gold table counts, and retain the resulting evidence before making new runtime or performance claims.
+If the project is redeployed in the future, use a budgeted environment, least-privilege identities, secret management, explicit source contracts, and the documented release gates. Run the Databricks workspace import script to deploy the Silver/Gold notebooks, dispatchers, and shared `src` modules; verify the master pipeline's child-pipeline references and notebook paths; run ADF/Databricks end to end; reconcile Gold table counts; and retain the resulting evidence before making new runtime or performance claims.
