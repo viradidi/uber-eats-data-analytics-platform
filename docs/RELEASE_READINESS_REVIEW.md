@@ -33,7 +33,7 @@ The 94-test run verifies the test suite and repository contracts on the recorded
 
 ## 3. Open gates — priority order
 
-A restore-specific configuration inventory is now available at [RESTORED_AZURE_CONFIGURATION_INVENTORY.md](RESTORED_AZURE_CONFIGURATION_INVENTORY.md). It records historic endpoints, identities, paths, job IDs, and the CSV File Server/Integration Runtime dependency that must be resolved in the new environment.
+A restore-specific configuration inventory is now available at [RESTORED_AZURE_CONFIGURATION_INVENTORY.md](RESTORED_AZURE_CONFIGURATION_INVENTORY.md). An idempotent [ADF control-table bootstrap migration](../sql/migrations/20261104_create_ingestion_control_tables.sql) now creates/verifies the two control tables and seeds only the four API endpoints documented in the repository; it deliberately leaves SQL source control rows and watermarks to be approved from real source contracts. It records historic endpoints, identities, paths, job IDs, and the CSV File Server/Integration Runtime dependency that must be resolved in the new environment.
 
 ### P0 — Restore environment-bound integrations
 
@@ -64,7 +64,7 @@ Complete [Incremental Source Contract](INCREMENTAL_SOURCE_CONTRACT.md) for every
 
 ### P1 — Prepare the restored environment
 
-Before deploying the updated control dataset, back up the SQL control database and apply/verify the `datetime2(7)` migration. Restore the required Azure SQL, ADLS Gen2, ADF, and Databricks resources; configure identities, secrets, network access, and least-privilege permissions. Publish the new ADF definitions, import the Gold notebook to `/Shared/UberEats/Gold_Analytics`, and make `src.gold` available to the notebook environment.
+Back up the SQL control database, apply/verify the ADF control-table bootstrap if needed, and apply/verify the `datetime2(7)` migration. Restore the required Azure SQL, ADLS Gen2, ADF, and Databricks resources; configure identities, secrets, network access, and least-privilege permissions. Publish the new ADF definitions, import the Gold notebook to `/Shared/UberEats/Gold_Analytics`, and make `src.gold` available to the notebook environment.
 
 ### P2 — Run one consolidated acceptance cycle
 
