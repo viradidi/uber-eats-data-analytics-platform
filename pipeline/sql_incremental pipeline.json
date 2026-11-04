@@ -29,8 +29,8 @@
         }
       },
       {
-        "name": "Count active SQL control rows",
-        "type": "Lookup",
+        "name": "Require active SQL control rows",
+        "type": "IfCondition",
         "dependsOn": [
           {
             "activity": "Lookup_SQL_Control",
@@ -39,43 +39,10 @@
             ]
           }
         ],
-        "policy": {
-          "timeout": "0.12:00:00",
-          "retry": 0,
-          "retryIntervalInSeconds": 30,
-          "secureOutput": false,
-          "secureInput": false
-        },
-        "userProperties": [],
-        "typeProperties": {
-          "source": {
-            "type": "AzureSqlSource",
-            "sqlReaderQuery": "SELECT COUNT(1) AS active_control_count FROM [dbo].[pipeline_control] WHERE [is_active] = 1;",
-            "queryTimeout": "02:00:00",
-            "partitionOption": "None"
-          },
-          "dataset": {
-            "referenceName": "DS_sql_control",
-            "type": "DatasetReference"
-          },
-          "firstRowOnly": true
-        }
-      },
-      {
-        "name": "Require active SQL control rows",
-        "type": "IfCondition",
-        "dependsOn": [
-          {
-            "activity": "Count active SQL control rows",
-            "dependencyConditions": [
-              "Succeeded"
-            ]
-          }
-        ],
         "userProperties": [],
         "typeProperties": {
           "expression": {
-            "value": "@greater(activity('Count active SQL control rows').output.firstRow.active_control_count, 0)",
+            "value": "@greater(length(activity('Lookup_SQL_Control').output.value), 0)",
             "type": "Expression"
           },
           "ifTrueActivities": [],
