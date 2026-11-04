@@ -83,7 +83,7 @@ The legacy File Server linked service and self-hosted Integration Runtime export
 
 ## 6. Factory and resource identities
 
-The repository contains a factory export named `ubereatssri` in `eastus` and a linked self-hosted Integration Runtime reference to a separate historic factory path. Confirm the actual restored Data Factory name, resource group, region, system-assigned identity, and Integration Runtime topology. Reapply role assignments and SQL/Key Vault/ADLS permissions to the new principal IDs; historical principal IDs are not reusable deployment inputs.
+The repository contains a factory export named `ubereatssri` in `eastus`. The export now declares only `identity.type = SystemAssigned`; historic read-only `principalId` and `tenantId` values have been removed because the restored factory will receive new identity identifiers. Confirm the actual restored Data Factory name, resource group, and region. Reapply role assignments and SQL/Key Vault/ADLS permissions to the new principal ID after creation. The CSV source no longer requires an Integration Runtime.
 
 ## 7. Repeatable source-file staging
 
