@@ -4,6 +4,12 @@
     "trustModeClaimForMi": {
       "value": "Disabled",
       "editable": true
+    },
+    "globalParameters": {
+      "bronze_root": {
+        "type": "string",
+        "value": "abfss://bronze@ubereatsrisstorage.dfs.core.windows.net"
+      }
     }
   },
   "location": "eastus",
