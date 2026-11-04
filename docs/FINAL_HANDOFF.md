@@ -55,6 +55,7 @@ The project is a strong implementation and design portfolio, but reviewers shoul
 - Source correctness depends on an explicit cursor contract and suitable overlap, replay, CDC, or reconciliation strategy where required.
 - Pipeline concurrency set to one serializes runs of that pipeline; it does not coordinate unrelated pipelines or external writers.
 - Compare-and-swap protects checkpoint advancement against stale updates, but does not alone make landing and Silver writes idempotent.
+- The SQL ADF pipeline invokes external Databricks job ID `121055824417886`; the job definition/notebook is not present in this repository, so its current SQL target write mode, merge keys, and same-interval replay behavior must be inspected in the workspace before claiming SQL destination idempotency.
 - Dynamic SQL identifiers must be validated against an allowlist and protected control metadata.
 - Repository tests do not substitute for a current live Azure integration run.
 
