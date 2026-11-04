@@ -121,6 +121,13 @@ if ($PSCmdlet.ShouldProcess("Data Factory $FactoryName", "Create or update")) {
     }
     Write-Host "PUT Data Factory $FactoryName -> HTTP $($response.StatusCode)"
 }
+if (-not $WhatIfPreference) {
+    $factoryResponse = Invoke-AzRestMethod -Path $factoryPath -Method GET -ErrorAction Stop
+    if ($factoryResponse.StatusCode -ne 200) {
+        throw "Data Factory read-back verification failed. HTTP $($factoryResponse.StatusCode)."
+    }
+    Write-Host "Verified Data Factory $FactoryName"
+}
 
 # Linked services are deployed before datasets and pipelines.
 $linkedServiceFiles = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot "linkedService") -Filter "*.json" -File | Sort-Object Name)
