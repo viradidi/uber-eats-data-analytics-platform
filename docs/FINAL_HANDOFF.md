@@ -14,7 +14,7 @@ This is owner-reported execution history, not independent third-party certificat
 
 - Multi-source ingestion design, exported child ADF resource definitions, and a new master pipeline that gates Gold publication on success of all three ingestion paths.
 - FastAPI mock source with API-key protection and source endpoints.
-- Bounded SQL incremental extraction design, success-dependent checkpoint advancement, serialized pipeline runs, and a checkpoint compare-and-swap guard in the exported pipeline.
+- Bounded SQL incremental extraction design, success-dependent checkpoint advancement, serialized pipeline runs, and a transactional checkpoint compare-and-swap guard that rolls back failed or non-unique updates.
 - Active SQL control-row filtering (`is_active = 1`) with a fail-closed guard when no sources are enabled; SQL source-metadata preflight for schema/table/watermark identifiers and datetime-family cursor types; null-watermark rejection before extraction; and a datetime2(7) checkpoint migration to preserve cursor precision.
 - Replay-safe API Silver preparation for timestamped cumulative endpoint snapshots: exact duplicates are collapsed, versioned entity records use the latest source update timestamp, and conflicting same-version records fail closed.
 - Configurable Bronze roots, repository-owned shared Spark utilities, five Gold analytics outputs, and a read-only business reporting SQL pack.
