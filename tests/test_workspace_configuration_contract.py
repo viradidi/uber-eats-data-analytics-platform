@@ -117,6 +117,30 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
             factory["properties"]["globalParameters"]["key_vault_uri"]["value"],
         )
 
+    def test_adf_deploy_script_creates_factory_then_linked_services_datasets_and_pipelines(self):
+        script = (ROOT / "deployment/azure/deploy_adf_resources.ps1").read_text(encoding="utf-8")
+        for token in (
+            "Az.Accounts",
+            "Az.Resources",
+            "2018-06-01",
+            "Invoke-AzRestMethod",
+            "Get-AzResourceGroup",
+            "-WaitForCompletion",
+            "$PSCmdlet.ShouldProcess",
+            "linkedservices/",
+            "datasets/",
+            "pipelines/",
+            "uber_eats_master.json",
+            "lastPublishTime",
+            "WhatIf selected",
+        ):
+            with self.subTest(token=token):
+                self.assertIn(token, script)
+
+        self.assertLess(script.index("Invoke-AzRestMethod -Path $factoryPath"), script.index("$linkedServiceFiles ="))
+        self.assertLess(script.index("$linkedServiceFiles ="), script.index("$datasetFiles ="))
+        self.assertLess(script.index("$datasetFiles ="), script.index("$pipelineOrder ="))
+        self.assertIn("Invoke-AdfGet -RelativePath \"pipelines/uber_eats_master\"", script)
     def test_workspace_import_script_deploys_exact_adf_notebook_paths_and_src_modules(self):
         script = (
             ROOT / "deployment/databricks/import_workspace_assets.ps1"
