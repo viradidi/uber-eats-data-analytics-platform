@@ -2,7 +2,7 @@
 
 ## Release decision
 
-**Portfolio status: ORIGINAL INGESTION/SILVER SCOPE COMPLETED; GOLD EXTENSION AWAITS LIVE VALIDATION.** The project owner confirms that the original end-to-end ingestion and Silver implementation ran successfully in its Azure environment. Resources were subsequently decommissioned to control costs. The Gold notebook, master ADF pipeline, and business reporting SQL are newer additions that require a fresh Azure environment rerun. The local-mode PySpark suite has passed in GitHub Actions: 90 tests in [run 41843392449](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41843392449).
+**Portfolio status: ORIGINAL INGESTION/SILVER SCOPE COMPLETED; GOLD EXTENSION AWAITS LIVE VALIDATION.** The project owner confirms that the original end-to-end ingestion and Silver implementation ran successfully in its Azure environment. Resources were subsequently decommissioned to control costs. The Gold notebook, master ADF pipeline, and business reporting SQL are newer additions that require a fresh Azure environment rerun. The local-mode PySpark suite has passed in GitHub Actions: 91 tests in [run 41845381270](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41845381270).
 
 The historical execution statement is owner-reported. It is not an independent audit, production certification, or proof that the environment is still running. New local PySpark tests validate Gold transformations against synthetic DataFrames; static tests validate the exported ADF dependency contract. Neither executes ADF or Databricks in Azure.
 
@@ -58,7 +58,7 @@ Do not claim a currently deployed service, independent production certification,
 - [x] Add reusable PySpark transformations and local synthetic-fixture tests.
 - [x] Add a master ADF definition with success dependencies for the API, CSV, and SQL child pipelines.
 - [x] Add business reporting SQL and run-audit retention contract.
-- [x] Run the local-mode PySpark suite in GitHub Actions; 90 tests passed in [run 41843392449](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41843392449).
+- [x] Run the local-mode PySpark suite in GitHub Actions; 91 tests passed in [run 41845381270](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41845381270).
 - [ ] Import the Gold notebook and make the src.gold module available in the target Databricks workspace.
 - [ ] Publish and validate the master ADF pipeline in the restored environment.
 - [ ] Run the end-to-end flow and reconcile actual Gold row counts and audit records.
