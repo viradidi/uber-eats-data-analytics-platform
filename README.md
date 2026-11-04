@@ -70,7 +70,7 @@ Azure Data Factory exports define pipeline, dataset, linked-service, and integra
 
 The SQL incremental-load design uses a lower watermark and a captured upper watermark to define a bounded extraction interval. The exported pipeline orders checkpoint advancement after the required downstream Silver job succeeds. It also includes pipeline concurrency configuration and a compare-and-swap-style checkpoint update.
 
-The SQL pipeline now validates the configured schema, table, watermark column, identifier syntax, and datetime-family cursor type before querying a source. Source queries honor the configured schema, and the control dataset uses a `datetime2(7)` checkpoint contract. Apply the [non-destructive checkpoint precision migration](sql/migrations/20261104_widen_pipeline_checkpoint_to_datetime2_7.sql) before deploying that updated contract.
+The SQL pipeline now validates the configured schema, table, watermark column, identifier syntax, and datetime-family cursor type before querying a source. It also fails closed when a source has null watermark values. Source queries honor the configured schema, and the control dataset uses a `datetime2(7)` checkpoint contract. Apply the [non-destructive checkpoint precision migration](sql/migrations/20261104_widen_pipeline_checkpoint_to_datetime2_7.sql) before deploying that updated contract.
 
 These controls reduce specific failure and concurrency risks, but a watermark alone does not guarantee complete change capture. The strict lower boundary still does not capture equal/older late arrivals or hard deletes. A per-source overlap or CDC strategy must be paired with a known business key and replay-safe Silver merge before it is enabled.
 
