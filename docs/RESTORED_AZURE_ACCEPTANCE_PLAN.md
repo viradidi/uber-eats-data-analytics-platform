@@ -10,6 +10,22 @@ Do not recreate Azure resources just to create portfolio screenshots. Use this p
 
 ## 1. Entry criteria — do not start the full master run until these pass
 
+After the external dependencies and resource group are restored, the ADF JSON can be deployed with the repository script. From the repo root, in PowerShell 7:
+
+```powershell
+Install-Module Az.Accounts, Az.Resources -Scope CurrentUser
+Connect-AzAccount
+Set-AzContext -SubscriptionId <SUBSCRIPTION_ID>
+
+.\\deployment\\azure\\configure_restore_environment.ps1 <required-restore-parameters>
+git diff
+
+.\\deployment\\azure\\deploy_adf_resources.ps1 -SubscriptionId <SUBSCRIPTION_ID> -ResourceGroupName <RESOURCE_GROUP> -FactoryName <DATA_FACTORY_NAME> -WhatIf
+.\\deployment\\azure\\deploy_adf_resources.ps1 -SubscriptionId <SUBSCRIPTION_ID> -ResourceGroupName <RESOURCE_GROUP> -FactoryName <DATA_FACTORY_NAME>
+```
+
+The ADF deploy script creates/updates the factory, linked services, datasets, and four pipelines through the Data Factory REST API, then reads back representative deployed resources. It does not start a pipeline or create/provision its linked external services. The SQL Silver job and its source contracts remain separate release gates.
+
 Start with the [restored Azure configuration inventory](RESTORED_AZURE_CONFIGURATION_INVENTORY.md). Before publishing ADF artifacts, run `deployment/azure/configure_restore_environment.ps1` from PowerShell 7 with the approved values from the restored environment. It updates historic SQL, ADLS, Key Vault, API, Databricks and factory bindings together; review the local `git diff` before publishing. The CSV branch has been moved from the retired Windows File Server/self-hosted Integration Runtime to the `bronze/csv_source` folder in ADLS.
 
 ### Repository and release identity
