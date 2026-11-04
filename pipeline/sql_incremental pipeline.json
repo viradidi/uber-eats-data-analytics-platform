@@ -17,7 +17,7 @@
         "typeProperties": {
           "source": {
             "type": "AzureSqlSource",
-            "sqlReaderQuery": "Select * from pipeline_control ",
+            "sqlReaderQuery": "SELECT * FROM [dbo].[pipeline_control] WHERE [is_active] = 1;",
             "queryTimeout": "02:00:00",
             "partitionOption": "None"
           },
@@ -29,11 +29,76 @@
         }
       },
       {
+        "name": "Count active SQL control rows",
+        "type": "Lookup",
+        "dependsOn": [
+          {
+            "activity": "Lookup_SQL_Control",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "userProperties": [],
+        "typeProperties": {
+          "source": {
+            "type": "AzureSqlSource",
+            "sqlReaderQuery": "SELECT COUNT(1) AS active_control_count FROM [dbo].[pipeline_control] WHERE [is_active] = 1;",
+            "queryTimeout": "02:00:00",
+            "partitionOption": "None"
+          },
+          "dataset": {
+            "referenceName": "DS_sql_control",
+            "type": "DatasetReference"
+          },
+          "firstRowOnly": true
+        }
+      },
+      {
+        "name": "Require active SQL control rows",
+        "type": "IfCondition",
+        "dependsOn": [
+          {
+            "activity": "Count active SQL control rows",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "userProperties": [],
+        "typeProperties": {
+          "expression": {
+            "value": "@greater(activity('Count active SQL control rows').output.firstRow.active_control_count, 0)",
+            "type": "Expression"
+          },
+          "ifTrueActivities": [],
+          "ifFalseActivities": [
+            {
+              "name": "Fail when no SQL control rows are active",
+              "type": "Fail",
+              "dependsOn": [],
+              "userProperties": [],
+              "typeProperties": {
+                "message": "No active SQL source rows were found in dbo.pipeline_control. Enable at least one approved source before running this pipeline and publishing Gold analytics.",
+                "errorCode": "SQL_NO_ACTIVE_CONTROL_ROWS"
+              }
+            }
+          ]
+        }
+      },
+      {
         "name": "ForEach item",
         "type": "ForEach",
         "dependsOn": [
           {
-            "activity": "Lookup_SQL_Control",
+            "activity": "Require active SQL control rows",
             "dependencyConditions": [
               "Succeeded"
             ]
