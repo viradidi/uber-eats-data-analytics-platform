@@ -23,7 +23,8 @@ def find_activity(activities, name):
 class SqlIncrementalHardeningContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        foreach = find_activity(PIPELINE["properties"]["activities"], "ForEach item")
+        cls.top = PIPELINE["properties"]["activities"]
+        foreach = find_activity(cls.top, "ForEach item")
         cls.activities = foreach["typeProperties"]["activities"]
         cls.validation = find_activity(cls.activities, "Validate SQL source metadata")
         cls.gate = find_activity(cls.activities, "SQL source metadata is valid")
@@ -32,6 +33,33 @@ class SqlIncrementalHardeningContractTests(unittest.TestCase):
         branch = condition["typeProperties"]["ifTrueActivities"]
         cls.copy = find_activity(branch, "adls data migration_copy1")
         cls.maximum = find_activity(branch, "Get max watermark_copy1")
+
+
+    def test_only_active_control_rows_are_processed(self):
+        lookup = find_activity(self.top, "Lookup_SQL_Control")
+        query = lookup["typeProperties"]["source"]["sqlReaderQuery"]
+        self.assertIn("FROM [dbo].[pipeline_control]", query)
+        self.assertIn("WHERE [is_active] = 1", query)
+        active_field = next(
+            column for column in CONTROL_DATASET["properties"]["schema"]
+            if column["name"] == "is_active"
+        )
+        self.assertEqual("bit", active_field["type"])
+
+    def test_pipeline_fails_when_no_sql_control_rows_are_active(self):
+        count = find_activity(self.top, "Count active SQL control rows")
+        gate = find_activity(self.top, "Require active SQL control rows")
+        loop = find_activity(self.top, "ForEach item")
+        self.assertIn("COUNT(1)", count["typeProperties"]["source"]["sqlReaderQuery"])
+        self.assertIn("WHERE [is_active] = 1", count["typeProperties"]["source"]["sqlReaderQuery"])
+        self.assertIn("active_control_count", gate["typeProperties"]["expression"]["value"])
+        self.assertEqual(
+            ["Require active SQL control rows"],
+            [item["activity"] for item in loop["dependsOn"]],
+        )
+        fail = gate["typeProperties"]["ifFalseActivities"][0]
+        self.assertEqual("Fail", fail["type"])
+        self.assertEqual("SQL_NO_ACTIVE_CONTROL_ROWS", fail["typeProperties"]["errorCode"])
 
     def test_source_metadata_validation_precedes_incremental_count(self):
         names = [activity["name"] for activity in self.activities]
