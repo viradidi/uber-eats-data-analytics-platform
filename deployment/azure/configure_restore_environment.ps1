@@ -192,7 +192,7 @@ $watermarkActivity.typeProperties.url = @{
     type = "Expression"
 }
 $keyActivity.typeProperties.url = @{
-    value = "@concat(pipeline().globalParameters.key_vault_uri, '/secrets/ubereatsapikey?api-version=7.4')"
+    value = "@concat(pipeline().globalParameters.key_vault_uri, '/secrets/ubereatsapikey?api-version=7.5')"
     type = "Expression"
 }
 $keyActivity.policy.secureInput = $true
