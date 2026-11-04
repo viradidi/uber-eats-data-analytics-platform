@@ -100,9 +100,8 @@ Before enabling a source:
 - Confirm that `pipeline_control.last_watermark_value` is deployed as `datetime2(7)`. Apply [the precision migration](../sql/migrations/20261104_widen_pipeline_checkpoint_to_datetime2_7.sql) if the existing column is the earlier `datetime` type; the migration preserves nullability and checkpoint values.
 - Confirm that the ADF SQL metadata preflight resolves the configured schema, table, and watermark column, and that the cursor uses a supported datetime type. The current export accepts `datetime`, `datetime2`, and `smalldatetime` only.
 - Keep schema/table/column names within the simple identifier contract accepted by the preflight; control-table write access remains privileged.
-
 - Restrict write access to the control table.
-- Validate schema, table, and column identifiers against an approved allowlist or metadata registry.
+- Review the preflight as a syntax/existence guard, not a replacement for source-specific authorization or a curated allowlist.
 - Verify the configured table, watermark, and business key exist in the source.
 - Serialize watermark values using the declared SQL type, precision, and timezone semantics.
 - Reject missing or invalid control fields; do not silently substitute a universal sentinel.
@@ -166,7 +165,7 @@ If one of these conditions is unknown, record the limitation, identify an owner,
 
 The committed ADF SQL incremental pipeline export includes a captured upper watermark, a strict lower watermark predicate, success dependencies from copy to the Silver job to checkpoint update, a compare-and-swap-style checkpoint predicate, and pipeline concurrency set to one. It now performs a SQL catalog preflight for `schema_name`, `table_name`, and `watermark_column` before constructing source queries, honors the configured schema, and uses bracket-quoted identifiers after validation. The exported control dataset describes the checkpoint as `datetime2(7)` and a preserving migration script is provided for the physical SQL control table.
 
-The export does not explicitly show a null-safe initial-load branch or an allowlist guard for dynamic SQL identifiers. The strict lower bound does not automatically capture late/equal-watermark changes, and the deterministic landing path does not by itself prove replay-safe writes.
+The export still does not explicitly show a null-safe initial-load branch. The metadata preflight checks that configured source objects exist, restricts identifier syntax, and validates datetime-family watermark types before queries execute; it is not a substitute for control-table access restrictions or a source-specific allowlist. The strict lower bound does not automatically capture late/equal-watermark changes. The pipeline has no configured overlap/CDC/delete policy or source business-key metadata for a replay-safe SQL Silver merge. The landing path does not by itself prove replay-safe writes. The physical datetime2(7) migration is committed but must be applied and verified in the target SQL control database.
 
 The project owner confirms that the completed platform was successfully executed end to end. The Azure resources used during that execution were later decommissioned to control costs. The current repository can be reviewed and its available automated checks can be run, but there is no currently deployed Azure environment in this project to use for a new live acceptance cycle. Do not confuse decommissioning with an incomplete project, or describe historical owner-confirmed execution as a new independent runtime test.
 
