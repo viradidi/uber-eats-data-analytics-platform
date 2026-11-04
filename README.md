@@ -32,7 +32,7 @@ The project also includes engineering controls and supporting documentation for 
 
 1. **Sources:** REST API resources, CSV files, and a relational SQL source.
 2. **Ingestion:** API, CSV, and SQL ingestion patterns are represented by separate Azure Data Factory pipeline exports.
-3. **Configuration:** metadata, datasets, linked services, and integration-runtime definitions support orchestration.
+3. **Configuration:** metadata, datasets, linked services, and a factory-level Bronze root parameter support orchestration.
 4. **Storage:** Azure Data Lake Storage Gen2 provides the lake storage integration and landing area.
 5. **Transformation:** Azure Databricks notebook exports implement Silver-layer processing using Spark.
 6. **Gold analytics:** A downstream Gold notebook builds order-level, daily performance, payment-method, driver, and restaurant-feedback tables.
@@ -100,7 +100,7 @@ See the [recovery and rerun runbook](docs/RECOVERY_AND_RERUN_RUNBOOK.md) and [op
 | `pipeline/` | Azure Data Factory pipeline exports |
 | `dataset/` | Dataset definitions |
 | `linkedService/` | Linked-service configuration exports |
-| `factory/`, `routing/` | Additional Azure Data Factory resource exports and notebook routing |
+| `factory/`, `routing/` | Data Factory factory settings and repository-owned API/CSV notebook dispatchers |
 | `notebooks/` | Databricks notebook exports for Silver and Gold transformations |
 | `src/gold/` | Reusable Spark transformations for Gold analytics |
 | `reports/` | Business analytics SQL reporting pack |
