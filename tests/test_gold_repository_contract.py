@@ -25,7 +25,7 @@ class GoldRepositoryContractTests(unittest.TestCase):
         }
         self.assertEqual(expected, set(dependencies))
         self.assertTrue(all(value == ["Succeeded"] for value in dependencies.values()))
-        self.assertEqual("/Shared/UberEats/Gold_Analytics", gold["typeProperties"]["notebookPath"])
+        self.assertEqual("/Shared/UberEats/notebooks/Gold_Analytics", gold["typeProperties"]["notebookPath"])
         self.assertEqual("ls_api_adb", gold["linkedServiceName"]["referenceName"])
         self.assertEqual("@pipeline().RunId", gold["typeProperties"]["baseParameters"]["pipeline_run_id"]["value"])
 
