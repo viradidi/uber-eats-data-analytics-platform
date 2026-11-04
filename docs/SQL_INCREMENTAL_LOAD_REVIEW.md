@@ -79,9 +79,7 @@ A query that selects rows above a watermark cannot detect hard deletes unless th
 
 ### 4.5 Dynamic SQL identifiers
 
-The exported expressions concatenate `table_name` and `watermark_column` from `pipeline_control` into SQL text.
-
-Treat these fields as privileged configuration. Validate schema, table, and column identifiers against an approved allowlist or metadata registry, restrict control-table write access, and reject unexpected values before query construction. The current export does not show an allowlist guard. Do not populate these identifiers from untrusted input.
+The exported expressions still construct SQL text from control-table metadata, so these fields remain privileged configuration. The new preflight checks that the exact schema, table, and watermark column exist in SQL Server catalog metadata, restricts identifiers to letters/digits/underscores with a letter/underscore first character, and only then permits the count/max/copy queries. Those queries use bracket-quoted identifiers and the configured schema. This is a guard against malformed or injected identifier text, not a replacement for restricting control-table write access or for a deployment-specific allowlist. Do not populate control metadata from untrusted input.
 
 ### 4.6 Watermark typing and SQL construction
 
@@ -150,6 +148,8 @@ For each test, preserve the run ID, input scenario, expected outcome, actual out
 
 The committed pipeline definition contains:
 
+- A source-metadata preflight that verifies the configured schema/table/column, rejects unsupported watermark types and unsafe identifier characters, and runs before any source count/copy query.
+- Schema-aware, bracket-quoted source queries.
 - A strict lower watermark and captured upper watermark for bounded extraction.
 - A dependency from the copy activity to the Databricks Silver job.
 - A dependency from successful Silver processing to checkpoint update.
@@ -157,7 +157,9 @@ The committed pipeline definition contains:
 - Pipeline concurrency set to one.
 - A deterministic landing filename derived from the control ID and watermark interval.
 
-The export does not explicitly provide a null-watermark initial-load branch or dynamic-identifier allowlist. The strict lower bound does not capture late/equal-watermark changes automatically, and the deterministic filename does not prove replay-safe sink behavior.
+The control dataset now declares `last_watermark_value` as `datetime2(7)`. A preserving migration script widens the physical control column from datetime-family types to `datetime2(7)` without resetting its value or changing nullability. The migration must be run in the target SQL environment before deployment; it has not been run against the decommissioned environment.
+
+The export still does not provide a null-watermark initial-load branch. Its strict lower bound does not capture late/equal-watermark changes automatically, and the deterministic landing filename does not prove replay-safe sink behavior. No per-source lookback/CDC/delete strategy is activated because the exported SQL control metadata does not define the business keys and downstream replay semantics needed to make overlap safe.
 
 The project was successfully executed historically according to the project owner. Its Azure resources were later decommissioned to control costs, so a new Azure runtime acceptance cycle is not currently available from the retained environment. Repository inspection and static validation remain possible; they should not be described as a new live Azure test.
 
