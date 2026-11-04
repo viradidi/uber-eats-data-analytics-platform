@@ -13,6 +13,7 @@ MIGRATION = (
 REVIEW = (ROOT / "docs/SQL_INCREMENTAL_LOAD_REVIEW.md").read_text(encoding="utf-8")
 SOURCE_CONTRACT = (ROOT / "docs/INCREMENTAL_SOURCE_CONTRACT.md").read_text(encoding="utf-8")
 PREFLIGHT = (ROOT / "docs/SQL_INCREMENTAL_CONTROL_PREFLIGHT.sql").read_text(encoding="utf-8")
+SOURCE_DIAGNOSTIC = (ROOT / "sql/diagnostics/inspect_source_contract_candidates.sql").read_text(encoding="utf-8")
 
 
 def find_activity(activities, name):
@@ -66,7 +67,8 @@ class SqlIncrementalHardeningContractTests(unittest.TestCase):
         )
         self.assertEqual("bit", active_field["type"])
         self.assertIn("WHERE is_active = 1", PREFLIGHT)
-        self.assertIn("WHERE pc.is_active = 1", PREFLIGHT)
+        self.assertIn("WHERE is_active = 1", PREFLIGHT)
+        self.assertIn("inspect_source_contract_candidates.sql", PREFLIGHT)
 
     def test_duplicate_active_control_metadata_fails_before_loop(self):
         lookup = find_activity(self.top, "Validate active SQL control metadata")
@@ -231,6 +233,33 @@ class SqlIncrementalHardeningContractTests(unittest.TestCase):
             "ROLLBACK TRANSACTION",
         ):
             self.assertIn(token, MIGRATION)
+
+    def test_source_contract_inventory_is_read_only_and_row_scans_are_opt_in(self):
+        for token in (
+            "DECLARE @CollectRowStats bit = 0",
+            "sys.schemas",
+            "sys.tables",
+            "sys.columns",
+            "sys.types",
+            "sys.indexes",
+            "QUOTENAME(",
+            "THROW 51200",
+            "THROW 51201",
+            "filter_definition",
+            "NO_PRIMARY_OR_UNIQUE_INDEX_CANDIDATE",
+        ):
+            self.assertIn(token, SOURCE_DIAGNOSTIC)
+        upper = SOURCE_DIAGNOSTIC.upper()
+        for forbidden in (
+            "UPDATE DBO.",
+            "DELETE FROM DBO.",
+            "MERGE DBO.",
+            "ALTER TABLE DBO.",
+            "DROP TABLE DBO.",
+            "TRUNCATE TABLE DBO.",
+        ):
+            self.assertNotIn(forbidden, upper)
+        self.assertIn("source owners must approve keys and cursor semantics", SOURCE_DIAGNOSTIC)
 
     def test_sql_silver_job_is_external_and_replay_contract_is_not_assumed(self):
         branch = find_activity(self.activities, "rowscount is there")["typeProperties"]["ifTrueActivities"]
