@@ -31,7 +31,8 @@ NOTEBOOKS = {
 
 
 class IncrementalReplayContractTests(unittest.TestCase):
-    def test_api_pipeline_uses_timestamped_landing_files(self):
+    def test_api_pipeline_serializes_runs_and_uses_timestamped_landing_files(self):
+        self.assertEqual(1, API_PIPELINE["properties"].get("concurrency"))
         activities = API_PIPELINE["properties"]["activities"]
         foreach = next(item for item in activities if item.get("name") == "foreach_api_endpoint")
         loop = foreach["typeProperties"]["activities"]
