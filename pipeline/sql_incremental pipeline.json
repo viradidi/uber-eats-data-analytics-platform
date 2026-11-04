@@ -409,7 +409,7 @@
                         {
                           "type": "Query",
                           "text": {
-                            "value": "@concat(\n    'UPDATE dbo.pipeline_control SET last_watermark_value = ''',\n    activity('Get max watermark_copy1').output.firstRow.max_watermark,\n    ''' WHERE control_id = ',\n    item().control_id,\n    ' AND last_watermark_value = ''',\n    item().last_watermark_value,\n    '''; IF @@ROWCOUNT <> 1 THROW 51001, ''Checkpoint conflict: control row changed or was not unique.'', 1;'\n)",
+                            "value": "@concat(\n    'SET XACT_ABORT ON; BEGIN TRY BEGIN TRANSACTION; UPDATE dbo.pipeline_control SET last_watermark_value = ''',\n    activity('Get max watermark_copy1').output.firstRow.max_watermark,\n    ''' WHERE control_id = ',\n    item().control_id,\n    ' AND last_watermark_value = ''',\n    item().last_watermark_value,\n    '''; IF @@ROWCOUNT <> 1 BEGIN ;THROW 51001, ''Checkpoint conflict: control row changed or was not unique.'', 1; END; COMMIT TRANSACTION; END TRY BEGIN CATCH IF XACT_STATE() <> 0 ROLLBACK TRANSACTION; THROW; END CATCH;'\n)",
                             "type": "Expression"
                           }
                         }
