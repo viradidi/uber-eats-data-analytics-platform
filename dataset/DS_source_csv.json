@@ -1,31 +1,33 @@
 {
-	"name": "DS_source_csv",
-	"properties": {
-		"linkedServiceName": {
-			"referenceName": "FileServer1",
-			"type": "LinkedServiceReference"
-		},
-		"parameters": {
-			"p_file_name": {
-				"type": "string"
-			}
-		},
-		"annotations": [],
-		"type": "DelimitedText",
-		"typeProperties": {
-			"location": {
-				"type": "FileServerLocation",
-				"fileName": {
-					"value": "@dataset().p_file_name",
-					"type": "Expression"
-				}
-			},
-			"columnDelimiter": ",",
-			"escapeChar": "\\",
-			"firstRowAsHeader": true,
-			"quoteChar": "\""
-		},
-		"schema": []
-	},
-	"type": "Microsoft.DataFactory/factories/datasets"
+  "name": "DS_source_csv",
+  "properties": {
+    "linkedServiceName": {
+      "referenceName": "AzureDataLakeStorage1",
+      "type": "LinkedServiceReference"
+    },
+    "parameters": {
+      "p_file_name": {
+        "type": "string"
+      }
+    },
+    "annotations": [],
+    "type": "DelimitedText",
+    "typeProperties": {
+      "location": {
+        "type": "AzureBlobFSLocation",
+        "fileName": {
+          "value": "@dataset().p_file_name",
+          "type": "Expression"
+        },
+        "folderPath": "csv_source",
+        "fileSystem": "bronze"
+      },
+      "columnDelimiter": ",",
+      "escapeChar": "\\",
+      "firstRowAsHeader": true,
+      "quoteChar": "\""
+    },
+    "schema": []
+  },
+  "type": "Microsoft.DataFactory/factories/datasets"
 }
