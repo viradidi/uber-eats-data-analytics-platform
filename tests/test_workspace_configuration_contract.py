@@ -51,6 +51,19 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
         requirements = (ROOT / "requirements-test.txt").read_text(encoding="utf-8")
         self.assertRegex(requirements, r"(?m)^pyspark==3\.5\.2$")
 
+    def test_restore_staging_scripts_are_repeatable_and_verify_inputs(self):
+        adls_script = (ROOT / "deployment/azure/stage_bronze_metadata.ps1").read_text(encoding="utf-8")
+        self.assertIn("api_metadata_v2 (2).json", adls_script)
+        self.assertIn("csv_metadata_proper (2).json", adls_script)
+        self.assertIn("az storage fs file upload", adls_script)
+        self.assertIn("--auth-mode login", adls_script)
+        self.assertIn("az storage fs file exists", adls_script)
+
+        csv_script = (ROOT / "deployment/azure/stage_csv_files.ps1").read_text(encoding="utf-8")
+        for file_name in ("drivers.csv", "promotions.csv", "zones.csv"):
+            self.assertIn(file_name, csv_script)
+        self.assertIn("Get-FileHash", csv_script)
+
     def test_csv_dispatcher_does_not_depend_on_a_personal_workspace_path(self):
         source = (ROOT / "routing/dispacher_csv_notebook.py").read_text(encoding="utf-8")
         self.assertNotIn("/Workspace/Users/", source)
