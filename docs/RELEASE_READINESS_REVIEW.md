@@ -41,11 +41,11 @@ The current exports retain historic SQL, ADLS, Key Vault, API, Databricks worksp
 
 The Silver notebook Bronze-root defaults have been corrected to match the ADLS linked service, and the personal workspace path in the CSV dispatcher has been replaced by a configurable relative notebook root. A regression test now checks these contracts. Repeatable PowerShell scripts now stage the API/CSV metadata JSON into ADLS and copy/hash-verify the three CSV fixtures to an already configured share.
 
-The ADF linked-service cluster defaults and local PySpark tests are aligned on Databricks Runtime 16.4 LTS / Spark 3.5.2. The API, CSV, and SQL Jobs may independently pin older runtimes in their own definitions, so their exports must be reviewed before deployment.
+The ADF linked-service cluster defaults and local PySpark tests are aligned on Databricks Runtime 16.4 LTS / Spark 3.5.2. The external SQL Silver Job may independently pin an older runtime in its own definition, so its export must be reviewed before deployment.
 
 ### P0 — Complete the external SQL Silver job review
 
-The committed SQL ADF pipeline passes `table_name` to job `121055824417886`, invokes it after the ADLS copy, and advances the checkpoint after that activity succeeds. The repository does not contain the job configuration or notebook code. The API and CSV branches also invoke external Jobs (IDs `1006977938504729` and `986239993761586`); those job settings must be checked when restoring the workspace, even though their notebook source exports are present.
+The committed SQL ADF pipeline passes `table_name` to job `121055824417886`, invokes it after the ADLS copy, and advances the checkpoint after that activity succeeds. The repository does not contain the SQL job configuration or notebook code. The API and CSV external Job IDs have been removed from the ADF pipelines: those branches now invoke the repository-owned dispatcher notebooks directly with the Bronze root passed from a factory global parameter.
 
 Required before approving SQL replay behavior:
 - Export the job settings/task graph.
