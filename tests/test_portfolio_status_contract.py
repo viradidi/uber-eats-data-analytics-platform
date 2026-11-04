@@ -41,7 +41,9 @@ class PortfolioStatusContractTests(unittest.TestCase):
         release_gate = (ROOT / "docs/PROJECT_RELEASE_GATE.md").read_text(encoding="utf-8")
         for content in (readme, handoff, release_gate):
             self.assertIn("121055824417886", content)
-            self.assertIn("not included in this repository", content.lower())
+        self.assertIn("not included in this repository", readme.lower())
+        self.assertIn("not present in this repository", handoff.lower())
+        self.assertIn("not source-controlled here", release_gate.lower())
         self.assertIn("same bounded interval twice", release_gate)
 
 
