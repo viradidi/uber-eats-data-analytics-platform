@@ -38,7 +38,7 @@ class SqlIncrementalHardeningContractTests(unittest.TestCase):
         self.assertLess(names.index("Validate SQL source metadata"), names.index("SQL source metadata is valid"))
         self.assertLess(names.index("SQL source metadata is valid"), names.index("Check any new data"))
         self.assertEqual(
-            ["SQL source metadata is valid"],
+            ["SQL watermark values are valid"],
             [item["activity"] for item in self.check.get("dependsOn", [])],
         )
         fail_activities = self.gate["typeProperties"]["ifFalseActivities"]
