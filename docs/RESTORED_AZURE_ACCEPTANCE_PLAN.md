@@ -10,7 +10,7 @@ Do not recreate Azure resources just to create portfolio screenshots. Use this p
 
 ## 1. Entry criteria — do not start the full master run until these pass
 
-Start with the [restored Azure configuration inventory](RESTORED_AZURE_CONFIGURATION_INVENTORY.md). It records the historic SQL, ADLS, Key Vault, API, Databricks, File Server, factory, and Integration Runtime bindings that must be confirmed or replaced. In particular, the CSV branch currently depends on a Windows File Server share and a self-hosted Integration Runtime; the checked-in CSV files are not automatically staged to that share.
+Start with the [restored Azure configuration inventory](RESTORED_AZURE_CONFIGURATION_INVENTORY.md). It records the historic SQL, ADLS, Key Vault, API, Databricks and factory bindings that must be confirmed or replaced. The CSV branch has been moved from the retired Windows File Server/self-hosted Integration Runtime to the `bronze/csv_source` folder in ADLS.
 
 ### Repository and release identity
 
@@ -49,7 +49,7 @@ If the job export is unavailable, do not claim SQL Silver replay safety. Do not 
 - [ ] Deploy the `src.gold` package so the Gold notebook can import its transformations.
 - [ ] Import `notebooks/Gold_Analytics` to the exact ADF-linked notebook path `/Shared/UberEats/Gold_Analytics`, or update the ADF export and review the change.
 - [ ] Verify Databricks linked services, workspace URL, job IDs, cluster/runtime configuration, catalog/schema/table permissions, and library dependencies. The committed ADF linked services are aligned on 16.4 LTS and local Spark CI uses PySpark 3.5.2; export all three Jobs and verify their own runtime settings separately.
-- [ ] Verify the restored CSV File Server share and self-hosted Integration Runtime, or approve and implement the documented cloud-source redesign before publishing the CSV pipeline.
+- [ ] Verify the restored ADLS source filesystem and permissions for `bronze/csv_source`.
 - [ ] Import and publish the ADF datasets, linked services, integration runtimes, child pipelines, SQL incremental pipeline, and master pipeline. Resolve all parameter, path, and dependency references before execution.
 
 ## 2. Pre-run input staging
@@ -62,13 +62,13 @@ az account set --subscription <RESTORED_SUBSCRIPTION_ID>
 .\\deployment\\azure\\stage_bronze_metadata.ps1 -StorageAccountName <STORAGE_ACCOUNT_NAME>
 ```
 
-After recreating and authorizing the CSV share and self-hosted Integration Runtime, copy and hash-verify the committed CSV fixtures to the share:
+Stage the three committed CSV source files into the same ADLS filesystem, in the source folder read by `DS_source_csv`:
 
 ```powershell
-.\\deployment\\azure\\stage_csv_files.ps1 -DestinationPath \\\\<HOST>\\UberEats
+.\\deployment\\azure\\stage_csv_files.ps1 -StorageAccountName <STORAGE_ACCOUNT_NAME>
 ```
 
-The second script does not create a Windows share or configure the Integration Runtime. Those are environment setup steps. Keep the ADLS metadata and CSV share inputs separate because the current ADF CSV source still reads from the File Server linked service.
+The script uploads and downloads each file to verify its SHA-256 hash. The CSV source no longer requires a Windows share or self-hosted Integration Runtime.
 
 ## 3. Pre-run smoke tests
 
