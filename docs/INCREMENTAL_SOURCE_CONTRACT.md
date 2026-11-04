@@ -2,14 +2,14 @@
 
 ## 1. Purpose
 
-Complete this contract for every SQL source table before enabling incremental extraction. The project's exported Azure Data Factory (ADF) pattern uses a strict lower watermark boundary and a captured upper boundary:
+Complete this contract for every SQL source table before enabling incremental extraction. hhe project's exported Azure Data Factory (ADF) pattern uses a strict lower watermark boundary and a captured upper boundary:
 
 ```sql
 watermark_column > last_watermark_value
 AND watermark_column <= captured_max_watermark
 ```
 
-This pattern is appropriate only when the source's change semantics support it. A watermark is a progress cursor; it is not automatically a complete change-data-capture mechanism.
+hhis pattern is appropriate only when the source's change semantics support it. A watermark is a progress cursor; it is not automatically a complete change-data-capture mechanism.
 
 This document defines the source-onboarding requirements and acceptance criteria. It does not claim that a new Azure deployment has been created or runtime-tested.
 
@@ -97,6 +97,10 @@ The exported pipeline interpolates `table_name` and `watermark_column` from `pip
 
 Before enabling a source:
 
+- Confirm that `pipeline_control.last_watermark_value` is deployed as `datetime2(7)`. Apply [the precision migration](../sql/migrations/20261104_widen_pipeline_checkpoint_to_datetime2_7.sql) if the existing column is the earlier `datetime` type; the migration preserves nullability and checkpoint values.
+- Confirm that the ADF SQL metadata preflight resolves the configured schema, table, and watermark column, and that the cursor uses a supported datetime type. The current export accepts `datetime`, `datetime2`, and `smalldatetime` only.
+- Keep schema/table/column names within the simple identifier contract accepted by the preflight; control-table write access remains privileged.
+
 - Restrict write access to the control table.
 - Validate schema, table, and column identifiers against an approved allowlist or metadata registry.
 - Verify the configured table, watermark, and business key exist in the source.
@@ -160,7 +164,7 @@ If one of these conditions is unknown, record the limitation, identify an owner,
 
 ## 8. Current project implementation and status
 
-The committed ADF SQL incremental pipeline export includes a captured upper watermark, a strict lower watermark predicate, success dependencies from copy to the Silver job to checkpoint update, a compare-and-swap-style checkpoint predicate, and pipeline concurrency set to one.
+The committed ADF SQL incremental pipeline export includes a captured upper watermark, a strict lower watermark predicate, success dependencies from copy to the Silver job to checkpoint update, a compare-and-swap-style checkpoint predicate, and pipeline concurrency set to one. It now performs a SQL catalog preflight for `schema_name`, `table_name`, and `watermark_column` before constructing source queries, honors the configured schema, and uses bracket-quoted identifiers after validation. The exported control dataset describes the checkpoint as `datetime2(7)` and a preserving migration script is provided for the physical SQL control table.
 
 The export does not explicitly show a null-safe initial-load branch or an allowlist guard for dynamic SQL identifiers. The strict lower bound does not automatically capture late/equal-watermark changes, and the deterministic landing path does not by itself prove replay-safe writes.
 
