@@ -11,6 +11,7 @@ STATUS_FILES = (
     "docs/PORTFOLIO_EVIDENCE.md",
     "docs/PROJECT_RELEASE_GATE.md",
     "docs/RUN_EVIDENCE_RETENTION.md",
+    "architecture/architecture.md",
 )
 
 
