@@ -116,6 +116,22 @@ class GoldTransformationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "blank values"):
             build_gold_outputs(self.silver)
 
+    def test_rejects_unsupported_payment_status(self):
+        self.silver["payments"] = self.silver["payments"].withColumn(
+            "payment_status",
+            F.when(F.col("payment_id") == 9001, F.lit("SETTLED")).otherwise(F.col("payment_status")),
+        )
+        with self.assertRaisesRegex(ValueError, "unsupported payment_status values"):
+            build_gold_outputs(self.silver)
+
+    def test_rejects_unsupported_order_status(self):
+        self.silver["order_status"] = self.silver["order_status"].withColumn(
+            "status",
+            F.when(F.col("status") == "DELIVERED", F.lit("UNKNOWN_STATE")).otherwise(F.col("status")),
+        )
+        with self.assertRaisesRegex(ValueError, "unsupported status values"):
+            build_gold_outputs(self.silver)
+
     def test_rejects_unparseable_payment_timestamp(self):
         self.silver["payments"] = self.silver["payments"].withColumn(
             "payment_timestamp",
