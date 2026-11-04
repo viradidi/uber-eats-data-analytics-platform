@@ -157,9 +157,11 @@ For each test, preserve the input scenario, run IDs, old and captured checkpoint
 
 ## 9. Current implementation status
 
-The committed ADF export declares pipeline concurrency as one and includes a compare-and-swap-style predicate in the checkpoint update, with SQL error 51001 when the update row count is not exactly one. The checkpoint update is ordered after successful copy and Silver processing.
+The committed ADF export declares pipeline concurrency as one and includes a compare-and-swap-style predicate in the checkpoint update, with SQL error 51001 when the update row count is not exactly one. The checkpoint update is ordered after successful copy and Silver processing. Before source extraction, the pipeline now validates the configured schema/table/watermark column against SQL catalog metadata and fails when source rows contain null watermark values. Source queries honor the configured schema and use bracket-quoted identifiers after the preflight.
 
-The exported definition still requires source-specific handling for null starting checkpoints, typed watermark serialization, and dynamic SQL identifier validation. The concurrency setting does not protect against external writers, and checkpoint compare-and-swap does not establish idempotency for landing or Silver writes.
+The control-dataset contract now uses `datetime2(7)`, with a migration script that preserves the physical control column's nullability and existing checkpoint values. The migration must be applied and verified before deploying the updated ADF dataset; it has not been run against the retired Azure SQL environment.
+
+The exported definition still requires source-specific handling for null starting control checkpoints, late/equal watermark visibility, deletes, and replay-safe Silver merges. The concurrency setting does not protect against external writers, and checkpoint compare-and-swap does not establish idempotency for landing or Silver writes.
 
 The project owner confirms that the platform was successfully executed end to end before its Azure resources were decommissioned to control costs. The current repository can be inspected and its available automated checks can be run, but the decommissioned environment is not available for a new live Azure concurrency acceptance cycle. Do not present configuration inspection as a new runtime test.
 
