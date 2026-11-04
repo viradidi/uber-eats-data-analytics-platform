@@ -71,6 +71,10 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
         self.assertEqual("SystemAssigned", factory["identity"]["type"])
         self.assertNotIn("principalId", factory["identity"])
         self.assertNotIn("tenantId", factory["identity"])
+        self.assertEqual(
+            "abfss://bronze@ubereatsrisstorage.dfs.core.windows.net",
+            factory["properties"]["globalParameters"]["bronze_root"]["value"],
+        )
 
     def test_csv_pipeline_reads_staged_adls_source_without_self_hosted_runtime(self):
         source_dataset = json.loads(
@@ -111,6 +115,11 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
         )
         self.assertIn("file_name", job["typeProperties"]["baseParameters"])
         self.assertIn("bronze_root", job["typeProperties"]["baseParameters"])
+        self.assertNotIn("jobId", job["typeProperties"])
+        self.assertEqual(
+            "@pipeline().globalParameters.bronze_root",
+            job["typeProperties"]["baseParameters"]["bronze_root"]["value"],
+        )
         self.assertNotIn("connectVia", source_dataset["properties"])
         self.assertFalse((ROOT / "linkedService/FileServer1.json").exists())
         self.assertFalse((ROOT / "integrationRuntime/integrationRuntime2.json").exists())
@@ -152,6 +161,7 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
             "@pipeline().globalParameters.bronze_root",
             job["typeProperties"]["baseParameters"]["bronze_root"]["value"],
         )
+        self.assertNotIn("jobId", job["typeProperties"])
 
 
     def test_csv_dispatcher_does_not_depend_on_a_personal_workspace_path(self):
