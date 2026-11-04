@@ -91,7 +91,7 @@ Validate these details for every source type. Prefer typed parameters or a store
 
 ### 4.7 Landing-file replay and destination idempotency
 
-The landing filename is derived from the control ID and lower/upper watermark values and ends in `.csv`. The `DelimitedTextWriteSettings.fileExtension` is also `.csv`, so the dynamic dataset filename and sink format agree. This provides a deterministic identity for the same logical extraction interval and avoids assigning a fresh timestamp-based filename on every attempt.
+The landing filename is derived from the control ID and lower/upper watermark values and ends in `.csv`. The `DelimitedTextWriteSettings.fileExtension` is also set to `.csv` for consistency. Because the output dataset supplies an explicit `fileName` through `p_file_name`, Azure Data Factory uses that dataset filename and ignores the sink `fileExtension` setting ([Microsoft documentation](https://learn.microsoft.com/en-us/azure/data-factory/format-delimited-text)). This provides a deterministic identity for the same logical extraction interval and avoids assigning a fresh timestamp-based filename on every attempt.
 
 A deterministic filename does not prove that the ADLS sink safely overwrites an existing object, nor does it guarantee that downstream Silver processing is idempotent. Confirm the sink's write/overwrite behavior and define the downstream merge, deduplication, or replacement strategy before claiming end-to-end idempotency.
 
