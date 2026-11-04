@@ -41,7 +41,7 @@ The current exports retain historic SQL, ADLS, Key Vault, API, Databricks worksp
 
 The Silver notebook Bronze-root defaults have been corrected to match the ADLS linked service, and the personal workspace path in the CSV dispatcher has been replaced by a configurable relative notebook root. A regression test now checks these contracts. Repeatable PowerShell scripts now stage the API/CSV metadata JSON and the three CSV source fixtures into ADLS, verifying remote file hashes. A Databricks workspace import script now imports the canonical notebooks and shared Python modules to the ADF-linked paths.
 
-The ADF linked-service cluster defaults and local PySpark tests are aligned on Databricks Runtime 16.4 LTS / Spark 3.5.2. The external SQL Silver Job may independently pin an older runtime in its own definition, so its export must be reviewed before deployment.
+The ADF linked-service cluster defaults and local PySpark tests are aligned on Databricks Runtime 16.4 LTS / Spark 3.5.2. The external SQL Silver Job may independently pin an older runtime in its own definition, so its export must be reviewed before deployment. The new PowerShell 7 restore-configuration script updates SQL, ADLS, Databricks, Key Vault, API and factory values together without writing secret values.
 
 ### P0 — Complete the external SQL Silver job review
 
@@ -64,7 +64,7 @@ Complete [Incremental Source Contract](INCREMENTAL_SOURCE_CONTRACT.md) for every
 
 ### P1 — Prepare the restored environment
 
-Back up the SQL control database, apply/verify the ADF control-table bootstrap if needed, and apply/verify the `datetime2(7)` migration. Restore the required Azure SQL, ADLS Gen2, ADF, and Databricks resources; configure identities, secrets, network access, and least-privilege permissions. Publish the new ADF definitions, run `deployment/databricks/import_workspace_assets.ps1` to import the notebook set and make `src.gold` and shared utilities available under `/Shared/UberEats/src`.
+Back up the SQL control database, apply/verify the ADF control-table bootstrap if needed, and apply/verify the `datetime2(7)` migration. Restore the required Azure SQL, ADLS Gen2, ADF, and Databricks resources; configure identities, secrets, network access, and least-privilege permissions. Run `deployment/azure/configure_restore_environment.ps1` with approved endpoints, review the local diff, publish the configured ADF definitions, and run `deployment/databricks/import_workspace_assets.ps1` to import the notebook set and make `src.gold` and shared utilities available under `/Shared/UberEats/src`.
 
 ### P2 — Run one consolidated acceptance cycle
 
