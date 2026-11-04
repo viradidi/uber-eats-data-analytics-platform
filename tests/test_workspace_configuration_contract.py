@@ -140,7 +140,10 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
         self.assertLess(script.index("Invoke-AzRestMethod -Path $factoryPath"), script.index("$linkedServiceFiles ="))
         self.assertLess(script.index("$linkedServiceFiles ="), script.index("$datasetFiles ="))
         self.assertLess(script.index("$datasetFiles ="), script.index("$pipelineOrder ="))
-        self.assertIn("Invoke-AdfGet -RelativePath \"pipelines/uber_eats_master\"", script)
+                self.assertIn("factoryResponse = Invoke-AzRestMethod -Path $factoryPath -Method GET", script)
+                self.assertIn('Invoke-AdfGet -RelativePath "linkedservices/$([uri]::EscapeDataString($resource.name))"', script)
+                self.assertIn('Invoke-AdfGet -RelativePath "datasets/$([uri]::EscapeDataString($resource.name))"', script)
+                self.assertIn('Invoke-AdfGet -RelativePath "pipelines/$([uri]::EscapeDataString($resource.name))"', script)
     def test_external_sql_job_export_script_collects_settings_and_workspace_sources_safely(self):
         script = (
             ROOT / "deployment/databricks/export_sql_silver_job.ps1"
