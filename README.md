@@ -64,7 +64,7 @@ The repository contains separate ingestion patterns for API resources, CSV files
 
 ### Metadata-driven orchestration
 
-Azure Data Factory exports define pipeline, dataset, linked-service, and integration-runtime resources. Metadata separates source and destination configuration from parts of the pipeline logic and supports reusable ingestion patterns.
+Azure Data Factory exports define pipelines, datasets, linked services, and factory-level configuration. API and CSV processing invoke repository-owned Databricks notebook dispatchers directly; only SQL Silver retains an external Databricks Job dependency.
 
 ### Incremental extraction and checkpoint control
 
@@ -245,6 +245,7 @@ Historical end-to-end validation is the project owner's reported completion stat
 - [ADF control-table bootstrap migration](sql/migrations/20261104_create_ingestion_control_tables.sql)
 - [ADLS metadata and CSV staging scripts](deployment/azure/)
 - [Databricks workspace import script](deployment/databricks/import_workspace_assets.ps1)
+- [Restored environment configuration script](deployment/azure/configure_restore_environment.ps1)
 
 ---
 
