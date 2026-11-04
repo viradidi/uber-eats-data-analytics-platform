@@ -92,7 +92,7 @@ Two scripts now reduce manual file preparation:
 - `deployment/azure/stage_bronze_metadata.ps1` creates the ADLS filesystem/metadata directory if needed, uploads the two metadata files with Azure CLI login authentication, and verifies the remote files.
 - `deployment/azure/stage_csv_files.ps1` copies `drivers.csv`, `promotions.csv`, and `zones.csv` to an already accessible destination and verifies each copy by SHA-256.
 
-Neither script creates the Windows share, installs/registers a self-hosted Integration Runtime, or configures Azure permissions. Those remain environment setup steps.
+Neither script configures Azure role assignments or SQL/Databricks permissions; those must be applied to the restored identities.
 
 ## 8. Pre-run configuration checklist
 
@@ -102,7 +102,7 @@ Neither script creates the Windows share, installs/registers a self-hosted Integ
 - [ ] Apply `20261104_create_ingestion_control_tables.sql` and verify both control tables; confirm the four API endpoints are seeded without resetting existing state.
 - [ ] Add only approved SQL source-control rows with verified business keys/cursors and non-null starting checkpoints; complete each SQL source contract.
 - [ ] Confirm ADLS account, `bronze` filesystem, metadata files and landing folders.
-- [ ] Confirm the CSV File Server/SHIR path or approve the ADLS-source redesign.
+- [ ] Run the CSV staging script and verify all three source files exist in `bronze/csv_source`.
 - [ ] Confirm API endpoint and Key Vault secret reference.
 - [ ] Confirm Databricks workspace, managed identity, catalog and schemas.
 - [ ] Export/inspect all three Databricks Jobs and update job IDs after any recreation.
