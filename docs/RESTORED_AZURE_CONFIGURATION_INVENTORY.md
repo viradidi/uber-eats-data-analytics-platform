@@ -45,7 +45,7 @@ The ADF factory export now carries a `bronze_root` global parameter consumed by 
 
 The API and CSV branches no longer depend on external Databricks Jobs. Their ADF activities invoke the repository-owned dispatchers directly through `DatabricksNotebook` activities, and the dispatchers invoke the correct Silver notebook from the relative `../notebooks` path. Both receive `bronze_root` from the Data Factory global parameter.
 
-The only remaining external ADF Job reference is SQL:
+The only remaining external ADF Job reference is SQL. Use deployment/databricks/export_sql_silver_job.ps1 to collect its job settings and workspace-backed notebook/script sources into a local review folder before sharing a sanitized package:
 
 | ADF activity | Job ID | Required action |
 |---|---:|---|
