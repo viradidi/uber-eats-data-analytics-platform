@@ -47,7 +47,7 @@ These are redeployment acceptance gates, not a request to recreate cloud resourc
 
 ## Portfolio claims
 
-Safe description: **an Azure-oriented data engineering platform integrating API, CSV, and SQL sources through ADF, ADLS Gen2, and Databricks/PySpark. The original ingestion/Silver implementation ran successfully in its original environment. A newer Gold analytics extension adds order, daily KPI, payment, driver, and restaurant-feedback datasets with local Spark tests and SQL reporting; it awaits a fresh Azure rerun.**
+Safe description: **an Azure-oriented data engineering platform integrating API, CSV, and SQL sources through ADF, ADLS Gen2, and Databricks/PySpark. The original ingestion/Silver implementation ran successfully in its original environment. A newer Gold analytics extension adds order, daily KPI, payment, driver, and restaurant-feedback datasets with local Spark tests that pass in GitHub Actions, plus SQL reporting. The Gold deployment and master ADF orchestration await a fresh Azure rerun.**
 
 Do not claim a currently deployed service, independent production certification, guaranteed exactly-once processing, or unmeasured performance outcomes.
 
