@@ -2,10 +2,12 @@
 dbutils.widgets.text("endpoint_name", "")
 dbutils.widgets.text("table_name", "")
 dbutils.widgets.text("notebook_root", "../notebooks", "Silver notebook folder")
+dbutils.widgets.text("bronze_root", "abfss://bronze@ubereatsrisstorage.dfs.core.windows.net", "Bronze storage root")
 
 endpoint_name = dbutils.widgets.get("endpoint_name").strip().lower()
 legacy_table_name = dbutils.widgets.get("table_name").strip().lower()
 notebook_root = dbutils.widgets.get("notebook_root").strip().rstrip("/")
+bronze_root = dbutils.widgets.get("bronze_root").strip().rstrip("/")
 
 # ADF supplies endpoint_name. table_name remains as a compatibility alias for
 # manually triggered historical job definitions.
@@ -24,4 +26,8 @@ if resource_name not in notebook_map:
 target_notebook = notebook_map[resource_name]
 print(f"API endpoint received: {resource_name}")
 print(f"Dispatching to: {notebook_root}/{target_notebook}")
-dbutils.notebook.run(f"{notebook_root}/{target_notebook}", 0)
+dbutils.notebook.run(
+    f"{notebook_root}/{target_notebook}",
+    0,
+    {"bronze_root": bronze_root},
+)
