@@ -146,8 +146,12 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
             ROOT / "deployment/databricks/import_workspace_assets.ps1"
         ).read_text(encoding="utf-8")
         for token in (
-            "databricks workspace import-dir",
-            "databricks workspace import $target --file $source --format RAW --overwrite",
+            "workspace",
+            "\"SOURCE\"",
+            "\"JUPYTER\"",
+            "\"RAW\"",
+            "\"--language\"",
+            "\"PYTHON\"",
             "Silver_Deliveries.py",
             "Silver_Drivers.py",
             "Silver_Order_Status.py",
@@ -162,6 +166,9 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
             "src/common/incremental.py",
             "src/gold/transformations.py",
             "$WorkspaceRoot = \"/Shared/UberEats\"",
+            "Import-Notebook",
+            "Import-PythonWorkspaceFile",
+            "Silver_Zones.ipynb",
         ):
             with self.subTest(token=token):
                 self.assertIn(token, script)
