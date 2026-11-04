@@ -141,6 +141,37 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
         self.assertLess(script.index("$linkedServiceFiles ="), script.index("$datasetFiles ="))
         self.assertLess(script.index("$datasetFiles ="), script.index("$pipelineOrder ="))
         self.assertIn("Invoke-AdfGet -RelativePath \"pipelines/uber_eats_master\"", script)
+    def test_external_sql_job_export_script_collects_settings_and_workspace_sources_safely(self):
+        script = (
+            ROOT / "deployment/databricks/export_sql_silver_job.ps1"
+        ).read_text(encoding="utf-8")
+        for token in (
+            "JobId = 121055824417886",
+            'jobs", "get"',
+            "--page-token",
+            "workspace", "get-status",
+            "workspace", "export",
+            "--format",
+            "RAW",
+            "SOURCE",
+            "secret_value",
+            "AccountKey",
+            "SharedAccessSignature",
+            "potential_secret_matches",
+            "external_source_references",
+            "child_job_references",
+            "Sanitized job definition",
+            "This script does not run, edit, or reset the Databricks Job.",
+        ):
+            with self.subTest(token=token):
+                self.assertIn(token, script)
+
+        self.assertNotIn("jobs run-now", script)
+        self.assertNotIn("jobs reset", script)
+        self.assertIn("export_sql_silver_job.ps1", (
+            ROOT / "docs/EXTERNAL_SQL_SILVER_JOB_REVIEW.md"
+        ).read_text(encoding="utf-8"))
+
     def test_workspace_import_script_deploys_exact_adf_notebook_paths_and_src_modules(self):
         script = (
             ROOT / "deployment/databricks/import_workspace_assets.ps1"
