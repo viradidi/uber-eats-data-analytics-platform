@@ -47,8 +47,9 @@ If the job export is unavailable, do not claim SQL Silver replay safety. Do not 
 - [ ] Deploy and verify the API source endpoint and its authentication setting.
 - [ ] Deploy the Silver notebooks and repository-owned shared Spark utilities required by those notebooks.
 - [ ] Deploy the `src.gold` package so the Gold notebook can import its transformations.
-- [ ] Import `notebooks/Gold_Analytics` to the exact ADF-linked notebook path `/Shared/UberEats/Gold_Analytics`, or update the ADF export and review the change.
-- [ ] Verify Databricks linked services, workspace URL, the SQL Silver job ID, cluster/runtime configuration, catalog/schema/table permissions, and library dependencies. API and CSV now invoke repository-owned notebooks directly; only the SQL Silver job remains external. The committed ADF linked services are aligned on 16.4 LTS and local Spark CI uses PySpark 3.5.2.
+- [ ] Authenticate the Databricks CLI to the restored workspace and run `deployment/databricks/import_workspace_assets.ps1`; it imports the canonical Silver/Gold notebooks, both dispatchers, and the shared `src` modules to the exact workspace paths used by ADF.
+- [ ] Verify Databricks linked services, workspace URL, the SQL Silver job ID, cluster/runtime configuration, catalog/schema/table permissions, and library dependencies. API and CSV now invoke repository-owned notebooks directly; only the SQL Silver job remains external.
+- [ ] Confirm `src` modules can be imported from `/Workspace/Shared/UberEats` and that the Silver/Gold notebooks receive the factory-level `bronze_root` parameter. The committed ADF linked services are aligned on 16.4 LTS and local Spark CI uses PySpark 3.5.2.
 - [ ] Verify the restored ADLS source filesystem and permissions for `bronze/csv_source`.
 - [ ] Import and publish the ADF datasets, linked services, child pipelines, SQL incremental pipeline, and master pipeline. Resolve all parameter, path, and dependency references before execution.
 
@@ -69,6 +70,15 @@ Stage the three committed CSV source files into the same ADLS filesystem, in the
 ```
 
 The script uploads and downloads each file to verify its SHA-256 hash. The CSV source no longer requires a Windows share or self-hosted Integration Runtime.
+
+Authenticate and import Databricks workspace assets (from the repository root) after selecting the intended workspace and CLI profile:
+
+```powershell
+databricks auth login <WORKSPACE_HOST> --profile uber-eats-restore
+.\\deployment\\databricks\\import_workspace_assets.ps1 -WorkspaceHost <WORKSPACE_HOST> -ProfileName uber-eats-restore
+```
+
+The import script verifies the notebook and module paths expected by the committed ADF definitions. It does not create SQL source tables or configure the external SQL Silver Job.
 
 ## 3. Pre-run smoke tests
 
