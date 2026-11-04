@@ -3,6 +3,7 @@ from pyspark.sql.functions import *
 from pyspark.sql.types  import *
 from src.common.spark_utils import standardize_columns
 from src.common.quality_events import log_pipeline_failure, quarantine_rejected_rows
+from src.common.incremental import deduplicate_replayed_snapshot_rows
 
 
 # COMMAND ----------
@@ -32,6 +33,9 @@ try:
         .load(f"{BRONZE_ROOT}/api/ratings/")
     )
     df_ratings_table= df_ratings.select(explode("data").alias("ratings")).select("ratings.*")
+    df_ratings_table = deduplicate_replayed_snapshot_rows(
+        df_ratings_table, key_columns=["rating_id"], version_column="updated_at", dataset_name="ratings"
+    )
 except Exception as exc:
     log_pipeline_failure(spark, "ratings", "source_read", exc)
     raise
@@ -42,7 +46,7 @@ print("ratings.source_rows=" + str(df_ratings_table_row_count))
 if df_ratings_table_row_count == 0:
     fail_validation("API Silver input is empty; refusing to overwrite the existing target table")
 # Fail before publishing if the API payload has schema, required-field, or key-quality defects.
-required_columns = ["rating_id","order_id","customer_id","restaurant_id","rating","created_at"]
+required_columns = ["rating_id","order_id","customer_id","restaurant_id","rating","created_at","updated_at"]
 missing_columns = sorted(set(required_columns) - set(df_ratings_table.columns))
 if missing_columns:
     fail_validation(f"ratings API payload is missing required columns: {missing_columns}")
