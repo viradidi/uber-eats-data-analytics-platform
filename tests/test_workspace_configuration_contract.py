@@ -51,6 +51,38 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
         requirements = (ROOT / "requirements-test.txt").read_text(encoding="utf-8")
         self.assertRegex(requirements, r"(?m)^pyspark==3\.5\.2$")
 
+    def test_restore_configuration_script_updates_all_environment_bound_adf_services(self):
+        script = (
+            ROOT / "deployment/azure/configure_restore_environment.ps1"
+        ).read_text(encoding="utf-8")
+        for token in (
+            "StorageAccountName",
+            "SourceSqlServerFqdn",
+            "SourceSqlDatabase",
+            "ControlSqlServerFqdn",
+            "ControlSqlDatabase",
+            "DatabricksWorkspaceHost",
+            "DatabricksWorkspaceResourceId",
+            "KeyVaultUri",
+            "ApiBaseUrl",
+            "linkedService/AzureDataLakeStorage1.json",
+            "linkedService/ls_sql_database.json",
+            "linkedService/ls_sql_control.json",
+            "linkedService/LS_db_silver.json",
+            "linkedService/ls_api_adb.json",
+            "linkedService/ls_silver_csv.json",
+            "linkedService/LS_restapi.json",
+            "linkedService/LS_AzureKeyVault.json",
+            "pipeline/api_src_inital load.json",
+            "pipeline().globalParameters.api_base_url",
+            "pipeline().globalParameters.key_vault_uri",
+            "secureOutput = $true",
+            "secretReference.Remove(\"secretVersion\")",
+            "git diff",
+        ):
+            with self.subTest(token=token):
+                self.assertIn(token, script)
+
     def test_restore_staging_scripts_are_repeatable_and_verify_inputs(self):
         adls_script = (ROOT / "deployment/azure/stage_bronze_metadata.ps1").read_text(encoding="utf-8")
         self.assertIn("api_metadata_v2 (2).json", adls_script)
