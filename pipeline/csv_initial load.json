@@ -126,7 +126,7 @@
             },
             {
               "name": "silver_csv_job_copy1",
-              "type": "DatabricksJob",
+              "type": "DatabricksNotebook",
               "dependsOn": [
                 {
                   "activity": "adls csv migration_copy1",
@@ -144,10 +144,15 @@
               },
               "userProperties": [],
               "typeProperties": {
-                "jobId": "986239993761586",
-                "jobParameters": {
+                "notebookPath": "/Shared/UberEats/routing/dispacher_csv_notebook",
+                "baseParameters": {
                   "file_name": {
                     "value": "@item().file_name",
+                    "type": "Expression"
+                  },
+                  "notebook_root": "../notebooks",
+                  "bronze_root": {
+                    "value": "@pipeline().globalParameters.bronze_root",
                     "type": "Expression"
                   }
                 }
