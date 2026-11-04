@@ -37,7 +37,7 @@ A restore-specific configuration inventory is now available at [RESTORED_AZURE_C
 
 ### P0 — Restore environment-bound integrations
 
-The current exports retain historic SQL, ADLS, Key Vault, API, Databricks workspace, and factory references. The CSV pipeline previously read from a Windows share through a self-hosted Integration Runtime. I moved the source to the ADLS `bronze/csv_source` folder, changed its source dataset and copy read settings, removed the retired File Server/Integration Runtime exports, and added a script that uploads and hash-verifies the three committed CSV files. The restored environment now only needs ADLS permissions and the staging script for this branch.
+The current exports retain historic SQL, ADLS, Key Vault, API, Databricks workspace, and factory references. The CSV pipeline previously read from a Windows share through a self-hosted Integration Runtime. The source now reads from the ADLS `bronze/csv_source` folder. Its source dataset and copy read settings were updated, the retired File Server/Integration Runtime exports were removed, and a script now uploads and hash-verifies the three committed CSV files. The restored environment now only needs ADLS permissions and the staging script for this branch.
 
 The Silver notebook Bronze-root defaults have been corrected to match the ADLS linked service, and the personal workspace path in the CSV dispatcher has been replaced by a configurable relative notebook root. A regression test now checks these contracts. Repeatable PowerShell scripts now stage the API/CSV metadata JSON and the three CSV source fixtures into ADLS, verifying remote file hashes. A Databricks workspace import script now imports the canonical notebooks and shared Python modules to the ADF-linked paths.
 
