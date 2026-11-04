@@ -4,7 +4,7 @@
 
 This guide helps a hiring manager or technical reviewer inspect the engineering work in this repository and understand what was validated.
 
-The project owner confirms that the original API/CSV/SQL ingestion and Silver platform ran successfully end to end in its original Azure environment. Azure resources were later decommissioned to control costs. The Gold analytics layer and master ADF pipeline are newer repository additions that await a fresh Azure rerun. The local-mode PySpark suite has passed in GitHub Actions (91 tests in [run 41845381270](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41845381270)); this is repository CI evidence against synthetic fixtures, not a live Databricks or ADF execution. Do not imply that the newer cloud scope has already executed in Azure.
+The project owner confirms that the original API/CSV/SQL ingestion and Silver platform ran successfully end to end in its original Azure environment. Azure resources were later decommissioned to control costs. The Gold analytics layer and master ADF pipeline are newer repository additions that await a fresh Azure rerun. The local-mode PySpark suite has passed in GitHub Actions (94 tests in [run 41845381270](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41846175735)); this is repository CI evidence against synthetic fixtures, not a live Databricks or ADF execution. Do not imply that the newer cloud scope has already executed in Azure.
 
 Keep three kinds of evidence distinct:
 
