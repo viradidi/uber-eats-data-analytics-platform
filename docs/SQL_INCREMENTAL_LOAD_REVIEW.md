@@ -26,15 +26,17 @@ The upper bound therefore makes the extraction window finite and repeatable. It 
 The exported pipeline defines this dependency chain inside the per-control-row processing flow:
 
 1. **Read control configuration** — `Lookup_SQL_Control` reads rows from `pipeline_control`.
-2. **Check for new data** — `Check any new data` counts source rows whose watermark is greater than the stored lower watermark.
-3. **Capture the upper bound** — when the check finds rows, `Get max watermark_copy1` retrieves the source's current maximum watermark.
-4. **Copy the bounded interval** — `adls data migration_copy1` copies rows above the stored watermark and at or below the captured maximum to the configured ADLS destination.
-5. **Run Silver processing** — `Job_Silver_copy1` starts the configured Databricks job after the copy succeeds.
-6. **Commit the checkpoint** — `update watermark_copy1` updates `pipeline_control.last_watermark_value` to the captured maximum only after the Silver job succeeds.
+2. **Validate source metadata** — `Validate SQL source metadata` checks that the configured `schema_name`, `table_name`, and `watermark_column` exist, use a supported datetime type, and satisfy the simple identifier contract.
+3. **Reject null source cursors** — `Validate SQL watermark nulls` fails the run if any source row has a null value in the configured watermark column.
+4. **Check for new data** — `Check any new data` counts source rows whose watermark is greater than the stored lower watermark.
+5. **Capture the upper bound** — when the check finds rows, `Get max watermark_copy1` retrieves the source's current maximum watermark.
+6. **Copy the bounded interval** — `adls data migration_copy1` copies rows above the stored watermark and at or below the captured maximum to the configured ADLS destination.
+7. **Run Silver processing** — `Job_Silver_copy1` starts the configured Databricks job after the copy succeeds.
+8. **Commit the checkpoint** — `update watermark_copy1` updates `pipeline_control.last_watermark_value` to the captured maximum only after the Silver job succeeds.
 
 The checkpoint update also compares the current control-row watermark with the prior value read by the run. It raises SQL error 51001 if the update affects anything other than one row. The exported pipeline declares `concurrency: 1`, which serializes runs of this pipeline when deployed and honored by ADF.
 
-Before the incremental count query, the updated export now validates `schema_name`, `table_name`, and `watermark_column` against SQL Server catalog metadata. It requires an existing table/column, a supported datetime watermark type, and simple identifier characters. The count, maximum-watermark, and copy queries now honor `schema_name` and bracket-quote the validated identifiers instead of hard-coding `dbo`.
+The source count, maximum-watermark, and copy queries honor `schema_name` and bracket-quote identifiers after the preflight. The preflight compares metadata values as escaped SQL string literals and only accepts simple identifier characters before those values are used as query identifiers.
 
 This ordering prevents the checkpoint from advancing merely because extraction started or the copy succeeded while the required Silver job subsequently failed. The compare-and-swap predicate also detects a stale control-row value at commit time.
 
