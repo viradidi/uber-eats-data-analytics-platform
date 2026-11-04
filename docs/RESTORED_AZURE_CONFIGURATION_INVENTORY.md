@@ -53,7 +53,7 @@ The only remaining external ADF Job reference is SQL:
 
 If that SQL Job is recreated, update the ADF SQL pipeline job ID and re-run the repository tests before publishing.
 
-The Gold notebook is invoked at `/Shared/UberEats/Gold_Analytics`. The [Databricks workspace import script](../deployment/databricks/import_workspace_assets.ps1) imports the notebook to `/Shared/UberEats/notebooks/Gold_Analytics` and places the `src.gold` package under `/Shared/UberEats/src`. Confirm the default catalog `ubereats_databricks1` and `silver`/`gold` schemas exist or override the notebook widgets with the approved catalog/schema names.
+The Gold notebook is invoked at `/Shared/UberEats/notebooks/Gold_Analytics`. The [Databricks workspace import script](../deployment/databricks/import_workspace_assets.ps1) imports the notebook to that exact path and places the `src.gold` package under `/Shared/UberEats/src`. Confirm the default catalog `ubereats_databricks1` and `silver`/`gold` schemas exist or override the notebook widgets with the approved catalog/schema names.
 
 ## 4. API and Key Vault
 
@@ -85,7 +85,30 @@ The legacy File Server linked service and self-hosted Integration Runtime export
 
 The repository contains a factory export named `ubereatssri` in `eastus`. The export now declares only `identity.type = SystemAssigned`; historic read-only `principalId` and `tenantId` values have been removed because the restored factory will receive new identity identifiers. Confirm the actual restored Data Factory name, resource group, and region. Reapply role assignments and SQL/Key Vault/ADLS permissions to the new principal ID after creation. The CSV source no longer requires an Integration Runtime.
 
-## 7. Repeatable source-file staging
+## 7. One-step environment configuration
+
+Run the PowerShell 7 script deployment/azure/configure_restore_environment.ps1 from a clean repository clone to replace historic environment references in the local ADF exports. It accepts the storage account, source SQL and control SQL endpoints, Databricks workspace host/resource ID, Key Vault URI, API base URL, factory name/region and cluster node type. It updates linked services, factory global parameters, the API watermark and Key Vault Web activities, removes the pinned historical API secret version, and changes notebook Bronze defaults to match the restored storage account.
+
+Example (replace every placeholder with the actual restored resource values):
+
+```powershell
+.\deployment\azure\configure_restore_environment.ps1 `
+  -StorageAccountName "<storage-account>" `
+  -SourceSqlServerFqdn "<source-server>.database.windows.net" `
+  -SourceSqlDatabase "<source-database>" `
+  -ControlSqlServerFqdn "<control-server>.database.windows.net" `
+  -ControlSqlDatabase "<control-database>" `
+  -DatabricksWorkspaceHost "https://<workspace-host>.azuredatabricks.net" `
+  -DatabricksWorkspaceResourceId "/subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.Databricks/workspaces/<workspace-name>" `
+  -KeyVaultUri "https://<vault-name>.vault.azure.net" `
+  -ApiBaseUrl "https://<api-host>" `
+  -DataFactoryName "<factory-name>" `
+  -AzureRegion "<azure-region>"
+```
+
+It modifies local JSON/notebook configuration files and never accepts secret values. Review the resulting git diff before publishing. Create the ubereatsapikey value in Key Vault and grant the new Data Factory managed identity access separately.
+
+## 8. Repeatable source-file staging
 
 Two scripts now reduce manual file preparation:
 
@@ -94,9 +117,10 @@ Two scripts now reduce manual file preparation:
 
 Neither staging script configures Azure role assignments or SQL/Databricks permissions; those must be applied to the restored identities. Use `deployment/databricks/import_workspace_assets.ps1` to import notebooks and shared Python modules after authenticating the Databricks CLI.
 
-## 8. Pre-run configuration checklist
+## 9. Pre-run configuration checklist
 
 - [ ] Confirm Azure subscription, resource group, region, budget and resource names.
+- [ ] Run configure_restore_environment.ps1 with approved endpoint values and review the resulting local diff.
 - [ ] Confirm SQL source/control server and database; restore source/control tables.
 - [ ] Apply `20261104_create_ingestion_control_tables.sql` and verify both control tables; confirm the four API endpoints are seeded without resetting existing state.
 - [ ] Apply and verify the checkpoint precision migration after the control table exists.
