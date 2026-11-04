@@ -54,7 +54,7 @@ function Protect-JobConfiguration {
     if ($Value -is [System.Collections.IDictionary]) {
         $protected = [ordered]@{}
         foreach ($key in $Value.Keys) {
-            if ([string]$key -match "(?i)(password|(^|[._-])token$|access[._-]?token|refresh[._-]?token|sas[._-]?token|api[._-]?key|client[._-]?secret|secret_value|(^|[._-])secret$|(^|[._-])key$|storage[._-]?key|private[._-]?key|authorization|connection[._-]?string|credential)") {
+            if ([string]$key -match "(?i)(password|(^|[._-])token$|access[._-]?token|refresh[._-]?token|sas[._-]?token|api[._-]?key|account[._-]?key|shared[._-]?access[._-]?key|storage[._-]?key|client[._-]?secret|secret_value|(^|[._-])secret$|(^|[._-])key$|storage[._-]?key|private[._-]?key|authorization|connection[._-]?string|credential)") {
                 $protected[$key] = "<REDACTED>"
             }
             else {
