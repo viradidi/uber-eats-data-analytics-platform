@@ -152,7 +152,7 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements-test.txt
 ```
 
-The test requirements include the API dependencies and PySpark 3.4.1. Java 17 is required for local Spark tests. Use requirements.txt alone when you only need to run the mock API.
+The test requirements include the API dependencies and PySpark 3.5.2. Java 17 is required for local Spark tests. Use requirements.txt alone when you only need to run the mock API.
 
 ### Configure the API key
 
@@ -241,6 +241,7 @@ Historical end-to-end validation is the project owner's reported completion stat
 - [Consolidated release-readiness review](docs/RELEASE_READINESS_REVIEW.md)
 - [External SQL Silver job review](docs/EXTERNAL_SQL_SILVER_JOB_REVIEW.md)
 - [Restored Azure acceptance plan](docs/RESTORED_AZURE_ACCEPTANCE_PLAN.md)
+- [Restored Azure configuration inventory](docs/RESTORED_AZURE_CONFIGURATION_INVENTORY.md)
 
 ---
 
