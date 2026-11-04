@@ -16,7 +16,7 @@ STATUS_FILES = (
 
 
 class PortfolioStatusContractTests(unittest.TestCase):
-    def test_status_documents_point_to_the_verified_90_test_ci_run(self):
+    def test_status_documents_point_to_the_verified_91_test_ci_run(self):
         for relative_path in STATUS_FILES:
             with self.subTest(path=relative_path):
                 content = (ROOT / relative_path).read_text(encoding="utf-8")
