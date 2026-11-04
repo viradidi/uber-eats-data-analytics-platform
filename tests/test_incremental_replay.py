@@ -95,7 +95,7 @@ class IncrementalReplayTests(unittest.TestCase):
     def test_null_keys_and_invalid_versions_are_rejected(self):
         null_key = self.spark.createDataFrame(
             [(None, "O1", 10.0, "2026-09-01 10:00:00")],
-            ["payment_id", "order_id", "amount", "updated_at"],
+            "payment_id STRING, order_id STRING, amount DOUBLE, updated_at STRING",
         )
         with self.assertRaisesRegex(ValueError, "null business keys"):
             deduplicate_replayed_snapshot_rows(
