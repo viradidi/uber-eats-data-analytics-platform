@@ -26,7 +26,9 @@ That CI result is not a live ADF, SQL Server, ADLS, or Databricks execution. The
 | SQL Silver destination behavior | ADF calls external job ID `121055824417886`; its actual settings and notebook/source are absent from this repository | **Open blocker** |
 | Gold transformation logic | Shared `src/gold` code, five output contracts, local PySpark fixtures/tests, Gold notebook export, business reporting SQL | Local Spark tests passed; workspace publication not proven |
 | Master orchestration | Master ADF export waits for API, CSV, and SQL child pipelines before Gold publication | Static dependency checks passed; ADF execution pending |
-| Notebook export consistency | Six paired Databricks SOURCE `.py` and Jupyter `.ipynb` exports match cell-for-cell; CI enforces parity and importer deploys canonical `.py` files | Repository-tested |\n| SQL source discovery | Read-only source-database catalog inventory reports cursor type/precision and primary/unique-index key candidates; optional table scans are disabled by default | Repository artifact added; execution awaits restored SQL source access |\n| Documentation and recovery | Source contracts, preflight SQL, runbooks, reconciliation queries, evidence retention, release gate | Repository reviewed |
+| Notebook export consistency | Six paired Databricks SOURCE `.py` and Jupyter `.ipynb` exports match cell-for-cell; CI enforces parity and importer deploys canonical `.py` files | Repository-tested |
+| SQL source discovery | Read-only source-database catalog inventory reports cursor type/precision and primary/unique-index key candidates; optional table scans are disabled by default | Repository artifact added; execution awaits restored SQL source access |
+| Documentation and recovery | Source contracts, preflight SQL, runbooks, reconciliation queries, evidence retention, release gate | Repository reviewed |
 | CI | Current verified run records 121 tests passing | Passed |
 
 The 121-test run verifies the test suite and repository contracts on the recorded commit. It does not establish that external Databricks job ID `121055824417886` is replay-safe.

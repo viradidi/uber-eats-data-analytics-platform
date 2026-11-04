@@ -20,7 +20,9 @@ This is owner-reported execution history, not independent third-party certificat
 - Configurable Bronze roots, repository-owned shared Spark utilities, five Gold analytics outputs, and a read-only business reporting SQL pack.
 - Data-quality checks, API contract tests, local PySpark transformation tests, static ADF/recovery contract tests, repository artifact integrity tests, and GitHub Actions validation.
 - Quarantine, quality metrics, reconciliation helpers, failure-event logging, operational SQL reports, and rerun/recovery guidance represented in the repository.
-- Architecture, source contracts, concurrency contract, limitations, and portfolio evidence documentation.\n- Cell-level parity between six paired Databricks SOURCE and Jupyter notebook exports, with CI enforcing canonical `.py` deployment sources.\n- Explicit source/control SQL linked-service separation and a read-only source database inventory for cursor and unique-key candidates.
+- Architecture, source contracts, concurrency contract, limitations, and portfolio evidence documentation.
+- Cell-level parity between six paired Databricks SOURCE and Jupyter notebook exports, with CI enforcing canonical `.py` deployment sources.
+- Explicit source/control SQL linked-service separation and a read-only source database inventory for cursor and unique-key candidates.
 
 ## Documentation handoff
 
@@ -29,7 +31,9 @@ Start with the [README](../README.md), then use these documents for deeper revie
 1. [Architecture overview](../architecture/architecture.md) and [architecture diagram](../architecture/uber-eats-end-to-end-architecture.svg)
 2. [SQL incremental-load review](SQL_INCREMENTAL_LOAD_REVIEW.md)
 3. [Incremental source contract](INCREMENTAL_SOURCE_CONTRACT.md)
-4. [Checkpoint concurrency contract](CHECKPOINT_CONCURRENCY_CONTRACT.md)\n5. [Notebook export consistency](NOTEBOOK_EXPORT_CONSISTENCY.md)\n6. [Read-only SQL source catalog discovery](../sql/diagnostics/inspect_source_contract_candidates.sql)
+4. [Checkpoint concurrency contract](CHECKPOINT_CONCURRENCY_CONTRACT.md)
+5. [Notebook export consistency](NOTEBOOK_EXPORT_CONSISTENCY.md)
+6. [Read-only SQL source catalog discovery](../sql/diagnostics/inspect_source_contract_candidates.sql)
 5. [Operations and reliability](OPERATIONS_AND_RELIABILITY.md)
 6. [Recovery and rerun runbook](RECOVERY_AND_RERUN_RUNBOOK.md)
 7. [Gold layer and business reporting](GOLD_LAYER_AND_REPORTING.md)

@@ -131,6 +131,9 @@ A checked repository artifact means the relevant code or documentation is presen
 
 - [x] Add shared PySpark transformations for order-level, daily order, payment-method, restaurant-feedback, and driver-performance outputs.
 - [x] Add Gold Databricks notebook exports and an ADF master pipeline that waits for API, CSV, and SQL ingestion success before Gold publication.
+- [x] Synchronize all six paired Databricks SOURCE `.py` and Jupyter `.ipynb` exports cell-for-cell; keep `.py` canonical for workspace deployment and enforce parity in CI.
+- [x] Separate SQL source catalog validation from control-database checkpoint updates in ADF; add a regression contract for independent source/control SQL endpoints.
+- [x] Add a read-only source SQL catalog inventory for cursor metadata and primary/unique-index key candidates; optional table scans are disabled by default and candidates still require source-owner approval.
 - [x] Add business reporting SQL with documented grains and metric definitions.
 - [x] Add local Spark tests and static ADF dependency-contract tests to CI.
 - [x] Add Gold run-audit design and run-evidence retention guidance.

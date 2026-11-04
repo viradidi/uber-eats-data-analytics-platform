@@ -52,7 +52,9 @@ A reviewer can follow this sequence without access to the retired cloud environm
 5. Review [Gold table grains and metric definitions](GOLD_LAYER_AND_REPORTING.md) and the [business reporting SQL pack](../reports/GOLD_ANALYTICS_REPORTING.sql).
 6. Follow the SQL incremental-load, source inventory, and checkpoint contracts:
    - [SQL incremental-load review](SQL_INCREMENTAL_LOAD_REVIEW.md)
-   - [Incremental source contract](INCREMENTAL_SOURCE_CONTRACT.md)\n   - [Read-only source catalog and key inventory](../sql/diagnostics/inspect_source_contract_candidates.sql)\n   - [Notebook export consistency](NOTEBOOK_EXPORT_CONSISTENCY.md)
+   - [Incremental source contract](INCREMENTAL_SOURCE_CONTRACT.md)
+   - [Read-only source catalog and key inventory](../sql/diagnostics/inspect_source_contract_candidates.sql)
+   - [Notebook export consistency](NOTEBOOK_EXPORT_CONSISTENCY.md)
    - [Checkpoint concurrency contract](CHECKPOINT_CONCURRENCY_CONTRACT.md)
 7. Review [operations and reliability](OPERATIONS_AND_RELIABILITY.md), the [recovery and rerun runbook](RECOVERY_AND_RERUN_RUNBOOK.md), and [run evidence retention](RUN_EVIDENCE_RETENTION.md).
 8. Inspect the validation workflow and tests, then distinguish local Spark/static contract tests from historical cloud execution.
