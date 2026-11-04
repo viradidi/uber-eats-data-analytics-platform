@@ -134,6 +134,9 @@ foreach ($file in $linkedServiceFiles) {
     $description = "linked service $($resource.name)"
     if ($PSCmdlet.ShouldProcess($description, "Create or update Azure Data Factory resource")) {
         Invoke-AdfPut -RelativePath "linkedservices/$([uri]::EscapeDataString($resource.name))" -Description $description -Payload $payload
+        if (-not $WhatIfPreference) {
+            Invoke-AdfGet -RelativePath "linkedservices/$([uri]::EscapeDataString($resource.name))" -Description "linked service $($resource.name)"
+        }
     }
 }
 
@@ -148,6 +151,9 @@ foreach ($file in $datasetFiles) {
     $description = "dataset $($resource.name)"
     if ($PSCmdlet.ShouldProcess($description, "Create or update Azure Data Factory resource")) {
         Invoke-AdfPut -RelativePath "datasets/$([uri]::EscapeDataString($resource.name))" -Description $description -Payload $payload
+        if (-not $WhatIfPreference) {
+            Invoke-AdfGet -RelativePath "datasets/$([uri]::EscapeDataString($resource.name))" -Description "dataset $($resource.name)"
+        }
     }
 }
 
@@ -171,25 +177,13 @@ foreach ($fileName in $pipelineOrder) {
     $description = "pipeline $($resource.name)"
     if ($PSCmdlet.ShouldProcess($description, "Create or update Azure Data Factory resource")) {
         Invoke-AdfPut -RelativePath "pipelines/$([uri]::EscapeDataString($resource.name))" -Description $description -Payload $payload
+        if (-not $WhatIfPreference) {
+            Invoke-AdfGet -RelativePath "pipelines/$([uri]::EscapeDataString($resource.name))" -Description "pipeline $($resource.name)"
+        }
     }
 }
 
-# Read each deployed resource back to confirm the Data Factory API recognizes it.
-if (-not $WhatIfPreference) {
-Invoke-AdfGet -RelativePath "linkedservices/AzureDataLakeStorage1" -Description "ADLS linked service"
-Invoke-AdfGet -RelativePath "linkedservices/ls_sql_control" -Description "SQL control linked service"
-Invoke-AdfGet -RelativePath "linkedservices/LS_db_silver" -Description "Databricks SQL Silver linked service"
-Invoke-AdfGet -RelativePath "datasets/DS_sql_control" -Description "SQL control dataset"
-Invoke-AdfGet -RelativePath "datasets/DS_source_csv" -Description "ADLS CSV source dataset"
-Invoke-AdfGet -RelativePath "pipelines/api_src_inital%20load" -Description "API ingestion pipeline"
-Invoke-AdfGet -RelativePath "pipelines/csv_initial%20load" -Description "CSV ingestion pipeline"
-Invoke-AdfGet -RelativePath "pipelines/sql_incremental%20pipeline" -Description "SQL incremental pipeline"
-Invoke-AdfGet -RelativePath "pipelines/uber_eats_master" -Description "Master pipeline"
-}
-else {
-    Write-Host "WhatIf selected: no resources were written and read-back verification was skipped."
-}
-
+# Every deployed factory child resource is read back immediately after its PUT.
 Write-Host ""
 Write-Host "ADF resource deployment and read-back verification completed."
 Write-Host "The master pipeline was NOT started. Run it only after SQL source contracts, the external SQL Silver Job review, Key Vault secret, and permissions have passed the acceptance gates."
