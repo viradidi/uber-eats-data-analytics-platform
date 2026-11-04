@@ -33,9 +33,17 @@ The 94-test run verifies the test suite and repository contracts on the recorded
 
 ## 3. Open gates — priority order
 
+A restore-specific configuration inventory is now available at [RESTORED_AZURE_CONFIGURATION_INVENTORY.md](RESTORED_AZURE_CONFIGURATION_INVENTORY.md). It records historic endpoints, identities, paths, job IDs, and the CSV File Server/Integration Runtime dependency that must be resolved in the new environment.
+
+### P0 — Restore environment-bound integrations
+
+The current exports retain historic SQL, ADLS, Key Vault, API, Databricks workspace, and factory references. The CSV pipeline additionally reads from a Windows share (`\\\\DESKTOP-P63LGSO\\UberEats`) through a self-hosted Integration Runtime; that share and encrypted File Server credential will not be portable to a newly provisioned environment. Recreate/re-authorize the share and runtime, or deliberately move CSV source staging to ADLS. Resolve the linked Integration Runtime reference, which points to a different historic factory/resource-group path than the committed factory export.
+
+The Silver notebook Bronze-root defaults have been corrected to match the ADLS linked service, and the personal workspace path in the CSV dispatcher has been replaced by a configurable relative notebook root. A regression test now checks these contracts.
+
 ### P0 — Complete the external SQL Silver job review
 
-The committed SQL ADF pipeline passes `table_name` to job `121055824417886`, invokes it after the ADLS copy, and advances the checkpoint after that activity succeeds. The repository does not contain the job configuration or notebook code.
+The committed SQL ADF pipeline passes `table_name` to job `121055824417886`, invokes it after the ADLS copy, and advances the checkpoint after that activity succeeds. The repository does not contain the job configuration or notebook code. The API and CSV branches also invoke external Jobs (IDs `1006977938504729` and `986239993761586`); those job settings must be checked when restoring the workspace, even though their notebook source exports are present.
 
 Required before approving SQL replay behavior:
 - Export the job settings/task graph.
