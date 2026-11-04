@@ -1,4 +1,11 @@
 # Databricks notebook source
+import sys
+
+dbutils.widgets.text("project_root", "/Workspace/Shared/UberEats", "Workspace package root")
+PROJECT_ROOT = dbutils.widgets.get("project_root").strip().rstrip("/")
+if PROJECT_ROOT and PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
 from src.common.spark_utils import standardize_columns
