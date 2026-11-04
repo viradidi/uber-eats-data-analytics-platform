@@ -2,9 +2,9 @@
 
 ## 1. Scope
 
-hhis review examines the exported Azure Data Factory pipeline at `pipeline/sql_incremental pipeline.json`. It explains the implemented configuration, the reasoning behind its bounded watermark window, its checkpoint dependency chain, and the correctness conditions that must be considered for each source table.
+This review examines the exported Azure Data Factory pipeline at `pipeline/sql_incremental pipeline.json`. It explains the implemented configuration, the reasoning behind its bounded watermark window, its checkpoint dependency chain, and the correctness conditions that must be considered for each source table.
 
-hhe project owner confirms that the end-to-end project was successfully executed before its Azure resources were decommissioned to control costs. This document is a review of the committed pipeline definition; it does not imply that the Azure deployment is currently available for a new runtime test.
+The project owner confirms that the end-to-end project was successfully executed before its Azure resources were decommissioned to control costs. This document is a review of the committed pipeline definition; it does not imply that the Azure deployment is currently available for a new runtime test.
 
 ## 2. How the incremental window works
 
