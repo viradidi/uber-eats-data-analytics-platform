@@ -74,6 +74,7 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
             "linkedService/LS_restapi.json",
             "linkedService/LS_AzureKeyVault.json",
             "pipeline/api_src_inital load.json",
+            "api-version=7.5",
             "pipeline().globalParameters.api_base_url",
             "pipeline().globalParameters.key_vault_uri",
             "secureOutput = $true",
@@ -106,6 +107,14 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
         self.assertEqual(
             "abfss://bronze@ubereatsrisstorage.dfs.core.windows.net",
             factory["properties"]["globalParameters"]["bronze_root"]["value"],
+        )
+        self.assertEqual(
+            "https://ubereats-mock-api.onrender.com",
+            factory["properties"]["globalParameters"]["api_base_url"]["value"],
+        )
+        self.assertEqual(
+            "https://ubereatskeyvalut.vault.azure.net",
+            factory["properties"]["globalParameters"]["key_vault_uri"]["value"],
         )
 
     def test_workspace_import_script_deploys_exact_adf_notebook_paths_and_src_modules(self):
@@ -199,6 +208,25 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
         watermark_expression = script["typeProperties"]["scripts"][0]["text"]["value"]
         self.assertIn("activity('Web_Get_Api_Watermarks')", watermark_expression)
         self.assertNotIn("activity('Web_Get_API_Watermarks')", watermark_expression)
+        watermark_activity = next(a for a in child_activities if a["name"] == "Web_Get_Api_Watermarks")
+        key_activity = next(a for a in child_activities if a["name"] == "get_keyvalut_api _key")
+        self.assertEqual(
+            "@concat(pipeline().globalParameters.api_base_url, '/watermarks')",
+            watermark_activity["typeProperties"]["url"]["value"],
+        )
+        self.assertEqual(
+            "@concat(pipeline().globalParameters.key_vault_uri, '/secrets/ubereatsapikey?api-version=7.5')",
+            key_activity["typeProperties"]["url"]["value"],
+        )
+        self.assertTrue(key_activity["policy"]["secureOutput"])
+        self.assertTrue(watermark_activity["policy"]["secureInput"])
+        rest_linked_service = json.loads(
+            (ROOT / "linkedService/LS_restapi.json").read_text(encoding="utf-8")
+        )
+        self.assertNotIn(
+            "secretVersion",
+            rest_linked_service["properties"]["typeProperties"]["authHeaders"]["X-API-Key"],
+        )
 
     def test_csv_pipeline_fails_closed_when_metadata_is_empty(self):
         pipeline = json.loads(
