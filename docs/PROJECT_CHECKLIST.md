@@ -1,6 +1,6 @@
 # Project Completion and Evidence Checklist
 
-Use this checklist to track delivered artifacts and validation. **Current status:** the original ingestion/Silver platform was successfully run end to end, as confirmed by the project owner, and its Azure resources were later decommissioned. The repository's current local-mode PySpark suite has passed in GitHub Actions (94 tests in run [41845381270](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41846175735)). That is local Spark/CI evidence, not a fresh ADF or Databricks cloud run. The later Gold deployment and the newest SQL ADF/SQL migration changes still need live validation in a restored environment.
+Use this checklist to track delivered artifacts and validation. **Current status:** the original ingestion/Silver platform was successfully run end to end, as confirmed by the project owner, and its Azure resources were later decommissioned. The repository's current local-mode PySpark suite has passed in GitHub Actions (94 tests in run [41846175735](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41846175735)). That is local Spark/CI evidence, not a fresh ADF or Databricks cloud run. The later Gold deployment and the newest SQL ADF/SQL migration changes still need live validation in a restored environment.
 
 ## Repository and documentation
 
