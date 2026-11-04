@@ -33,7 +33,7 @@ The 94-test run verifies the test suite and repository contracts on the recorded
 
 ## 3. Open gates — priority order
 
-A restore-specific configuration inventory is now available at [RESTORED_AZURE_CONFIGURATION_INVENTORY.md](RESTORED_AZURE_CONFIGURATION_INVENTORY.md). An idempotent [ADF control-table bootstrap migration](../sql/migrations/20261104_create_ingestion_control_tables.sql) now creates/verifies the two control tables and seeds only the four API endpoints documented in the repository; it deliberately leaves SQL source control rows and watermarks to be approved from real source contracts. It records historic endpoints, identities, paths, job IDs, and the CSV File Server/Integration Runtime dependency that must be resolved in the new environment.
+A restore-specific configuration inventory is now available at [RESTORED_AZURE_CONFIGURATION_INVENTORY.md](RESTORED_AZURE_CONFIGURATION_INVENTORY.md). An idempotent [ADF control-table bootstrap migration](../sql/migrations/20261104_create_ingestion_control_tables.sql) now creates/verifies the two control tables and seeds only the four API endpoints documented in the repository; it deliberately leaves SQL source control rows and watermarks to be approved from real source contracts. It records historic endpoints, identities, paths, and job IDs that must be confirmed or replaced in the new environment.
 
 ### P0 — Restore environment-bound integrations
 
