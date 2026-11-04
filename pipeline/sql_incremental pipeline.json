@@ -29,11 +29,76 @@
         }
       },
       {
+        "name": "Validate active SQL control metadata",
+        "type": "Lookup",
+        "dependsOn": [
+          {
+            "activity": "Lookup_SQL_Control",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "userProperties": [],
+        "typeProperties": {
+          "source": {
+            "type": "AzureSqlSource",
+            "sqlReaderQuery": "SELECT CASE WHEN EXISTS (SELECT 1 FROM dbo.pipeline_control WHERE is_active = 1 GROUP BY control_id HAVING control_id IS NULL OR COUNT(1) > 1) OR EXISTS (SELECT 1 FROM dbo.pipeline_control WHERE is_active = 1 GROUP BY schema_name, table_name, watermark_column HAVING COUNT(1) > 1) THEN 1 ELSE 0 END AS has_duplicate_active_metadata;",
+            "queryTimeout": "02:00:00",
+            "partitionOption": "None"
+          },
+          "dataset": {
+            "referenceName": "DS_sql_control",
+            "type": "DatasetReference"
+          },
+          "firstRowOnly": true
+        }
+      },
+      {
+        "name": "Active SQL control metadata is unique",
+        "type": "IfCondition",
+        "dependsOn": [
+          {
+            "activity": "Validate active SQL control metadata",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "userProperties": [],
+        "typeProperties": {
+          "expression": {
+            "value": "@equals(activity('Validate active SQL control metadata').output.firstRow.has_duplicate_active_metadata, 0)",
+            "type": "Expression"
+          },
+          "ifTrueActivities": [],
+          "ifFalseActivities": [
+            {
+              "name": "Fail duplicate active SQL control metadata",
+              "type": "Fail",
+              "dependsOn": [],
+              "userProperties": [],
+              "typeProperties": {
+                "message": "Active SQL control metadata contains a null/duplicate control_id or a duplicate schema/table/watermark mapping. Resolve duplicates before ingestion.",
+                "errorCode": "SQL_DUPLICATE_ACTIVE_CONTROL_METADATA"
+              }
+            }
+          ]
+        }
+      },
+      {
         "name": "Require active SQL control rows",
         "type": "IfCondition",
         "dependsOn": [
           {
-            "activity": "Lookup_SQL_Control",
+            "activity": "Active SQL control metadata is unique",
             "dependencyConditions": [
               "Succeeded"
             ]
