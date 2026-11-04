@@ -9,7 +9,7 @@ from src.common.incremental import deduplicate_replayed_snapshot_rows
 # COMMAND ----------
 
 # Environment-specific storage configuration (override the widget per workspace/job).
-dbutils.widgets.text("bronze_root", "abfss://bronze@ubereaststorage.dfs.core.windows.net", "Bronze storage root")
+dbutils.widgets.text("bronze_root", "abfss://bronze@ubereatsrisstorage.dfs.core.windows.net", "Bronze storage root")
 BRONZE_ROOT = dbutils.widgets.get("bronze_root").rstrip("/")
 
 def fail_validation(message, stage="silver_validation"):
