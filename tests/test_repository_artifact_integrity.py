@@ -37,6 +37,49 @@ class RepositoryArtifactIntegrityTests(unittest.TestCase):
                     failures.append(f"{path.relative_to(ROOT)}:{line_number}: {line}")
         self.assertEqual([], failures, "Unresolved merge markers found:\n" + "\n".join(failures))
 
+    def test_adf_export_resource_references_resolve(self):
+        def load_exports(directory):
+            exports = {}
+            for path in sorted((ROOT / directory).glob("*.json")):
+                document = json.loads(path.read_text(encoding="utf-8"))
+                exports[document["name"]] = (path, document)
+            return exports
+
+        linked_services = load_exports("linkedService")
+        datasets = load_exports("dataset")
+        pipelines = load_exports("pipeline")
+
+        missing = []
+        for path, dataset in datasets.values():
+            linked_service = dataset.get("properties", {}).get("linkedServiceName", {})
+            reference = linked_service.get("referenceName")
+            if reference and reference not in linked_services:
+                missing.append(f"{path.relative_to(ROOT)} -> linked service {reference}")
+
+        def visit(value, owner_path):
+            if isinstance(value, dict):
+                reference_type = value.get("type")
+                reference_name = value.get("referenceName")
+                if reference_name and reference_type == "LinkedServiceReference":
+                    if reference_name not in linked_services:
+                        missing.append(f"{owner_path} -> linked service {reference_name}")
+                elif reference_name and reference_type == "DatasetReference":
+                    if reference_name not in datasets:
+                        missing.append(f"{owner_path} -> dataset {reference_name}")
+                elif reference_name and reference_type == "PipelineReference":
+                    if reference_name not in pipelines:
+                        missing.append(f"{owner_path} -> child pipeline {reference_name}")
+                for child in value.values():
+                    visit(child, owner_path)
+            elif isinstance(value, list):
+                for child in value:
+                    visit(child, owner_path)
+
+        for path, pipeline in pipelines.values():
+            visit(pipeline.get("properties", {}), str(path.relative_to(ROOT)))
+
+        self.assertEqual([], missing, "Unresolved ADF resource references:\\n" + "\\n".join(missing))
+
     def test_readme_links_the_release_gate(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         self.assertTrue((ROOT / "docs" / "PROJECT_RELEASE_GATE.md").is_file())
