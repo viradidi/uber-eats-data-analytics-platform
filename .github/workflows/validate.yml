@@ -183,6 +183,30 @@ jobs:
           print("Gold notebook portability checks passed.")
           PY
 
+      - name: Parse PowerShell deployment scripts
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $paths = Get-ChildItem -Path deployment -Filter "*.ps1" -Recurse -File
+          $failures = @()
+          foreach ($path in $paths) {
+              $tokens = $null
+              $parseErrors = $null
+              [System.Management.Automation.Language.Parser]::ParseFile(
+                  $path.FullName,
+                  [ref]$tokens,
+                  [ref]$parseErrors
+              ) | Out-Null
+              foreach ($errorItem in $parseErrors) {
+                  $failures += "{0}:{1}: {2}" -f $path.FullName, $errorItem.Extent.StartLineNumber, $errorItem.Message
+              }
+          }
+          if ($failures.Count -gt 0) {
+              $failures | ForEach-Object { Write-Error $_ }
+              exit 1
+          }
+          Write-Host "PowerShell syntax checks passed for $($paths.Count) deployment scripts."
+
       - name: Install test dependencies
         run: python -m pip install -r requirements-test.txt
 
