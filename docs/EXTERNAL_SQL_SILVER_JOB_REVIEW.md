@@ -10,7 +10,7 @@ The repository does not contain the job definition or its SQL Silver notebook/so
 
 ## 1. Export the job definition
 
-The repository now includes the export helper at ../deployment/databricks/export_sql_silver_job.ps1. Authenticate the Databricks CLI to the workspace that owns job ID 121055824417886, then run it from the repository root:
+The repository now includes an [export helper](../deployment/databricks/export_sql_silver_job.ps1). Authenticate the Databricks CLI to the workspace that owns job ID 121055824417886, then run it from the repository root:
 
 ~~~powershell
 databricks auth login --host <WORKSPACE_HOST> --profile uber-eats-restore
