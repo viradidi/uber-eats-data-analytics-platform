@@ -34,7 +34,7 @@ The historical execution statement is owner-reported. It is not an independent a
 Before redeploying or enabling a source in a new environment:
 
 1. Validate the source table, business key, cursor type/precision, timezone, initial-load behavior, late visibility, equal cursor values, and delete semantics.
-2. Confirm only approved `is_active = 1` control rows are enabled; validate that active `control_id` values and `(schema_name, table_name, watermark_column)` mappings are unique. Enforce an approved allowlist for dynamic SQL identifiers and restrict control-table write access.
+2. Confirm only approved `is_active = 1` control rows are enabled; validate that `control_id` is non-null and unique across the full control table and that active `(schema_name, table_name, watermark_column)` mappings are unique. Enforce an approved allowlist for dynamic SQL identifiers and restrict control-table write access.
 3. Confirm typed watermark serialization and null-checkpoint handling.
 4. Verify landing write behavior and replay-safe Silver merge/deduplication semantics.
 5. Import Gold_Analytics to /Shared/UberEats/Gold_Analytics, deploy src.gold so the notebook can import the transformation module, and verify the Databricks linked service and catalog permissions.
