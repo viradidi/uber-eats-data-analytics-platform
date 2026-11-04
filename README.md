@@ -72,6 +72,8 @@ The SQL incremental-load design uses a lower watermark and a captured upper wate
 
 These controls reduce specific failure and concurrency risks, but a watermark alone does not guarantee complete change capture. Correctness still depends on each source's update semantics, initial-load strategy, late-arriving data behavior, delete handling, and replay-safe destination writes.
 
+For API endpoints, timestamped landing snapshots accumulate in the endpoint folders. The API Silver notebooks now use a shared PySpark replay helper: exact snapshot replays are collapsed, payment/delivery/rating entities retain the greatest source `updated_at`, and order-status history uses the composite event key `(order_id, status_timestamp)`. Conflicting payloads with the same key and source version fail before publication. This does not remove the separate late/equal-watermark and delete limitations in the SQL incremental source pattern.
+
 See:
 - [SQL incremental-load review](docs/SQL_INCREMENTAL_LOAD_REVIEW.md)
 - [Incremental source contract](docs/INCREMENTAL_SOURCE_CONTRACT.md)
