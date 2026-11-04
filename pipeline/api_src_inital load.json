@@ -206,7 +206,7 @@
             },
             {
               "name": "Job_api",
-              "type": "DatabricksJob",
+              "type": "DatabricksNotebook",
               "dependsOn": [
                 {
                   "activity": "Api_migration",
@@ -224,10 +224,15 @@
               },
               "userProperties": [],
               "typeProperties": {
-                "jobId": "1006977938504729",
-                "jobParameters": {
+                "notebookPath": "/Shared/UberEats/routing/api-dispacher-notebook",
+                "baseParameters": {
                   "endpoint_name": {
                     "value": "@item().endpoint_name",
+                    "type": "Expression"
+                  },
+                  "notebook_root": "../notebooks",
+                  "bronze_root": {
+                    "value": "@pipeline().globalParameters.bronze_root",
                     "type": "Expression"
                   }
                 }
