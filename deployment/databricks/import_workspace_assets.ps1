@@ -5,8 +5,7 @@ param(
     [string]$WorkspaceHost,
 
     [Parameter(Mandatory = $false)]
-    [string]$ProfileName,
-
+    [string]$ProfileName
 )
 
 $ErrorActionPreference = "Stop"
