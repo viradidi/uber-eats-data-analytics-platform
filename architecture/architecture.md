@@ -143,7 +143,7 @@ These controls have boundaries. In particular, a watermark does not automaticall
 
 ## 7. Repository validation and historical execution
 
-The project owner confirms that the original ingestion and Silver platform was completed and successfully executed end to end before Azure resources were decommissioned to control costs. The Gold layer and master ADF pipeline are newer repository enhancements that still require a fresh Azure deployment and runtime run. The local-mode PySpark suite has passed in GitHub Actions (94 tests in [run 41846175735](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41846175735)); this tests synthetic transformation behavior, not live Databricks or ADF deployment.
+The project owner confirms that the original ingestion and Silver platform was completed and successfully executed end to end before Azure resources were decommissioned to control costs. The Gold layer and master ADF pipeline are newer repository enhancements that still require a fresh Azure deployment and runtime run. The local-mode PySpark suite has passed in GitHub Actions (121 tests in [run 41899236348](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41899236348)); this tests synthetic transformation behavior, not live Databricks or ADF deployment.
 
 The repository retains implementation artifacts and repeatable checks, including API tests, local PySpark tests for Gold transformations, static ADF dependency-contract tests, and a GitHub Actions workflow that validates JSON/notebook structure, Python syntax, notebook portability, dependency installation, and the test suite. These checks do not execute live ADF or Databricks resources.
 

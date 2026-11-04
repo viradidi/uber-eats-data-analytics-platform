@@ -6,7 +6,7 @@
 
 This repository is a reviewable, Azure-oriented data engineering portfolio project. Its committed artifacts cover a FastAPI mock source, synthetic sample data, API/CSV/SQL ingestion patterns, exported Azure Data Factory resources, Databricks Silver notebook exports, reusable Gold transformations and reporting SQL, shared Spark utilities, data-quality checks, reconciliation utilities, CI validation, and recovery documentation.
 
-The project owner confirms that the original API/CSV/SQL ingestion and Silver implementation ran successfully in its original Azure environment. Those cloud resources were later intentionally decommissioned to avoid ongoing costs. The Gold layer and master ADF pipeline are newer repository enhancements and have not yet been deployed and run in Azure. The local-mode PySpark suite does run in GitHub Actions and passed 94 tests in [run 41846175735](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41846175735); that validates synthetic in-memory transformations, not workspace deployment, Delta writes, or end-to-end orchestration. The repository therefore distinguishes historical execution, current repository CI evidence, and pending cloud validation.
+The project owner confirms that the original API/CSV/SQL ingestion and Silver implementation ran successfully in its original Azure environment. Those cloud resources were later intentionally decommissioned to avoid ongoing costs. The Gold layer and master ADF pipeline are newer repository enhancements and have not yet been deployed and run in Azure. The local-mode PySpark suite does run in GitHub Actions and passed 121 tests in [run 41899236348](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41899236348); that validates synthetic in-memory transformations, not workspace deployment, Delta writes, or end-to-end orchestration. The repository therefore distinguishes historical execution, current repository CI evidence, and pending cloud validation.
 
 This is owner-reported execution history, not independent third-party certification. Repository artifacts can be inspected directly; retained historical runtime evidence should be linked where available.
 
@@ -20,7 +20,7 @@ This is owner-reported execution history, not independent third-party certificat
 - Configurable Bronze roots, repository-owned shared Spark utilities, five Gold analytics outputs, and a read-only business reporting SQL pack.
 - Data-quality checks, API contract tests, local PySpark transformation tests, static ADF/recovery contract tests, repository artifact integrity tests, and GitHub Actions validation.
 - Quarantine, quality metrics, reconciliation helpers, failure-event logging, operational SQL reports, and rerun/recovery guidance represented in the repository.
-- Architecture, source contracts, concurrency contract, limitations, and portfolio evidence documentation.
+- Architecture, source contracts, concurrency contract, limitations, and portfolio evidence documentation.\n- Cell-level parity between six paired Databricks SOURCE and Jupyter notebook exports, with CI enforcing canonical `.py` deployment sources.\n- Explicit source/control SQL linked-service separation and a read-only source database inventory for cursor and unique-key candidates.
 
 ## Documentation handoff
 
@@ -29,7 +29,7 @@ Start with the [README](../README.md), then use these documents for deeper revie
 1. [Architecture overview](../architecture/architecture.md) and [architecture diagram](../architecture/uber-eats-end-to-end-architecture.svg)
 2. [SQL incremental-load review](SQL_INCREMENTAL_LOAD_REVIEW.md)
 3. [Incremental source contract](INCREMENTAL_SOURCE_CONTRACT.md)
-4. [Checkpoint concurrency contract](CHECKPOINT_CONCURRENCY_CONTRACT.md)
+4. [Checkpoint concurrency contract](CHECKPOINT_CONCURRENCY_CONTRACT.md)\n5. [Notebook export consistency](NOTEBOOK_EXPORT_CONSISTENCY.md)\n6. [Read-only SQL source catalog discovery](../sql/diagnostics/inspect_source_contract_candidates.sql)
 5. [Operations and reliability](OPERATIONS_AND_RELIABILITY.md)
 6. [Recovery and rerun runbook](RECOVERY_AND_RERUN_RUNBOOK.md)
 7. [Gold layer and business reporting](GOLD_LAYER_AND_REPORTING.md)

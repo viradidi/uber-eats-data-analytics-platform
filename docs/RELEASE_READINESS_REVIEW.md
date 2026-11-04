@@ -2,8 +2,8 @@
 
 **Review date:** 2026-11-04  
 **Repository:** [viradidi/uber-eats-data-analytics-platform](https://github.com/viradidi/uber-eats-data-analytics-platform)  
-**Reviewed repository commit for CI evidence:** `f729edf741b40aebcd44fcf02d4f055119c5b390`  
-**CI evidence:** [GitHub Actions run 41846175735 — 94 tests passed](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41846175735)
+**Reviewed repository commit for CI evidence:** `fbc5b7f190142be09dedb3a3b3dd729b237c0d34`  
+**CI evidence:** [GitHub Actions run 41899236348 — 121 tests passed](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41899236348)
 
 ## 1. Release decision
 
@@ -11,7 +11,7 @@
 
 **Repository-side status: READY FOR CONTROLLED HANDOFF. Restored Azure release status: NOT YET ACCEPTED.**
 
-The original API/CSV/SQL ingestion and Silver implementation were successfully executed end to end in the original Azure environment, as confirmed by the project owner. Those resources were later decommissioned to control costs. The repository now contains later SQL ADF hardening, Gold transformations/reporting, and master ADF orchestration changes. GitHub Actions passed the 94-test suite on the reviewed commit, including local-mode PySpark tests, ADF/static contracts, notebook portability checks, and repository integrity checks.
+The original API/CSV/SQL ingestion and Silver implementation were successfully executed end to end in the original Azure environment, as confirmed by the project owner. Those resources were later decommissioned to control costs. The repository now contains later SQL ADF hardening, Gold transformations/reporting, and master ADF orchestration changes. GitHub Actions passed the 121-test suite on the reviewed commit, including local-mode PySpark tests, ADF/static contracts, notebook portability checks, and repository integrity checks.
 
 That CI result is not a live ADF, SQL Server, ADLS, or Databricks execution. The newer SQL changes and Gold/master pipeline still need a restored Azure acceptance run. No current cloud deployment is implied.
 
@@ -22,14 +22,14 @@ That CI result is not a live ADF, SQL Server, ADLS, or Databricks execution. The
 | API source | FastAPI implementation, API authentication and endpoint tests | Repository-tested |
 | API incremental replay | Shared PySpark helper and Silver notebook exports; exact replays collapse, versioned entities retain latest source version, conflicting versions fail closed | Local Spark tests passed |
 | CSV ingestion/Silver | Exported ADF definitions, notebook exports, validation and reconciliation logic | Static/repository reviewed; original execution owner-confirmed |
-| SQL ADF extraction | Active control filtering, duplicate/null metadata guards, source metadata preflight, null cursor guard, bounded window, deterministic landing identity, concurrency=1, transactional checkpoint compare-and-swap | Static contract tests passed; new deployment not runtime-tested |
+| SQL ADF extraction | Active control filtering, duplicate/null metadata guards, source-database catalog preflight, null cursor guard, bounded window, deterministic landing identity, concurrency=1, transactional checkpoint compare-and-swap; source and control SQL endpoints are explicitly separated | Static contract tests passed, including split-database routing; new deployment not runtime-tested |
 | SQL Silver destination behavior | ADF calls external job ID `121055824417886`; its actual settings and notebook/source are absent from this repository | **Open blocker** |
 | Gold transformation logic | Shared `src/gold` code, five output contracts, local PySpark fixtures/tests, Gold notebook export, business reporting SQL | Local Spark tests passed; workspace publication not proven |
 | Master orchestration | Master ADF export waits for API, CSV, and SQL child pipelines before Gold publication | Static dependency checks passed; ADF execution pending |
-| Documentation and recovery | Source contracts, preflight SQL, runbooks, reconciliation queries, evidence retention, release gate | Repository reviewed |
-| CI | Current verified run records 94 tests passing | Passed |
+| Notebook export consistency | Six paired Databricks SOURCE `.py` and Jupyter `.ipynb` exports match cell-for-cell; CI enforces parity and importer deploys canonical `.py` files | Repository-tested |\n| SQL source discovery | Read-only source-database catalog inventory reports cursor type/precision and primary/unique-index key candidates; optional table scans are disabled by default | Repository artifact added; execution awaits restored SQL source access |\n| Documentation and recovery | Source contracts, preflight SQL, runbooks, reconciliation queries, evidence retention, release gate | Repository reviewed |
+| CI | Current verified run records 121 tests passing | Passed |
 
-The 94-test run verifies the test suite and repository contracts on the recorded commit. It does not establish that external Databricks job ID `121055824417886` is replay-safe.
+The 121-test run verifies the test suite and repository contracts on the recorded commit. It does not establish that external Databricks job ID `121055824417886` is replay-safe.
 
 ## 3. Open gates — priority order
 
@@ -60,7 +60,7 @@ Follow [External SQL Silver Job Review](EXTERNAL_SQL_SILVER_JOB_REVIEW.md). Unti
 
 The generic source-contract template is present, but each active SQL control row needs a verified contract for business key, cursor type/precision/timezone, initial watermark, equal/late-arriving changes, deletes, destination merge behavior, and reconciliation. The current ADF export requires a valid non-null starting checkpoint; it does not implement a null-checkpoint initial-load branch.
 
-Complete [Incremental Source Contract](INCREMENTAL_SOURCE_CONTRACT.md) for every enabled source and approve the control-table values.
+Use the read-only [source catalog discovery script](../sql/diagnostics/inspect_source_contract_candidates.sql) against the source database to inventory cursor metadata and unique-index candidates, then complete [Incremental Source Contract](INCREMENTAL_SOURCE_CONTRACT.md) for every enabled source and approve business keys and control-table values.
 
 ### P1 — Prepare the restored environment
 

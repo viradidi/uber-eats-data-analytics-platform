@@ -2,7 +2,7 @@
 
 ## Release decision
 
-**Portfolio status: ORIGINAL INGESTION/SILVER SCOPE COMPLETED; GOLD EXTENSION AWAITS LIVE VALIDATION.** The project owner confirms that the original end-to-end ingestion and Silver implementation ran successfully in its Azure environment. Resources were subsequently decommissioned to control costs. The Gold notebook, master ADF pipeline, and business reporting SQL are newer additions that require a fresh Azure environment rerun. The local-mode PySpark suite has passed in GitHub Actions: 94 tests in [run 41846175735](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41846175735).
+**Portfolio status: ORIGINAL INGESTION/SILVER SCOPE COMPLETED; GOLD EXTENSION AWAITS LIVE VALIDATION.** The project owner confirms that the original end-to-end ingestion and Silver implementation ran successfully in its Azure environment. Resources were subsequently decommissioned to control costs. The Gold notebook, master ADF pipeline, and business reporting SQL are newer additions that require a fresh Azure environment rerun. The local-mode PySpark suite has passed in GitHub Actions: 121 tests in [run 41899236348](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41899236348).
 
 The historical execution statement is owner-reported. It is not an independent audit, production certification, or proof that the environment is still running. New local PySpark tests validate Gold transformations against synthetic DataFrames; static tests validate the exported ADF dependency contract. Neither executes ADF or Databricks in Azure.
 
@@ -12,7 +12,7 @@ The historical execution statement is owner-reported. It is not an independent a
 - Exported Azure Data Factory definitions for API, CSV, and SQL ingestion patterns.
 - ADLS Gen2 landing integration and Databricks Silver notebook exports.
 - Five Gold Delta output definitions, a run-audit record contract, a Gold notebook export, a read-only business reporting SQL pack, and a master ADF pipeline that gates Gold publication on all three ingestion pipelines succeeding.
-- SQL bounded-watermark extraction, active-source filtering, pre-loop rejection of null/duplicate active control IDs and duplicate source mappings, serialized pipeline configuration, and transactional compare-and-swap checkpoint update.
+- SQL bounded-watermark extraction, active-source filtering, pre-loop rejection of null/duplicate active control IDs and duplicate source mappings, serialized pipeline configuration, and transactional compare-and-swap checkpoint update. Source metadata validation is routed to the source SQL database while checkpoint writes use the separate control SQL database.
 - Shared PySpark utilities, data-quality and reconciliation helpers, operational SQL reports, CI checks, and recovery documentation.
 
 ## Evidence and validation boundaries
@@ -60,7 +60,7 @@ Do not claim a currently deployed service, independent production certification,
 - [x] Add reusable PySpark transformations and local synthetic-fixture tests.
 - [x] Add a master ADF definition with success dependencies for the API, CSV, and SQL child pipelines.
 - [x] Add business reporting SQL and run-audit retention contract.
-- [x] Run the local-mode PySpark suite in GitHub Actions; 94 tests passed in [run 41846175735](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41846175735).
+- [x] Run the local-mode PySpark suite in GitHub Actions; 121 tests passed in [run 41899236348](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41899236348).
 - [ ] Import the Gold notebook and make the src.gold module available in the target Databricks workspace.
 - [ ] Publish and validate the master ADF pipeline in the restored environment.
 - [ ] Run the end-to-end flow and reconcile actual Gold row counts and audit records.

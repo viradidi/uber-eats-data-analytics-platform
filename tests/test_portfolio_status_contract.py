@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CI_RUN_URL = "https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41846175735"
+CI_RUN_URL = "https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41899236348"
 STATUS_FILES = (
     "README.md",
     "docs/PROJECT_CHECKLIST.md",
@@ -11,17 +11,17 @@ STATUS_FILES = (
     "docs/PORTFOLIO_EVIDENCE.md",
     "docs/PROJECT_RELEASE_GATE.md",
     "docs/RUN_EVIDENCE_RETENTION.md",
-    "architecture/architecture.md",
+    "architecture/architecture.md",\n    "docs/RELEASE_READINESS_REVIEW.md",
 )
 
 
 class PortfolioStatusContractTests(unittest.TestCase):
-    def test_status_documents_point_to_the_verified_94_test_ci_run(self):
+    def test_status_documents_point_to_the_verified_121_test_ci_run(self):
         for relative_path in STATUS_FILES:
             with self.subTest(path=relative_path):
                 content = (ROOT / relative_path).read_text(encoding="utf-8")
                 self.assertIn(CI_RUN_URL, content)
-                self.assertIn("94 tests", content)
+                self.assertIn("121 tests", content)
 
     def test_local_spark_ci_is_not_misrepresented_as_live_cloud_validation(self):
         for relative_path in STATUS_FILES:

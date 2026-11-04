@@ -6,7 +6,7 @@ An Azure-oriented data engineering project demonstrating API, CSV, and SQL inges
 **Focus:** Data Engineering · Cloud Data Platforms · Analytics Engineering  
 **Repository:** https://github.com/viradidi/uber-eats-data-analytics-platform
 
-> **Project status:** The original API/CSV/SQL ingestion and Silver implementation were successfully executed end to end in the original Azure environment, as confirmed by the project owner. Those Azure resources were later decommissioned to control costs. The Gold transformations and master ADF orchestration are newer repository enhancements. The local-mode PySpark suite has since passed in GitHub Actions (94 tests in [run 41846175735](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41846175735)); this validates the tested transformations against synthetic data, not a live Databricks job or ADF deployment. The newer Gold cloud deployment and latest SQL ADF hardening still require a fresh Azure acceptance run.
+> **Project status:** The original API/CSV/SQL ingestion and Silver implementation were successfully executed end to end in the original Azure environment, as confirmed by the project owner. Those Azure resources were later decommissioned to control costs. The Gold transformations and master ADF orchestration are newer repository enhancements. The local-mode PySpark suite has since passed in GitHub Actions (121 tests in [run 41899236348](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41899236348)); this validates the tested transformations against synthetic data, not a live Databricks job or ADF deployment. The newer Gold cloud deployment and latest SQL ADF hardening still require a fresh Azure acceptance run.
 
 ---
 
