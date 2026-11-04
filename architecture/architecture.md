@@ -4,7 +4,7 @@
 
 This document explains the architecture of the completed Uber Eats data engineering project using the repository's Python application, Azure Data Factory resource exports, storage and SQL configurations, metadata, Databricks notebook exports, tests, and operational documentation.
 
-The platform demonstrates three source-ingestion patterns—REST API, CSV files, and SQL incremental extraction—followed by lake landing, Databricks/Spark processing, validation, and operational recovery controls.
+The platform demonstrates three source-ingestion patterns—REST API, CSV files, and SQL incremental extraction—followed by lake landing, Databricks/Spark Silver processing, a downstream Gold analytics extension, business reporting, validation, and operational recovery controls.
 
 The diagram is a logical view of the project, not a live service map. The project owner confirms that the end-to-end implementation was successfully executed and validated. The Azure resources used during that work were subsequently decommissioned to control costs; they are not represented as currently deployed or available.
 
@@ -19,7 +19,8 @@ The pipeline is presented as six logical stages:
 3. **Normalize** — Azure Databricks and PySpark notebook processing prepare source data for the Silver layer.
 4. **Validate** — schema, data-quality, duplicate-handling, and reconciliation checks are applied where implemented.
 5. **Load** — processed Silver outputs are produced; SQL incremental progress is advanced only after the required downstream work succeeds.
-6. **Log and recover** — operational records, failure handling, and rerun guidance support investigation and recovery.
+6. **Gold analytics extension** — the new Gold notebook derives order, daily performance, payment-method, driver, and restaurant-feedback datasets from Silver. This downstream layer is not drawn in the existing SVG, which is preserved as the original pipeline architecture view.
+7. **Log and recover** — operational records, failure handling, and rerun guidance support investigation and recovery.
 
 The metadata and control plane supports the flow through API/CSV metadata, ADF datasets and linked services, integration-runtime configuration, SQL watermark state, and environment configuration.
 
@@ -56,6 +57,12 @@ The project uses an ADLS Gen2 storage integration as the landing layer between i
 ### Azure Databricks and PySpark
 
 Databricks notebook exports and shared Spark utilities implement Silver-layer processing. The repository includes shared column-standardization functionality and dataset-specific notebook logic. The notebooks represent the transformation layer of the completed project.
+
+### Gold analytics and business reporting
+
+The downstream Gold extension is implemented in src/gold/transformations.py and notebooks/Gold_Analytics.py. It produces gold_order_360, gold_daily_order_performance, gold_payment_method_performance, gold_restaurant_feedback, and gold_driver_performance. The exported uber_eats_master ADF pipeline waits for the existing API, CSV, and SQL ingestion pipelines before invoking the Gold notebook. The business reporting SQL pack is in reports/GOLD_ANALYTICS_REPORTING.sql. The existing SVG remains unchanged and depicts the ingestion/Silver architecture; the Gold extension is documented here and in docs/GOLD_LAYER_AND_REPORTING.md.
+
+Promotions and zones are not attributed to orders because current Silver facts do not carry validated promo_id or zone_id foreign keys. The repository contains reporting SQL but does not include a deployed Power BI dashboard.
 
 ### Data quality and operations
 
@@ -136,9 +143,9 @@ These controls have boundaries. In particular, a watermark does not automaticall
 
 ## 7. Repository validation and historical execution
 
-The project owner confirms that the platform was completed and successfully executed end to end before the Azure resources were decommissioned to control costs.
+The project owner confirms that the original ingestion and Silver platform was completed and successfully executed end to end before Azure resources were decommissioned to control costs. The Gold layer, master ADF pipeline, and local PySpark tests are newer repository enhancements and are awaiting a fresh cloud rerun.
 
-The repository retains implementation artifacts and repeatable checks, including Python unit tests and a GitHub Actions workflow that validates JSON/notebook structure, Python syntax, notebook code-cell syntax, notebook portability, dependency installation, and the test suite.
+The repository retains implementation artifacts and repeatable checks, including API tests, local PySpark tests for Gold transformations, static ADF dependency-contract tests, and a GitHub Actions workflow that validates JSON/notebook structure, Python syntax, notebook portability, dependency installation, and the test suite. These checks do not execute live ADF or Databricks resources.
 
 These repository checks are useful for reviewing the codebase, but they are not a substitute for a currently running Azure deployment. Current cloud resources are not available through this repository. Historical execution status is based on the project owner's confirmation; any retained run logs, screenshots, or output evidence can provide additional corroboration.
 

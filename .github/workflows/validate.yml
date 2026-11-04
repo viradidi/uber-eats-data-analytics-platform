@@ -22,6 +22,12 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Set up Java for local Spark tests
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
       - name: Validate JSON and notebook files
         run: |
           python - <<'PY'
@@ -116,6 +122,7 @@ jobs:
           files = sorted(
               p for p in notebook_dir.iterdir()
               if p.suffix.lower() in {".py", ".ipynb"}
+              and p.name.startswith("Silver_")
           )
           failures = []
           for path in files:
@@ -146,11 +153,52 @@ jobs:
           print(f"Portability checks passed for {len(files)} Silver notebook exports.")
           PY
 
-      - name: Install Python application dependencies
-        run: python -m pip install -r requirements.txt
+      - name: Check Gold notebook portability
+        run: |
+          python - <<'PY'
+          import ast
+          import json
+          from pathlib import Path
+
+          py_path = Path("notebooks/Gold_Analytics.py")
+          ipynb_path = Path("notebooks/Gold_Analytics.ipynb")
+          py_source = py_path.read_text(encoding="utf-8")
+          notebook = json.loads(ipynb_path.read_text(encoding="utf-8"))
+          cells = [
+              "".join(cell.get("source", []))
+              for cell in notebook.get("cells", [])
+              if cell.get("cell_type") == "code"
+          ]
+          notebook_source = "\n".join(cells)
+          failures = []
+          if "/Workspace/Users/" in py_source or "/Workspace/Users/" in notebook_source:
+              failures.append("Gold notebook must not contain a personal workspace path")
+          if "from src.gold.transformations import build_gold_outputs" not in py_source:
+              failures.append("Gold notebook must use the shared transformation module")
+          if "gold_run_audit" not in py_source:
+              failures.append("Gold notebook must write run audit records")
+          if failures:
+              raise SystemExit("\n".join(failures))
+          ast.parse(py_source, filename=str(py_path))
+          print("Gold notebook portability checks passed.")
+          PY
+
+      - name: Install test dependencies
+        run: python -m pip install -r requirements-test.txt
 
       - name: Run complete repository test suite
-        run: python -m unittest discover -s tests -v
+        run: |
+          set -o pipefail
+          python -m unittest discover -s tests -v 2>&1 | tee test-results.txt
+
+      - name: Upload test log artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repository-validation-${{ github.run_id }}
+          path: test-results.txt
+          if-no-files-found: warn
+          retention-days: 90
 
       - name: Check API security configuration
         run: |

@@ -1,6 +1,6 @@
 # Project Completion and Evidence Checklist
 
-Use this checklist to track delivered artifacts and validation. **Current status:** the project owner reports that end-to-end functionality and checks have been validated and are working. Earlier milestone notes that say runtime execution was pending describe the state at the time those notes were written, not the current validation status.
+Use this checklist to track delivered artifacts and validation. **Current status:** the original ingestion/Silver platform was successfully run end to end, as confirmed by the project owner. The Gold analytics extension, master ADF pipeline, and new local PySpark suite are later repository enhancements; their cloud runtime validation remains pending until the environment is restored and rerun.
 
 ## Repository and documentation
 
@@ -122,3 +122,20 @@ Drivers, Promotions, and Zones now identify duplicate business-key groups, persi
 - [x] Complete final README link/render review (portfolio-site listing remains optional)
 
 A checked repository artifact means the relevant code or documentation is present. Runtime validation items marked complete reflect the project owner's confirmation that validation was performed; retain available run logs and outputs as supporting review evidence.
+
+
+## Gold analytics extension — environment rerun pending
+
+- [x] Add shared PySpark transformations for order-level, daily order, payment-method, restaurant-feedback, and driver-performance outputs.
+- [x] Add Gold Databricks notebook exports and an ADF master pipeline that waits for API, CSV, and SQL ingestion success before Gold publication.
+- [x] Add business reporting SQL with documented grains and metric definitions.
+- [x] Add local Spark tests and static ADF dependency-contract tests to CI.
+- [x] Add Gold run-audit design and run-evidence retention guidance.
+- [x] Fix generated API test payments to populate both payment_timestamp and updated_at as required by the Payments Silver contract.
+- [ ] Run the local PySpark tests in GitHub Actions and review the actual workflow result for the commit.
+- [ ] Import Gold_Analytics into the target Databricks workspace and make src.gold available to the notebook.
+- [ ] Publish and run the master ADF pipeline in the restored environment.
+- [ ] Verify all five Gold tables, output counts, gold_run_audit rows, and reconciliation results.
+- [ ] Capture actual ADF and Databricks run IDs, URLs, timestamps, and outputs using docs/run-evidence/runtime-evidence-template.md.
+
+The existing architecture SVG remains unchanged; the Gold extension is documented in the architecture text and the Gold layer guide. The repository contains reporting SQL, not a deployed Power BI dashboard.

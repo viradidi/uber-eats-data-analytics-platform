@@ -558,6 +558,11 @@ def generate_payment_test_data(
 
     next_number = _next_payment_number(data)
 
+    event_timestamp = (
+        datetime.now(timezone.utc)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
     new_payment = {
         "payment_id": f"P{next_number}",
         "order_id": next_number,
@@ -569,11 +574,8 @@ def generate_payment_test_data(
             ["CARD", "UPI"]
         ),
         "payment_status": "COMPLETED",
-        "updated_at": (
-            datetime.now(timezone.utc)
-            .isoformat()
-            .replace("+00:00", "Z")
-        )
+        "payment_timestamp": event_timestamp,
+        "updated_at": event_timestamp
     }
 
     data.append(new_payment)

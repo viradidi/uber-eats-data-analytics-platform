@@ -6,7 +6,7 @@ Bring operational data from API, CSV, and relational SQL sources into a structur
 
 ## Canonical architecture
 
-The canonical visual architecture is the [end-to-end architecture diagram](uber-eats-end-to-end-architecture.svg). This document is a concise reading guide to that diagram; it does not define a separate downstream analytics-serving platform.
+The canonical visual architecture remains the [end-to-end architecture diagram](uber-eats-end-to-end-architecture.svg), which is preserved as the original ingestion-through-Silver view. This document also describes the newer downstream Gold analytics extension; the SVG itself has not been redrawn.
 
 ![Uber Eats end-to-end data platform](uber-eats-end-to-end-architecture.svg)
 
@@ -17,7 +17,8 @@ The canonical visual architecture is the [end-to-end architecture diagram](uber-
 3. **Land:** source data is written to the configured Azure Data Lake Storage Gen2 landing area.
 4. **Normalize:** Azure Databricks and PySpark notebook exports process landed datasets and prepare Silver-layer outputs.
 5. **Validate:** implemented schema, required-field, key, domain, quality, quarantine, and reconciliation controls validate data according to each dataset's processing path.
-6. **Load and operate:** successful Silver outputs are published; SQL incremental progress is advanced only after the required downstream processing succeeds. Operational SQL, failure logging, and runbooks support investigation and recovery.
+6. **Gold analytics:** a downstream notebook builds order 360, daily order performance, payment-method performance, restaurant feedback, and driver performance datasets from Silver.
+7. **Load and operate:** successful Silver outputs are published; SQL incremental progress is advanced only after the required downstream processing succeeds. Operational SQL, business reporting SQL, failure logging, and runbooks support investigation and analysis.
 
 ## Metadata and control plane
 
@@ -31,8 +32,8 @@ The data flow is supported by API/CSV metadata, ADF datasets and linked services
 - Recovery requires inspecting partial writes and checkpoint state before replaying a batch.
 - Credentials belong in secure runtime configuration, not committed source files.
 
-See [the detailed architecture explanation](architecture.md), the [incremental source contract](../docs/INCREMENTAL_SOURCE_CONTRACT.md), and the [recovery runbook](../docs/RECOVERY_AND_RERUN_RUNBOOK.md).
+See [the detailed architecture explanation](architecture.md), the [Gold layer and reporting guide](../docs/GOLD_LAYER_AND_REPORTING.md), the [incremental source contract](../docs/INCREMENTAL_SOURCE_CONTRACT.md), and the [recovery runbook](../docs/RECOVERY_AND_RERUN_RUNBOOK.md).
 
 ## Deployment boundary
 
-This is a logical view of the completed project. The project owner confirms successful end-to-end execution in its original Azure environment; those resources were later decommissioned to control costs. The diagram and exported definitions do not imply that the Azure resources are currently deployed or live.
+The original ingestion/Silver platform was successfully executed in its original Azure environment, as confirmed by the project owner; those resources were later decommissioned to control costs. The Gold extension and master ADF pipeline are newer repository additions awaiting a fresh cloud rerun. The diagram and exported definitions do not imply that Azure resources are currently deployed or live.

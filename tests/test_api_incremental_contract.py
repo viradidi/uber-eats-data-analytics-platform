@@ -252,5 +252,21 @@ class ApiTimestampContractTests(unittest.TestCase):
         self.assertIn("invalid JSON", raised.exception.detail)
 
 
+    def test_generated_payment_includes_silver_required_event_timestamp(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "payments.json"
+            existing = [{"payment_id": "P1008"}]
+            with patch.object(api, "load_json_file", return_value=existing), patch.object(
+                api, "_data_file_path", return_value=str(target)
+            ):
+                result = api.generate_payment_test_data(api_key="local-test-key")
+
+            generated = result["record"]
+            self.assertIn("payment_timestamp", generated)
+            self.assertEqual(generated["updated_at"], generated["payment_timestamp"])
+            saved = json.loads(target.read_text(encoding="utf-8"))
+            self.assertEqual(generated, saved[-1])
+            self.assertEqual("P1009", generated["payment_id"])
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,12 +1,12 @@
 # Uber Eats Data Engineering Platform
 
-An end-to-end, Azure-oriented data engineering project demonstrating multi-source ingestion, orchestration, lake storage, Spark transformations, incremental-load controls, data quality, and recovery practices using restaurant-delivery domain data.
+An Azure-oriented data engineering project demonstrating API, CSV, and SQL ingestion, Silver transformations, a downstream Gold analytics layer, incremental-load controls, data quality, and operational recovery using synthetic restaurant-delivery domain data.
 
 **Project owner:** Isaiah Nyakundi  
 **Focus:** Data Engineering · Cloud Data Platforms · Analytics Engineering  
 **Repository:** https://github.com/viradidi/uber-eats-data-analytics-platform
 
-> **Project status:** Completed and successfully validated end to end by the project owner. The Azure resources used during implementation were subsequently decommissioned to control costs. The repository preserves the source code, exported configurations, notebooks, tests, and engineering documentation. The cloud environment is therefore not represented as currently deployed or continuously available.
+> **Project status:** The original API/CSV/SQL ingestion and Silver implementation were successfully executed end to end in the original Azure environment, as confirmed by the project owner. Those Azure resources were later decommissioned to control costs. The Gold layer, business-reporting pack, master ADF orchestration pipeline, and local PySpark tests are newer repository enhancements and are awaiting a fresh cloud rerun; they are not presented as already runtime-validated.
 
 ---
 
@@ -20,7 +20,7 @@ This project brings together three ingestion patterns:
 - **CSV files:** file-based datasets such as drivers, promotions, and delivery zones.
 - **SQL:** an incremental extraction pattern using source watermarks and a control table.
 
-Azure Data Factory coordinates the ingestion workflows. Data is landed in Azure Data Lake Storage Gen2 and processed through Azure Databricks/Spark Silver-layer notebook exports.
+Azure Data Factory coordinates the ingestion workflows. Data is landed in Azure Data Lake Storage Gen2 and processed through Azure Databricks/Spark Silver transformations. A downstream Gold layer now builds order, payment, driver, and restaurant-feedback analytics for SQL-based business reporting.
 
 The project also includes engineering controls and supporting documentation for incremental-load correctness, checkpoint handling, data quality, reconciliation, security considerations, and recovery.
 
@@ -35,7 +35,8 @@ The project also includes engineering controls and supporting documentation for 
 3. **Configuration:** metadata, datasets, linked services, and integration-runtime definitions support orchestration.
 4. **Storage:** Azure Data Lake Storage Gen2 provides the lake storage integration and landing area.
 5. **Transformation:** Azure Databricks notebook exports implement Silver-layer processing using Spark.
-6. **Operational controls:** SQL reports, quality/reconciliation utilities, checkpoint logic, and runbooks support validation and recovery.
+6. **Gold analytics:** A downstream Gold notebook builds order-level, daily performance, payment-method, driver, and restaurant-feedback tables.
+7. **Operational controls:** SQL reports, quality/reconciliation utilities, checkpoint logic, and runbooks support validation and recovery.
 
 The diagram and exported definitions describe the implemented project architecture. They are not a claim that the Azure resources remain deployed today.
 
@@ -50,7 +51,7 @@ For component-level detail, see [Architecture documentation](architecture/archit
 | Azure Data Factory | Ingestion orchestration and pipeline configuration |
 | Azure Data Lake Storage Gen2 | Data lake storage integration |
 | Azure Databricks | Distributed transformation environment |
-| Apache Spark / PySpark | Silver-layer notebook processing |
+| Apache Spark / PySpark | Silver and Gold transformations plus local Spark tests |
 | SQL | Relational source extraction, control logic, reconciliation, and operational queries |
 | JSON / CSV | Resource configuration, metadata, and source fixtures |
 | GitHub Actions | Automated repository validation |
@@ -78,7 +79,7 @@ See:
 
 ### Transformation and data quality
 
-Databricks notebook exports cover delivery-domain datasets in the Silver layer. The repository also contains shared Spark utilities, quality checks, reconciliation queries, and operational SQL reports.
+Databricks notebook exports cover delivery-domain datasets in the Silver layer. A shared PySpark transformation module publishes five Gold analytics tables, and a read-only SQL pack provides daily KPIs, order drill-through, payment analysis, driver performance, and restaurant feedback. Operational SQL reports for quality and reconciliation remain separate.
 
 ### Recovery and operational thinking
 
@@ -96,10 +97,12 @@ See the [recovery and rerun runbook](docs/RECOVERY_AND_RERUN_RUNBOOK.md) and [op
 | `dataset/` | Dataset definitions |
 | `linkedService/` | Linked-service configuration exports |
 | `factory/`, `integrationRuntime/`, `routing/` | Additional Azure Data Factory resource exports |
-| `notebooks/` | Databricks notebook exports for Silver transformations |
+| `notebooks/` | Databricks notebook exports for Silver and Gold transformations |
+| `src/gold/` | Reusable Spark transformations for Gold analytics |
+| `reports/` | Business analytics SQL reporting pack |
 | `src/common/` | Shared Spark utilities |
 | `architecture/` | Architecture diagram and documentation |
-| `docs/` | Source contracts, design reviews, runbooks, reconciliation, and project handoff material |
+| `docs/` | Source contracts, Gold definitions, runbooks, run-evidence guidance, reconciliation, and project handoff material |
 | `.github/workflows/` | GitHub Actions validation workflow |
 | `tests/` | Automated repository and application tests |
 
@@ -142,8 +145,10 @@ Install dependencies:
 
 ```bash
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+python -m pip install -r requirements-test.txt
 ```
+
+The test requirements include the API dependencies and PySpark 3.4.1. Java 17 is required for local Spark tests. Use requirements.txt alone when you only need to run the mock API.
 
 ### Configure the API key
 
@@ -182,15 +187,15 @@ From the repository root:
 python -m unittest discover -s tests -v
 ```
 
-The GitHub Actions workflow also checks JSON and notebook validity, Python syntax, notebook code-cell syntax, notebook portability, dependency installation, the unit-test suite, and API security configuration.
+The GitHub Actions workflow also checks JSON and notebook validity, Python syntax, notebook code-cell syntax, Silver/Gold notebook portability, ADF orchestration contracts, API behavior, and the Gold transformations through local-mode PySpark tests. It uploads the test log as a 90-day workflow artifact.
 
-These automated checks validate the repository behaviors they cover. They do not, by themselves, execute Azure Data Factory pipelines or prove live Databricks/Spark runtime behavior.
+The local Spark tests execute PySpark transformations against in-memory synthetic DataFrames. ADF tests inspect the exported JSON and dependency ordering; they do not execute Azure Data Factory. Neither test type proves a live Databricks workspace run.
 
 See the [GitHub Actions workflow history](https://github.com/viradidi/uber-eats-data-analytics-platform/actions).
 
 ## 8. Validation status and deployment boundary
 
-The project owner confirms that the end-to-end implementation and validation were completed successfully. The cloud environment was later decommissioned to avoid ongoing costs.
+The project owner confirms that the original ingestion and Silver implementation ran end to end successfully before the cloud environment was decommissioned to avoid ongoing costs. The Gold layer and master ADF orchestration are newer additions and still require redeployment and live validation.
 
 The following distinction is important when reviewing the repository:
 
@@ -198,8 +203,8 @@ The following distinction is important when reviewing the repository:
 |---|---|
 | Application source code and synthetic fixtures | A continuously running API deployment |
 | Exported Azure Data Factory resource definitions | A currently deployed ADF factory |
-| Databricks notebook exports and shared utilities | A currently available Databricks workspace or live job |
-| Automated tests and GitHub Actions workflow | Proof that every cloud service is executing now |
+| Databricks Silver and Gold notebook exports, shared utilities, and local Spark tests | A currently available Databricks workspace or live job |
+| Automated API, repository, and local PySpark tests plus ADF static-contract checks | Proof that every cloud service is executing now |
 | Architecture, source contracts, SQL reviews, and runbooks | Independent production certification or an ongoing production SLA |
 
 Historical end-to-end validation is the project owner's reported completion status. Current cloud availability is a separate matter. Where retained run IDs, logs, screenshots, or reconciliation outputs are available, they can provide additional evidence of the historical execution.
@@ -216,6 +221,9 @@ Historical end-to-end validation is the project owner's reported completion stat
 ## 10. Further technical documentation
 
 - [Architecture and component responsibilities](architecture/architecture.md)
+- [Gold layer and business reporting](docs/GOLD_LAYER_AND_REPORTING.md)
+- [Run evidence and retention](docs/RUN_EVIDENCE_RETENTION.md)
+- [Gold SQL reporting pack](reports/GOLD_ANALYTICS_REPORTING.sql)
 - [SQL incremental-load review](docs/SQL_INCREMENTAL_LOAD_REVIEW.md)
 - [Incremental source contract](docs/INCREMENTAL_SOURCE_CONTRACT.md)
 - [Checkpoint concurrency contract](docs/CHECKPOINT_CONCURRENCY_CONTRACT.md)

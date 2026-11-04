@@ -4,7 +4,7 @@
 
 This guide helps a hiring manager or technical reviewer inspect the engineering work in this repository and understand what was validated.
 
-The project owner confirms that the platform was completed end to end and ran successfully in its original Azure environment. Azure resources were later decommissioned to control costs. The repository therefore represents a completed project with a historical execution record, not a currently running hosted service.
+The project owner confirms that the original API/CSV/SQL ingestion and Silver platform ran successfully end to end in its original Azure environment. Azure resources were later decommissioned to control costs. The Gold analytics layer, business-reporting SQL, master ADF pipeline, and local Spark tests are newer repository additions and await a fresh Azure rerun; do not imply that this newer scope has already executed in the cloud.
 
 Keep three kinds of evidence distinct:
 
@@ -23,7 +23,8 @@ The strongest interview discussion areas are the engineering decisions behind th
 3. **Incremental extraction:** using a captured upper watermark to bound an extraction window, then advancing state only after the downstream processing dependency succeeds.
 4. **Concurrency control:** combining pipeline-level serialization with a compare-and-swap checkpoint update, while recognizing the limits of each control.
 5. **Data processing:** applying PySpark transformations and shared standardization utilities in the lake processing layer.
-6. **Operational readiness:** providing quality, reconciliation, failure logging, recovery, and rerun guidance rather than treating a successful ingestion as the whole solution.
+6. **Analytics engineering:** building a Gold order-level model and daily, payment-method, driver, and restaurant-feedback aggregates, with documented metric grains and SQL reporting queries.
+7. **Operational readiness:** providing quality, reconciliation, failure logging, run-level audit records, evidence retention, recovery, and rerun guidance rather than treating a successful ingestion as the whole solution.
 
 Be prepared to explain the trade-offs and limitations as well as the implementation. In particular, discuss late-arriving rows, equal or non-monotonic cursors, deletes, replay safety, dynamic SQL identifier validation, and the difference between repository tests and cloud-runtime validation.
 
@@ -33,10 +34,11 @@ Be prepared to explain the trade-offs and limitations as well as the implementat
 |---|---|---|---|
 | Multi-source ingestion is implemented | FastAPI source API, ADF pipeline and dataset definitions, SQL/CSV/API ingestion assets | The ingestion design and implementation artifacts are present in the repository | That a live Azure pipeline is currently deployed |
 | Data is landed in the lake | ADLS-related linked services, datasets, pipeline activities, and landing conventions | The configured landing path and orchestration intent | Current storage contents or live resource availability |
-| Spark transformations are implemented | Databricks/PySpark notebooks and shared utilities | Transformation logic, standardization, and processing structure | A current Databricks job run |
+| Silver and Gold Spark transformations are implemented | Databricks/PySpark notebooks, src/gold/transformations.py, and local-mode PySpark tests | Transformation logic and tested behavior against synthetic in-memory fixtures | A current Databricks job run or successful Gold Delta publication |
 | Incremental extraction is controlled | SQL extraction query, control/checkpoint logic, and [SQL incremental-load review](SQL_INCREMENTAL_LOAD_REVIEW.md) | Bounded watermark extraction and the documented checkpoint design | Correct handling of every source's late-arriving updates or deletes without the source contract being met |
 | Concurrent checkpoint writes are guarded | ADF concurrency setting, compare-and-swap update logic, and [checkpoint concurrency contract](CHECKPOINT_CONCURRENCY_CONTRACT.md) | The implemented serialization and optimistic checkpoint guard | Protection from unrelated pipelines or external writers that bypass the same control |
 | Data quality and operational handling are considered | Quality/reconciliation utilities, operational SQL, failure logging, and runbooks | The available controls and documented response procedures | A specific quality threshold or recovery scenario passing unless its result is retained |
+| Gold orchestration and business reporting are defined | pipeline/uber_eats_master.json, Gold notebook exports, and reports/GOLD_ANALYTICS_REPORTING.sql | The static ADF dependency contract and SQL reporting definitions | A published ADF pipeline, live notebook execution, or deployed Power BI dashboard |
 | Repository changes are validated automatically | The validation workflow definition and test suite | The automated validation workflow and test definitions | A successful run for a particular commit unless the corresponding Actions run is inspected |
 
 ## Recommended reviewer path
@@ -46,13 +48,14 @@ A reviewer can follow this sequence without access to the retired cloud environm
 1. Start with the [README](../README.md) for scope, architecture, setup, and project status.
 2. Inspect the [architecture diagram](../architecture/uber-eats-end-to-end-architecture.svg) and its [technical explanation](../architecture/architecture.md).
 3. Trace an ingestion path through the ADF pipeline, datasets, linked services, and API implementation.
-4. Review the Databricks notebooks and shared PySpark utilities.
-5. Follow the SQL incremental-load and checkpoint contracts:
+4. Review the Silver Databricks notebooks, src/gold/transformations.py, and Gold_Analytics notebook export.
+5. Review [Gold table grains and metric definitions](GOLD_LAYER_AND_REPORTING.md) and the [business reporting SQL pack](../reports/GOLD_ANALYTICS_REPORTING.sql).
+6. Follow the SQL incremental-load and checkpoint contracts:
    - [SQL incremental-load review](SQL_INCREMENTAL_LOAD_REVIEW.md)
    - [Incremental source contract](INCREMENTAL_SOURCE_CONTRACT.md)
    - [Checkpoint concurrency contract](CHECKPOINT_CONCURRENCY_CONTRACT.md)
-6. Review [operations and reliability](OPERATIONS_AND_RELIABILITY.md) and the [recovery and rerun runbook](RECOVERY_AND_RERUN_RUNBOOK.md).
-7. Inspect the validation workflow and tests, then distinguish automated repository checks from historical cloud execution.
+7. Review [operations and reliability](OPERATIONS_AND_RELIABILITY.md), the [recovery and rerun runbook](RECOVERY_AND_RERUN_RUNBOOK.md), and [run evidence retention](RUN_EVIDENCE_RETENTION.md).
+8. Inspect the validation workflow and tests, then distinguish local Spark/static contract tests from historical cloud execution.
 
 ## Interview discussion prompts
 
@@ -69,7 +72,7 @@ Use these prompts to test whether the implementation can be explained clearly in
 
 Answers should refer to the actual repository implementation and its documented boundaries, not imply that every proposed extension is already implemented.
 
-## Historical runtime evidence
+## Historical and future runtime evidence
 
 If original artifacts were retained, these are the most useful items to include. Add only real, sanitized records.
 
@@ -125,4 +128,9 @@ Suggested portfolio wording:
 
 > Built and validated an end-to-end Azure-oriented data engineering platform integrating API, CSV, and SQL sources through Azure Data Factory, ADLS Gen2, and Databricks/PySpark. Implemented metadata-driven ingestion, bounded incremental extraction, guarded checkpoint updates, transformation utilities, data-quality and reconciliation controls, and operational recovery documentation. The project ran successfully in its original environment; Azure resources were subsequently decommissioned to manage costs. Source code, configuration exports, tests, and engineering documentation remain available in the repository.
 
-Use this wording as a concise project summary, not as a claim that the cloud deployment is currently live. Tailor any quantified impact or performance claims only when measured results are available.
+Use wording that distinguishes the previously executed ingestion/Silver platform from the newer Gold extension awaiting live validation. The repository has reporting SQL but no deployed Power BI dashboard. Tailor any quantified impact or performance claims only when measured results are available.
+
+
+## Gold extension evidence boundary
+
+The Gold transformation module is tested locally with PySpark in CI, while the master ADF pipeline is checked structurally for its child-pipeline success dependencies and Gold notebook path. Those are meaningful code-level checks but are not an Azure integration test. See [run evidence and retention](RUN_EVIDENCE_RETENTION.md) for the evidence to capture during the future environment rerun.
