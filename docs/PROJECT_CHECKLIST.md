@@ -1,6 +1,6 @@
 # Project Completion and Evidence Checklist
 
-Use this checklist to track delivered artifacts and validation. **Current status:** the original ingestion/Silver platform was successfully run end to end, as confirmed by the project owner, and its Azure resources were later decommissioned. The repository's current local-mode PySpark suite has passed in GitHub Actions (90 tests in run [41843392449](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41843392449)). That is local Spark/CI evidence, not a fresh ADF or Databricks cloud run. The later Gold deployment and the newest SQL ADF/SQL migration changes still need live validation in a restored environment.
+Use this checklist to track delivered artifacts and validation. **Current status:** the original ingestion/Silver platform was successfully run end to end, as confirmed by the project owner, and its Azure resources were later decommissioned. The repository's current local-mode PySpark suite has passed in GitHub Actions (91 tests in run [41845381270](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41845381270)). That is local Spark/CI evidence, not a fresh ADF or Databricks cloud run. The later Gold deployment and the newest SQL ADF/SQL migration changes still need live validation in a restored environment.
 
 ## Repository and documentation
 
@@ -132,7 +132,7 @@ A checked repository artifact means the relevant code or documentation is presen
 - [x] Add local Spark tests and static ADF dependency-contract tests to CI.
 - [x] Add Gold run-audit design and run-evidence retention guidance.
 - [x] Fix generated API test payments to populate both payment_timestamp and updated_at as required by the Payments Silver contract.
-- [x] Run the local PySpark tests in GitHub Actions and review the actual workflow result: [90 tests passed in run 41843392449](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41843392449).
+- [x] Run the local PySpark tests in GitHub Actions and review the actual workflow result: [91 tests passed in run 41845381270](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41845381270).
 - [ ] Import Gold_Analytics into the target Databricks workspace and make src.gold available to the notebook.
 - [ ] Publish and run the master ADF pipeline in the restored environment.
 - [ ] Verify all five Gold tables, output counts, gold_run_audit rows, and reconciliation results.
