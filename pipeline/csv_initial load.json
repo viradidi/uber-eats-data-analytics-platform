@@ -52,7 +52,7 @@
           },
           "activities": [
             {
-              "name": "onpremise migration_copy1",
+              "name": "adls csv migration_copy1",
               "type": "Copy",
               "dependsOn": [],
               "policy": {
@@ -129,7 +129,7 @@
               "type": "DatabricksJob",
               "dependsOn": [
                 {
-                  "activity": "onpremise migration_copy1",
+                  "activity": "adls csv migration_copy1",
                   "dependencyConditions": [
                     "Succeeded"
                   ]
