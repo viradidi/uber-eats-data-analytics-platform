@@ -22,7 +22,7 @@ The pipeline is presented as six logical stages:
 6. **Gold analytics extension** — the new Gold notebook derives order, daily performance, payment-method, driver, and restaurant-feedback datasets from Silver. This downstream layer is not drawn in the existing SVG, which is preserved as the original pipeline architecture view.
 7. **Log and recover** — operational records, failure handling, and rerun guidance support investigation and recovery.
 
-The metadata and control plane supports the flow through API/CSV metadata, ADF datasets and linked services, integration-runtime configuration, SQL watermark state, and environment configuration.
+The metadata and control plane supports the flow through API/CSV metadata, ADF datasets and linked services, SQL watermark state, and environment configuration. The CSV source fixtures are staged into ADLS Gen2 before the ADF copy, so the restored CSV path does not depend on a desktop share or self-hosted Integration Runtime.
 
 ## 3. Component responsibilities
 
@@ -42,7 +42,7 @@ The API key is read from the API_KEY environment variable. The application fails
 
 ### Azure Data Factory
 
-ADF resource exports define separate API, CSV, and SQL incremental ingestion pipelines, alongside supporting dataset, linked-service, factory, and integration-runtime configuration.
+ADF resource exports define separate API, CSV, and SQL incremental ingestion pipelines, alongside supporting dataset, linked-service, and factory configuration. The CSV path is ADLS-to-ADLS and does not require a self-hosted Integration Runtime.
 
 ADF provides orchestration and coordinates the pipeline activities. The exported JSON files are the versioned project definitions; they do not mean that an Azure Data Factory instance is currently running.
 
@@ -81,10 +81,10 @@ The API implementation includes timestamp filtering and watermark-related endpoi
 
 ### 4.2 CSV ingestion
 
-1. The CSV ingestion pattern identifies the configured source files.
-2. Metadata and dataset configuration resolve the source and target conventions.
-3. ADF orchestrates the file ingestion.
-4. The landed files become inputs to downstream Spark processing.
+1. The three committed CSV source fixtures are staged into `bronze/csv_source` in ADLS Gen2 with SHA-256 verification.
+2. `csv_metadata_proper (2).json` maps each file to its Silver landing folder.
+3. ADF reads each source file from ADLS and copies it into the corresponding Bronze CSV landing folder.
+4. The CSV Databricks job processes each landed file through the configured notebook dispatcher.
 
 ### 4.3 SQL incremental ingestion
 
