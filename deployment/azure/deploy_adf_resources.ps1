@@ -5,7 +5,7 @@ param(
     [string]$SubscriptionId,
 
     [Parameter(Mandatory = $true)]
-    [ValidatePattern("^[A-Za-z0-9._() -]{1,90}$")]
+    [ValidatePattern("^[A-Za-z0-9._()-]{1,90}$")]
     [string]$ResourceGroupName,
 
     [Parameter(Mandatory = $true)]
