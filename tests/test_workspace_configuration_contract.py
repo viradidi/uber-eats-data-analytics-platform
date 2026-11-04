@@ -64,6 +64,38 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
             self.assertIn(file_name, csv_script)
         self.assertIn("Get-FileHash", csv_script)
 
+    def test_csv_pipeline_reads_staged_adls_source_without_self_hosted_runtime(self):
+        source_dataset = json.loads(
+            (ROOT / "dataset/DS_source_csv.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(
+            "AzureDataLakeStorage1",
+            source_dataset["properties"]["linkedServiceName"]["referenceName"],
+        )
+        location = source_dataset["properties"]["typeProperties"]["location"]
+        self.assertEqual("AzureBlobFSLocation", location["type"])
+        self.assertEqual("bronze", location["fileSystem"])
+        self.assertEqual("csv_source", location["folderPath"])
+
+        pipeline = json.loads(
+            (ROOT / "pipeline/csv_initial load.json").read_text(encoding="utf-8")
+        )
+        loop = next(
+            activity for activity in pipeline["properties"]["activities"]
+            if activity.get("type") == "ForEach"
+        )
+        copy = next(
+            activity for activity in loop["typeProperties"]["activities"]
+            if activity["name"] == "onpremise migration_copy1"
+        )
+        self.assertEqual(
+            "AzureBlobFSReadSettings",
+            copy["typeProperties"]["source"]["storeSettings"]["type"],
+        )
+        self.assertNotIn("connectVia", source_dataset["properties"])
+        self.assertFalse((ROOT / "linkedService/FileServer1.json").exists())
+        self.assertFalse((ROOT / "integrationRuntime/integrationRuntime2.json").exists())
+
     def test_csv_dispatcher_does_not_depend_on_a_personal_workspace_path(self):
         source = (ROOT / "routing/dispacher_csv_notebook.py").read_text(encoding="utf-8")
         self.assertNotIn("/Workspace/Users/", source)
