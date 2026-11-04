@@ -37,7 +37,7 @@ class IncrementalReplayContractTests(unittest.TestCase):
         foreach = next(item for item in activities if item.get("name") == "foreach_api_endpoint")
         loop = foreach["typeProperties"]["activities"]
         copy = next(item for item in loop if item.get("name") == "Api_migration")
-        filename = copy["typeProperties"]["outputs"][0]["parameters"]["p_file_name"]["value"]
+        filename = copy["outputs"][0]["parameters"]["p_file_name"]["value"]
         self.assertIn("formatDateTime(utcNow()", filename)
         self.assertIn("endpoint_name", filename)
 
