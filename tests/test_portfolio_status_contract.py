@@ -12,7 +12,7 @@ STATUS_FILES = (
     "docs/PROJECT_RELEASE_GATE.md",
     "docs/RUN_EVIDENCE_RETENTION.md",
     "architecture/architecture.md",
-        "docs/RELEASE_READINESS_REVIEW.md",
+    "docs/RELEASE_READINESS_REVIEW.md",
 )
 
 
