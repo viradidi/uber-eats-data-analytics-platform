@@ -42,6 +42,11 @@ class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
         self.assertIn("last_watermark_value", script)
         self.assertIn("@@ROWCOUNT <> 1", script)
         self.assertIn("THROW 51001", script)
+        self.assertIn("SET XACT_ABORT ON", script)
+        self.assertIn("BEGIN TRY", script)
+        self.assertIn("BEGIN TRANSACTION", script)
+        self.assertIn("IF XACT_STATE() <> 0 ROLLBACK TRANSACTION", script)
+        self.assertIn("END CATCH", script)
         self.assertIn("does not protect the control table from other pipelines", CONCURRENCY)
 
     def test_copy_is_bounded_by_captured_upper_watermark(self):
