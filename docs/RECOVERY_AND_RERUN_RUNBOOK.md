@@ -47,7 +47,7 @@ The exported ADF definition is `pipeline/sql_incremental pipeline.json`. It read
 
 ### Checkpoint concurrency safeguards
 
-The committed pipeline export sets pipeline concurrency to one and uses a compare-and-swap style control-row update based on the control ID and previously read watermark. The SQL update raises error 51001 when the affected-row count is not exactly one. These controls reduce conflicting updates within the intended pipeline execution path; they do not provide a global lock across other pipelines or external writers, and they do not make landing or Silver writes idempotent.
+The committed pipeline export sets pipeline concurrency to one and wraps its compare-and-swap control-row update in a SQL transaction. The update matches the control ID and previously read watermark; if the affected-row count is not exactly one, it raises error 51001 and rolls the transaction back. `XACT_ABORT` and `TRY/CATCH` also roll back on SQL execution errors. These controls reduce conflicting updates within the intended pipeline execution path; they do not provide a global lock across other pipelines or external writers, and they do not make landing or Silver writes idempotent.
 
 If the compare-and-swap update fails, reread the control row and inspect the competing run or writer. Do not simply rerun the old update with a newly observed watermark. Reconcile the destination first, then determine the correct checkpoint from the data actually committed.
 
