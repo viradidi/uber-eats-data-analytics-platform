@@ -6,6 +6,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PIPELINE = json.loads((ROOT / "pipeline/sql_incremental pipeline.json").read_text(encoding="utf-8"))
 CONTROL_DATASET = json.loads((ROOT / "dataset/DS_sql_control.json").read_text(encoding="utf-8"))
+SOURCE_WATER_DATASET = json.loads((ROOT / "dataset/ds_sql_water.json").read_text(encoding="utf-8"))
 MIGRATION = (
     ROOT / "sql/migrations/20261104_widen_pipeline_checkpoint_to_datetime2_7.sql"
 ).read_text(encoding="utf-8")
@@ -123,6 +124,26 @@ class SqlIncrementalHardeningContractTests(unittest.TestCase):
         fail_activities = self.gate["typeProperties"]["ifFalseActivities"]
         self.assertEqual("Fail", fail_activities[0]["type"])
         self.assertEqual("SQL_SOURCE_METADATA_INVALID", fail_activities[0]["typeProperties"]["errorCode"])
+
+    def test_split_source_and_control_databases_use_the_correct_linked_services(self):
+        source_linked_service = SOURCE_WATER_DATASET["properties"]["linkedServiceName"]["referenceName"]
+        control_linked_service = CONTROL_DATASET["properties"]["linkedServiceName"]["referenceName"]
+        self.assertEqual("ls_sql_database", source_linked_service)
+        self.assertEqual("ls_sql_control", control_linked_service)
+        self.assertEqual("ds_sql_water", self.validation["typeProperties"]["dataset"]["referenceName"])
+
+        null_check = find_activity(self.activities, "Validate SQL watermark nulls")
+        self.assertEqual("ds_sql", null_check["typeProperties"]["dataset"]["referenceName"])
+        self.assertEqual("ds_sql", self.check["typeProperties"]["dataset"]["referenceName"])
+        self.assertEqual("ds_sql_water", self.maximum["typeProperties"]["dataset"]["referenceName"])
+
+        branch = find_activity(self.activities, "rowscount is there")["typeProperties"]["ifTrueActivities"]
+        checkpoint = find_activity(branch, "update watermark_copy1")
+        self.assertEqual("ls_sql_control", checkpoint["linkedServiceName"]["referenceName"])
+
+        restore_script = (ROOT / "deployment/azure/configure_restore_environment.ps1").read_text(encoding="utf-8")
+        self.assertIn('Set-SqlLinkedService "linkedService/ls_sql_database.json" $SourceSqlServerFqdn $SourceSqlDatabase', restore_script)
+        self.assertIn('Set-SqlLinkedService "linkedService/ls_sql_control.json" $ControlSqlServerFqdn $ControlSqlDatabase', restore_script)
 
     def test_metadata_validation_checks_schema_table_column_and_safe_identifier_contract(self):
         query = self.validation["typeProperties"]["source"]["sqlReaderQuery"]["value"]

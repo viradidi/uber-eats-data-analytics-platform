@@ -40,6 +40,16 @@ The source count, maximum-watermark, and copy queries honor `schema_name` and br
 
 This ordering prevents the checkpoint from advancing merely because extraction started or the copy succeeded while the required Silver job subsequently failed. The compare-and-swap predicate also detects a stale control-row value at commit time.
 
+### 3.1 Separate source and control databases
+
+The restore script supports a source SQL database that is different from the control SQL database. The ADF resource references preserve two connection boundaries:
+
+- `Lookup_SQL_Control`, duplicate/active-control checks, and the checkpoint compare-and-swap update use `DS_sql_control` / `ls_sql_control`.
+- Source catalog preflight, source watermark-null checks, row counts, maximum-watermark lookup, and source copy use `ls_sql_database` through the source datasets.
+
+The source catalog preflight uses `ds_sql_water`, which is bound to `ls_sql_database`, rather than the control dataset. The checkpoint update uses `ls_sql_control`, not the source linked service. CI enforces this separation. This matters when restored source and control databases have different names or are hosted on different SQL servers; a query against the control database's `sys.schemas` cannot validate a table that exists only in the source database.
+
+
 These mechanisms have limits: a pipeline-level concurrency setting is not a per-source lock against other pipelines or external writers, and checkpoint protection does not automatically make landing-file writes or Silver transformations idempotent.
 
 ## 4. Important correctness boundaries

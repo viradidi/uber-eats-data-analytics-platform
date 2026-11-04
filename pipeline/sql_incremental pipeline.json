@@ -166,7 +166,7 @@
                   "partitionOption": "None"
                 },
                 "dataset": {
-                  "referenceName": "DS_sql_control",
+                  "referenceName": "ds_sql_water",
                   "type": "DatasetReference"
                 },
                 "firstRowOnly": true
@@ -466,7 +466,7 @@
                     },
                     "userProperties": [],
                     "linkedServiceName": {
-                      "referenceName": "ls_sql_database",
+                      "referenceName": "ls_sql_control",
                       "type": "LinkedServiceReference"
                     },
                     "typeProperties": {

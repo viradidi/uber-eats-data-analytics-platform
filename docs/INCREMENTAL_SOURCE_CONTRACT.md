@@ -91,6 +91,14 @@ The API Silver tables are still rebuilt from the accumulated landing snapshots a
 
 This API snapshot policy is separate from the SQL incremental ADF pipeline. The SQL pipeline still uses a strict lower watermark boundary. Its late/equal-watermark and delete limitations remain until each SQL source has a verified cursor contract and a source-appropriate overlap, CDC, tombstone, or reconciliation strategy.
 
+## 3.1 Source catalog discovery before completing a contract
+
+The repository includes [a read-only source catalog and candidate-key inventory](../sql/diagnostics/inspect_source_contract_candidates.sql). Run it in the **source SQL database**, not automatically in the control database. First export the approved active rows from `dbo.pipeline_control` in the control database; paste their control ID, schema, table, watermark column, and current checkpoint into the script's in-memory `@ActiveSources` table.
+
+The inventory reports whether each configured source table and cursor column exists, the cursor's SQL type/precision/scale/nullability, and primary/unique-index key columns that can be considered as candidates. Optional row statistics include total rows, null-cursor rows, min/max cursor values, rows tied at the maximum cursor, and rows at/before the stored checkpoint. Those statistics can scan large tables; enable `@CollectRowStats` only after the source owner approves the read workload.
+
+A primary/unique index is evidence of an enforced uniqueness constraint, not proof that its columns are the correct business key for the Silver model. A datetime column is only a cursor candidate, not proof that inserts/updates advance it reliably. The business owner and source semantics still require review and approval. The helper does not modify data or activate control rows.
+
 ## 4. Control-table and SQL safety
 
 The exported pipeline interpolates `table_name` and `watermark_column` from `pipeline_control` into SQL text. Treat these values as privileged configuration.

@@ -48,6 +48,7 @@ If the job export is unavailable, do not claim SQL Silver replay safety. Do not 
 ### SQL source and control contracts
 
 - [ ] Complete [the incremental source contract](INCREMENTAL_SOURCE_CONTRACT.md) for every active row in `dbo.pipeline_control`.
+- [ ] Export the active control-row identifiers to [the read-only source catalog discovery script](../sql/diagnostics/inspect_source_contract_candidates.sql), run it against the source SQL database, and retain its cursor type/precision and primary/unique-key candidate output. Enable optional row statistics only after the source owner approves the scan. Approve business keys and cursor semantics with the source owner; do not treat catalog candidates as approval.
 - [ ] Verify each source table, schema, watermark column, cursor type/precision/timezone, business key, initial-load position, late-arrival semantics, and delete strategy.
 - [ ] Apply [the idempotent control-table bootstrap](../sql/migrations/20261104_create_ingestion_control_tables.sql) to create/verify the API and SQL ADF control tables and seed the four documented API endpoints.
 - [ ] Add only reviewed SQL source-control rows; confirm the control table has unique, non-null `control_id` values and unique active source mappings.

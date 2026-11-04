@@ -79,6 +79,7 @@ For API endpoints, timestamped landing snapshots accumulate in the endpoint fold
 See:
 - [SQL incremental-load review](docs/SQL_INCREMENTAL_LOAD_REVIEW.md)
 - [Incremental source contract](docs/INCREMENTAL_SOURCE_CONTRACT.md)
+- [SQL source catalog discovery](sql/diagnostics/inspect_source_contract_candidates.sql)
 - [Checkpoint concurrency contract](docs/CHECKPOINT_CONCURRENCY_CONTRACT.md)
 
 ### Transformation and data quality

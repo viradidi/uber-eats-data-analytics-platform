@@ -75,29 +75,8 @@ FROM dbo.pipeline_control
 WHERE is_active = 1
 ORDER BY control_id;
 
--- 5. Catalog check for enabled source objects. Existence is not authorization;
--- also verify the watermark type and documented change semantics.
-SELECT
-    pc.control_id,
-    pc.schema_name,
-    pc.table_name,
-    pc.watermark_column,
-    CASE
-        WHEN t.object_id IS NULL THEN 'source table not found in configured schema'
-        WHEN c.column_id IS NULL THEN 'watermark column not found on source table'
-        ELSE 'object exists; verify watermark type and source semantics'
-    END AS catalog_check,
-    ty.name AS watermark_data_type
-FROM dbo.pipeline_control AS pc
-LEFT JOIN sys.schemas AS s
-    ON s.name = pc.schema_name
-LEFT JOIN sys.tables AS t
-    ON t.schema_id = s.schema_id
-   AND t.name = pc.table_name
-LEFT JOIN sys.columns AS c
-    ON c.object_id = t.object_id
-   AND c.name = pc.watermark_column
-LEFT JOIN sys.types AS ty
-    ON ty.user_type_id = c.user_type_id
-WHERE pc.is_active = 1
-ORDER BY pc.control_id;
+-- 5. Source-object catalog checks must run in the SOURCE SQL database.
+-- The control database may be separate from the source database after restore;
+-- querying sys.schemas/sys.tables here would inspect the wrong database.
+-- Use sql/diagnostics/inspect_source_contract_candidates.sql after copying the
+-- approved active control rows into its @ActiveSources table variable.
