@@ -242,6 +242,7 @@ Historical end-to-end validation is the project owner's reported completion stat
 - [External SQL Silver job review](docs/EXTERNAL_SQL_SILVER_JOB_REVIEW.md)
 - [Restored Azure acceptance plan](docs/RESTORED_AZURE_ACCEPTANCE_PLAN.md)
 - [Restored Azure configuration inventory](docs/RESTORED_AZURE_CONFIGURATION_INVENTORY.md)
+- [ADF control-table bootstrap migration](sql/migrations/20261104_create_ingestion_control_tables.sql)
 - [ADLS metadata and CSV staging scripts](deployment/azure/)
 
 ---
