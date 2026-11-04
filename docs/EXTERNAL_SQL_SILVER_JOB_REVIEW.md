@@ -46,7 +46,7 @@ For every task that runs a notebook, script, or child job:
 
 Official references: [Databricks Workspace Export API](https://docs.databricks.com/api/workspace-files/v1/export) and [Import and export Databricks notebooks](https://docs.databricks.com/aws/en/notebooks/notebook-export-import).
 
-The minimum review package for the SQL branch is the job settings JSON plus every source file needed to follow the task from input selection through target publication. For a complete restored-workspace handoff, export the API job (`1006977938504729`) and CSV job (`986239993761586`) settings too, and confirm their configured notebook/source paths and parameters. Their source notebooks are in this repository, but the job task graphs, identities, libraries, retry policies, and compute versions are external. A screenshot alone is not sufficient to establish code behavior.
+The minimum review package for the SQL branch is the job settings JSON plus every source file needed to follow the task from input selection through target publication. The API and CSV branches now invoke repository-owned Databricks Notebook activities directly, so their previous external Job IDs are no longer required. Review the current API/CSV dispatchers and ADF notebook paths as part of the deployment review. A screenshot alone is not sufficient to establish SQL Silver job behavior.
 
 ## 3. Sanitize before sharing
 
