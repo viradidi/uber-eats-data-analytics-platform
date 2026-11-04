@@ -244,6 +244,7 @@ Historical end-to-end validation is the project owner's reported completion stat
 - [Restored Azure configuration inventory](docs/RESTORED_AZURE_CONFIGURATION_INVENTORY.md)
 - [ADF control-table bootstrap migration](sql/migrations/20261104_create_ingestion_control_tables.sql)
 - [ADLS metadata and CSV staging scripts](deployment/azure/)
+- [Databricks workspace import script](deployment/databricks/import_workspace_assets.ps1)
 
 ---
 
