@@ -15,6 +15,9 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+if ($PSVersionTable.PSVersion.Major -lt 7) {
+    throw "PowerShell 7 or newer is required for JSON processing."
+}
 
 if (-not (Get-Command databricks -ErrorAction SilentlyContinue)) {
     throw "Databricks CLI is required. Install the current Databricks CLI before exporting the SQL Silver Job."
@@ -51,7 +54,7 @@ function Protect-JobConfiguration {
     if ($Value -is [System.Collections.IDictionary]) {
         $protected = [ordered]@{}
         foreach ($key in $Value.Keys) {
-            if ([string]$key -match "(?i)(password|(^|[._-])token$|access[._-]?token|refresh[._-]?token|api[._-]?key|client[._-]?secret|secret_value|(^|[._-])secret$|private[._-]?key|authorization|connection[._-]?string|credential)") {
+            if ([string]$key -match "(?i)(password|(^|[._-])token$|access[._-]?token|refresh[._-]?token|sas[._-]?token|api[._-]?key|client[._-]?secret|secret_value|(^|[._-])secret$|(^|[._-])key$|storage[._-]?key|private[._-]?key|authorization|connection[._-]?string|credential)") {
                 $protected[$key] = "<REDACTED>"
             }
             else {
@@ -213,14 +216,15 @@ foreach ($page in $pages) {
     $protectedPages += ,(Protect-JobConfiguration -Value $page)
 }
 $jobExportPath = Join-Path $OutputDirectory ("job_" + $JobId + "_sanitized.json")
-$protectedPages | ConvertTo-Json -Depth 100 | Set-Content -LiteralPath $jobExportPath -Encoding utf8
+ConvertTo-Json -InputObject @($protectedPages) -Depth 100 | Set-Content -LiteralPath $jobExportPath -Encoding utf8
 
 # Identify likely literal credentials in exported notebook/script sources. Do not
 # alter code automatically; inspect every flagged file before sharing.
 $secretPatterns = @(
     '(?i)(password|secret|client_secret|api_key|access_token|refresh_token)\s*[:=]\s*["''][^"'']+["'']',
     '(?i)(authorization|bearer)\s*[:=]\s*["''][^"'']+["'']',
-    '(?i)(jdbc:[^"'']*(?:password|pwd)=)[^;"'']+'
+    '(?i)(jdbc:[^"'']*(?:password|pwd)=)[^;"'']+',
+    '(?i)(AccountKey|SharedAccessSignature)\s*=\s*[^;\s]+'
 )
 $potentialSecrets = @()
 foreach ($source in $taskSourceResults | Where-Object { $_.status -eq "exported" }) {
