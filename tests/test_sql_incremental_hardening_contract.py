@@ -11,6 +11,7 @@ MIGRATION = (
 ).read_text(encoding="utf-8")
 REVIEW = (ROOT / "docs/SQL_INCREMENTAL_LOAD_REVIEW.md").read_text(encoding="utf-8")
 SOURCE_CONTRACT = (ROOT / "docs/INCREMENTAL_SOURCE_CONTRACT.md").read_text(encoding="utf-8")
+PREFLIGHT = (ROOT / "docs/SQL_INCREMENTAL_CONTROL_PREFLIGHT.sql").read_text(encoding="utf-8")
 
 
 def find_activity(activities, name):
@@ -45,6 +46,8 @@ class SqlIncrementalHardeningContractTests(unittest.TestCase):
             if column["name"] == "is_active"
         )
         self.assertEqual("bit", active_field["type"])
+        self.assertIn("WHERE is_active = 1", PREFLIGHT)
+        self.assertIn("WHERE pc.is_active = 1", PREFLIGHT)
 
     def test_pipeline_fails_when_no_sql_control_rows_are_active(self):
         count = find_activity(self.top, "Count active SQL control rows")
