@@ -142,6 +142,53 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
             self.assertGreaterEqual(first_src_import, 0, relative_path)
             self.assertLess(first_sys_insert, first_src_import, relative_path)
 
+    def test_api_pipeline_fails_closed_when_no_endpoint_controls_are_active(self):
+        pipeline = json.loads(
+            (ROOT / "pipeline/api_src_inital load.json").read_text(encoding="utf-8")
+        )
+        activities = pipeline["properties"]["activities"]
+        guard = next(a for a in activities if a["name"] == "Require active API endpoint rows")
+        loop = next(a for a in activities if a["name"] == "foreach_api_endpoint")
+        expression = guard["typeProperties"]["expression"]["value"]
+        self.assertIn("length(activity('lookup_api_control').output.value)", expression)
+        self.assertEqual(
+            ["Require active API endpoint rows"],
+            [item["activity"] for item in loop["dependsOn"]],
+        )
+        self.assertEqual(
+            "API_NO_ACTIVE_ENDPOINTS",
+            guard["typeProperties"]["ifFalseActivities"][0]["typeProperties"]["errorCode"],
+        )
+
+        child_activities = loop["typeProperties"]["activities"]
+        names = {activity["name"] for activity in child_activities}
+        self.assertIn("Web_Get_Api_Watermarks", names)
+        script = next(a for a in child_activities if a["name"] == "Script_update_api_control")
+        watermark_expression = script["typeProperties"]["scripts"][0]["text"]["value"]
+        self.assertIn("activity('Web_Get_Api_Watermarks')", watermark_expression)
+        self.assertNotIn("activity('Web_Get_API_Watermarks')", watermark_expression)
+
+    def test_csv_pipeline_fails_closed_when_metadata_is_empty(self):
+        pipeline = json.loads(
+            (ROOT / "pipeline/csv_initial load.json").read_text(encoding="utf-8")
+        )
+        activities = pipeline["properties"]["activities"]
+        guard = next(a for a in activities if a["name"] == "Require CSV metadata rows")
+        loop = next(a for a in activities if a["name"] == "ForEach1")
+        expression = guard["typeProperties"]["expression"]["value"]
+        self.assertIn("length(activity('metadata lookup').output.value)", expression)
+        self.assertEqual(
+            ["Require CSV metadata rows"],
+            [item["activity"] for item in loop["dependsOn"]],
+        )
+        self.assertEqual(
+            "CSV_NO_SOURCE_FILES",
+            guard["typeProperties"]["ifFalseActivities"][0]["typeProperties"]["errorCode"],
+        )
+
+        copy = next(a for a in loop["typeProperties"]["activities"] if a["name"] == "adls csv migration_copy1")
+        self.assertEqual(".csv", copy["typeProperties"]["sink"]["formatSettings"]["fileExtension"])
+
     def test_csv_pipeline_reads_staged_adls_source_without_self_hosted_runtime(self):
         source_dataset = json.loads(
             (ROOT / "dataset/DS_source_csv.json").read_text(encoding="utf-8")
@@ -197,7 +244,6 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
         self.assertIn('dbutils.widgets.text("endpoint_name"', source)
         self.assertIn('{"bronze_root": bronze_root}', source)
         self.assertIn('dbutils.widgets.text("notebook_root"', source)
-        self.assertIn('{"bronze_root": bronze_root}', source)
         for endpoint, notebook in (
             ("payments", "Silver_Payments"),
             ("deliveries", "Silver_Deliveries"),
