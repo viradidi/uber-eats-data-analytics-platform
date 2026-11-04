@@ -41,17 +41,17 @@ The three Databricks linked services currently reference the historic workspace:
 
 Replace these values when using a different workspace and verify managed-identity access.
 
-The linked-service cluster runtime is now aligned on **Databricks Runtime 16.4 LTS / Photon / Scala 2.12**. The local PySpark test requirement is aligned to Spark 3.5.2. Microsoft lists 16.4 LTS support through May 9, 2028; the previous 13.3 LTS support end date was August 22, 2026. See [Azure Databricks runtime versions and compatibility](https://learn.microsoft.com/en-us/azure/databricks/release-notes/runtime/). This alignment applies to the ADF linked-service cluster definitions; it does not update compute configured inside independently managed Jobs. Export and inspect those job definitions too.
+The ADF factory export now carries a `bronze_root` global parameter consumed by the direct API and CSV notebook activities. Set this once to the restored ADLS container path. The linked-service cluster runtime is now aligned on **Databricks Runtime 16.4 LTS / Photon / Scala 2.12**. The local PySpark test requirement is aligned to Spark 3.5.2. Microsoft lists 16.4 LTS support through May 9, 2028; the previous 13.3 LTS support end date was August 22, 2026. See [Azure Databricks runtime versions and compatibility](https://learn.microsoft.com/en-us/azure/databricks/release-notes/runtime/). This alignment applies to the ADF linked-service cluster definitions; it does not update compute configured inside independently managed Jobs. Export and inspect those job definitions too.
 
-ADF invokes these existing job IDs:
+The API and CSV branches no longer depend on external Databricks Jobs. Their ADF activities invoke the repository-owned dispatchers directly through `DatabricksNotebook` activities, and the dispatchers invoke the correct Silver notebook from the relative `../notebooks` path. Both receive `bronze_root` from the Data Factory global parameter.
+
+The only remaining external ADF Job reference is SQL:
 
 | ADF activity | Job ID | Required action |
 |---|---:|---|
-| API `Job_api` | `1006977938504729` | Confirm the job exists in the restored workspace, export settings, verify notebook/source and task parameters |
-| CSV `silver_csv_job_copy1` | `986239993761586` | Confirm the job exists, export settings, verify dispatcher/notebook paths and `file_name` parameter |
 | SQL `Job_Silver_copy1` | `121055824417886` | Export and complete the dedicated [SQL Silver job review](EXTERNAL_SQL_SILVER_JOB_REVIEW.md); its notebook/source is not included in this repository |
 
-If new Jobs are created, their IDs will differ. Update the corresponding ADF pipeline JSON references and re-run the repository tests before publishing.
+If that SQL Job is recreated, update the ADF SQL pipeline job ID and re-run the repository tests before publishing.
 
 The Gold notebook is invoked at `/Shared/UberEats/Gold_Analytics`. Deploy that notebook and the `src.gold` package/module dependencies to the selected workspace path. Confirm the default catalog `ubereats_databricks1` and `silver`/`gold` schemas exist or override the notebook widgets with the approved catalog/schema names.
 
@@ -105,7 +105,7 @@ Neither script configures Azure role assignments or SQL/Databricks permissions; 
 - [ ] Run the CSV staging script and verify all three source files exist in `bronze/csv_source`.
 - [ ] Confirm API endpoint and Key Vault secret reference.
 - [ ] Confirm Databricks workspace, managed identity, catalog and schemas.
-- [ ] Export/inspect all three Databricks Jobs and update job IDs after any recreation.
+- [ ] Export/inspect the external SQL Databricks Job `121055824417886`; API and CSV are direct repository-owned Databricks Notebook activities.
 - [ ] Deploy notebooks, shared Python modules and Gold assets to the expected workspace paths.
 - [ ] Confirm current supported runtime and available node SKUs/quotas in the chosen region.
 - [ ] Publish ADF resources and validate all references before the first master run.
