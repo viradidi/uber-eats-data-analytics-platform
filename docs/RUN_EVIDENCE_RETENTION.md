@@ -5,7 +5,7 @@
 Keep repository-level evidence separate from cloud-runtime evidence.
 
 - The GitHub Actions workflow validates committed JSON/notebook files, Python syntax, notebook code cells, Silver notebook portability, static ADF/Gold contracts, and the Python/PySpark unit tests.
-- The workflow uploads its test-results.txt output as a GitHub Actions artifact with a 90-day retention period. The run is also associated with its commit SHA and workflow URL. The latest verified full suite recorded 90 passing tests in [run 41845381270](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41845381270), commit `8d687b5f56d657dfa615dac5bb8323f0299e9b4a`.
+- The workflow uploads its test-results.txt output as a GitHub Actions artifact with a 90-day retention period. The run is also associated with its commit SHA and workflow URL. The latest verified full suite recorded 91 tests passing in [run 41845381270](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41845381270), commit `c2501ffc728806644cef5ae313cc9a4d407df3c0`.
 - Existing Silver notebook logic appends quality, failure, quarantine, and reconciliation records to Delta audit tables where the corresponding workspace, catalog, schema, and permissions are available.
 - The Gold notebook appends one row per execution to gold.gold_run_audit, including the parent ADF run ID, run status, output row counts, and UTC timestamps.
 
