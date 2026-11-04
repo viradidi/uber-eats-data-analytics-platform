@@ -8,7 +8,7 @@ from delta.tables import DeltaTable
 # COMMAND ----------
 
 # Environment-specific storage configuration (override the widget per workspace/job).
-dbutils.widgets.text("bronze_root", "abfss://bronze@ubereaststorage.dfs.core.windows.net", "Bronze storage root")
+dbutils.widgets.text("bronze_root", "abfss://bronze@ubereatsrisstorage.dfs.core.windows.net", "Bronze storage root")
 BRONZE_ROOT = dbutils.widgets.get("bronze_root").rstrip("/")
 
 
