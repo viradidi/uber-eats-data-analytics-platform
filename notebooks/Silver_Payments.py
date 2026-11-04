@@ -3,6 +3,7 @@ from pyspark.sql.functions import *
 from pyspark.sql.types  import *
 from src.common.spark_utils import standardize_columns
 from src.common.quality_events import log_pipeline_failure, quarantine_rejected_rows
+from src.common.incremental import deduplicate_replayed_snapshot_rows
 
 
 # COMMAND ----------
@@ -33,6 +34,9 @@ try:
         .load(f"{BRONZE_ROOT}/api/payments/")
     )
     df_payments_table= df_payments.select(explode("data").alias("payments")).select("payments.*")
+    df_payments_table = deduplicate_replayed_snapshot_rows(
+        df_payments_table, key_columns=["payment_id"], version_column="updated_at", dataset_name="payments"
+    )
 except Exception as exc:
     log_pipeline_failure(spark, "payments", "source_read", exc)
     raise
@@ -43,7 +47,7 @@ print("payments.source_rows=" + str(df_payments_table_row_count))
 if df_payments_table_row_count == 0:
     fail_validation("API Silver input is empty; refusing to overwrite the existing target table")
 # Fail before publishing if the API payload has schema, required-field, or key-quality defects.
-required_columns = ["payment_id","order_id","payment_method","amount","payment_status","payment_timestamp"]
+required_columns = ["payment_id","order_id","payment_method","amount","payment_status","payment_timestamp","updated_at"]
 missing_columns = sorted(set(required_columns) - set(df_payments_table.columns))
 if missing_columns:
     fail_validation(f"payments API payload is missing required columns: {missing_columns}")
