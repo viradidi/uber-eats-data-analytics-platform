@@ -61,6 +61,8 @@ COMMIT TRANSACTION;
 
 Important implementation details:
 
+- The control dataset now declares `last_watermark_value` as `datetime2(7)`. Apply the [precision migration](../sql/migrations/20261104_widen_pipeline_checkpoint_to_datetime2_7.sql) before deploying the updated ADF dataset. It preserves existing nullability and checkpoint values; it has not been run against the retired SQL environment.
+
 - `@control_id`, `@previous_watermark`, and `@captured_upper_watermark` must use types compatible with the actual table columns.
 - Timestamp precision and timezone interpretation must be consistent between source values, ADF expressions, and SQL storage.
 - The control table should enforce uniqueness for `control_id`; the row-count check is a runtime guard, not a replacement for a unique constraint.
