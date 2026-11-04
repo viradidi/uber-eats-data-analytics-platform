@@ -36,6 +36,24 @@ class SqlIncrementalHardeningContractTests(unittest.TestCase):
         cls.maximum = find_activity(branch, "Get max watermark_copy1")
 
 
+    def test_control_table_bootstrap_creates_only_verified_api_control_rows(self):
+        bootstrap = (
+            ROOT / "sql/migrations/20261104_create_ingestion_control_tables.sql"
+        ).read_text(encoding="utf-8").lower()
+        self.assertIn("create table dbo.pipeline_control", bootstrap)
+        self.assertIn("create table dbo.api_pipeline_control", bootstrap)
+        self.assertIn("last_watermark_value datetime2(7) null", bootstrap)
+        self.assertIn("check (is_active = 0 or last_watermark_value is not null)", bootstrap)
+        self.assertIn("ux_pipeline_control_active_source_cursor", bootstrap)
+        self.assertIn("ux_api_pipeline_control_endpoint_name", bootstrap)
+        for endpoint in ("payments", "deliveries", "ratings", "order-status"):
+            with self.subTest(endpoint=endpoint):
+                self.assertIn(f"('{endpoint}', 'api/", bootstrap)
+        self.assertIn("where not exists", bootstrap)
+        self.assertIn("no sql source control rows or watermark values were created", bootstrap)
+        self.assertIn("begin catch", bootstrap)
+        self.assertIn("rollback transaction", bootstrap)
+
     def test_only_active_control_rows_are_processed(self):
         lookup = find_activity(self.top, "Lookup_SQL_Control")
         query = lookup["typeProperties"]["source"]["sqlReaderQuery"]
