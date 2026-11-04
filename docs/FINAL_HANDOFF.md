@@ -35,6 +35,9 @@ Start with the [README](../README.md), then use these documents for deeper revie
 7. [Gold layer and business reporting](GOLD_LAYER_AND_REPORTING.md)
 8. [Run evidence and retention](RUN_EVIDENCE_RETENTION.md)
 9. [Portfolio evidence pack](PORTFOLIO_EVIDENCE.md)
+10. [Consolidated release-readiness review](RELEASE_READINESS_REVIEW.md)
+11. [External SQL Silver job review](EXTERNAL_SQL_SILVER_JOB_REVIEW.md)
+12. [Restored Azure acceptance plan](RESTORED_AZURE_ACCEPTANCE_PLAN.md)
 
 ## Validation and evidence boundaries
 
