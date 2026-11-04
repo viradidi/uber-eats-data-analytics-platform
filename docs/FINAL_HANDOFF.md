@@ -15,6 +15,7 @@ This is owner-reported execution history, not independent third-party certificat
 - Multi-source ingestion design, exported child ADF resource definitions, and a new master pipeline that gates Gold publication on success of all three ingestion paths.
 - FastAPI mock source with API-key protection and source endpoints.
 - Bounded SQL incremental extraction design, success-dependent checkpoint advancement, serialized pipeline runs, and a checkpoint compare-and-swap guard in the exported pipeline.
+- Replay-safe API Silver preparation for timestamped cumulative endpoint snapshots: exact duplicates are collapsed, versioned entity records use the latest source update timestamp, and conflicting same-version records fail closed.
 - Configurable Bronze roots, repository-owned shared Spark utilities, five Gold analytics outputs, and a read-only business reporting SQL pack.
 - Data-quality checks, API contract tests, local PySpark transformation tests, static ADF/recovery contract tests, repository artifact integrity tests, and GitHub Actions validation.
 - Quarantine, quality metrics, reconciliation helpers, failure-event logging, operational SQL reports, and rerun/recovery guidance represented in the repository.
