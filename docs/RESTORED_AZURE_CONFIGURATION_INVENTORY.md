@@ -26,12 +26,11 @@ Before deployment:
 
 - Confirm whether this SQL database is still the intended source/control database. Do not assume the historic endpoint is available.
 - Restore or provision the source tables and required control tables.
-- Create and seed `dbo.pipeline_control` with approved active source rows and valid typed starting watermarks.
-- Create and seed `dbo.api_pipeline_control` for the API branch.
+- Apply [the idempotent ADF control-table bootstrap](../sql/migrations/20261104_create_ingestion_control_tables.sql) to create/verify both ADF control tables and seed the four API endpoint controls. Then add only approved SQL source-control rows to `dbo.pipeline_control`, using verified source table/keys/cursors and valid typed starting watermarks.
 - Grant the restored Data Factory managed identity the required least-privilege SQL permissions.
 - Apply and verify the `datetime2(7)` checkpoint migration before deploying the updated checkpoint dataset.
 
-The repository contains a read-only [control preflight](SQL_INCREMENTAL_CONTROL_PREFLIGHT.sql), checkpoint migration, and [incremental-run acceptance queries](SQL_INCREMENTAL_RUN_ACCEPTANCE_QUERIES.md). The actual active source rows and per-table source contracts are environment data and still need approval.
+Run the [control-table bootstrap migration](../sql/migrations/20261104_create_ingestion_control_tables.sql) first, then apply the checkpoint precision migration if the existing column is not already `datetime2(7)`. The repository contains a read-only [control preflight](SQL_INCREMENTAL_CONTROL_PREFLIGHT.sql), checkpoint migration, and [incremental-run acceptance queries](SQL_INCREMENTAL_RUN_ACCEPTANCE_QUERIES.md). The actual active source rows and per-table source contracts are environment data and still need approval.
 
 ## 3. Databricks workspace, Jobs, and runtime
 
@@ -108,7 +107,8 @@ Neither script creates the Windows share, installs/registers a self-hosted Integ
 - [ ] Confirm Azure subscription, resource group, region, budget and resource names.
 - [ ] Confirm SQL source/control server and database; restore source/control tables.
 - [ ] Apply and verify the checkpoint precision migration.
-- [ ] Create and seed source-specific SQL/API control metadata; complete each SQL source contract.
+- [ ] Apply `20261104_create_ingestion_control_tables.sql` and verify both control tables; confirm the four API endpoints are seeded without resetting existing state.
+- [ ] Add only approved SQL source-control rows with verified business keys/cursors and non-null starting checkpoints; complete each SQL source contract.
 - [ ] Confirm ADLS account, `bronze` filesystem, metadata files and landing folders.
 - [ ] Confirm the CSV File Server/SHIR path or approve the ADLS-source redesign.
 - [ ] Confirm API endpoint and Key Vault secret reference.
