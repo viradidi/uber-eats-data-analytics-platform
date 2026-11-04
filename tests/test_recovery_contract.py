@@ -66,7 +66,15 @@ class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
         self.assertIn("restrict write access to the control table", SOURCE.lower())
 
     def test_sql_review_documents_limits_and_metadata_risks(self):
-        for term in ("Null or uninitialized watermark", "Late-arriving rows and equal watermark values", "does not show an allowlist guard", "untrusted input", "idempotent"):
+        for term in (
+            "Null or uninitialized watermark",
+            "Late-arriving rows and equal watermark values",
+            "deployment-specific allowlist",
+            "untrusted input",
+            "idempotent",
+            "source-metadata preflight",
+            "datetime2(7)",
+        ):
             self.assertIn(term.lower(), REVIEW.lower())
         self.assertIn("counts source rows whose watermark is greater", REVIEW.lower())
         self.assertIn("does not, by itself, guarantee", REVIEW.lower())
