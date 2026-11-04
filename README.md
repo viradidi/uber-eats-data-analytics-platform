@@ -20,7 +20,7 @@ This project brings together three ingestion patterns:
 - **CSV files:** file-based datasets such as drivers, promotions, and delivery zones.
 - **SQL:** an incremental extraction pattern using source watermarks and a control table.
 
-Azure Data Factory coordinates the ingestion workflows. Data is landed in Azure Data Lake Storage Gen2 and processed through Azure Databricks/Spark Silver transformations. A downstream Gold layer now builds order, payment, driver, and restaurant-feedback analytics for SQL-based business reporting.
+Azure Data Factory coordinates the ingestion workflows. API and CSV Silver processing use repository-owned Databricks notebook dispatchers; the SQL Silver branch retains its external Databricks Job dependency. Data is landed in Azure Data Lake Storage Gen2 and processed through Azure Databricks/Spark transformations. A downstream Gold layer now builds order, payment, driver, and restaurant-feedback analytics for SQL-based business reporting.
 
 The project also includes engineering controls and supporting documentation for incremental-load correctness, checkpoint handling, data quality, reconciliation, security considerations, and recovery.
 
