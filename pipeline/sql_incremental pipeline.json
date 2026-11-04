@@ -47,8 +47,7 @@
           },
           "activities": [
             {
-              "name": "Check any new data",
-              "description": "",
+              "name": "Validate SQL source metadata",
               "type": "Lookup",
               "dependsOn": [],
               "policy": {
@@ -63,7 +62,76 @@
                 "source": {
                   "type": "AzureSqlSource",
                   "sqlReaderQuery": {
-                    "value": "@concat(\n    'SELECT COUNT(*) AS row_count FROM dbo.',\n    item().table_name,\n    ' WHERE ',\n    item().watermark_column,\n    ' > ''',\n    item().last_watermark_value,\n    ''''\n)",
+                    "value": "@concat('SELECT COUNT(*) AS valid_source_count FROM sys.schemas s JOIN sys.tables t ON t.schema_id = s.schema_id JOIN sys.columns c ON c.object_id = t.object_id JOIN sys.types ty ON c.user_type_id = ty.user_type_id WHERE s.name = N''', replace(item().schema_name,'''',''''''), ''' AND t.name = N''', replace(item().table_name,'''',''''''), ''' AND c.name = N''', replace(item().watermark_column,'''',''''''), ''' AND ty.name IN (''datetime'', ''datetime2'', ''smalldatetime'') AND s.name NOT LIKE ''%[^A-Za-z0-9_]%'' AND t.name NOT LIKE ''%[^A-Za-z0-9_]%'' AND c.name NOT LIKE ''%[^A-Za-z0-9_]%'' AND LEFT(s.name, 1) LIKE ''[A-Za-z_]'' AND LEFT(t.name, 1) LIKE ''[A-Za-z_]'' AND LEFT(c.name, 1) LIKE ''[A-Za-z_]''')",
+                    "type": "Expression"
+                  },
+                  "queryTimeout": "02:00:00",
+                  "partitionOption": "None"
+                },
+                "dataset": {
+                  "referenceName": "DS_sql_control",
+                  "type": "DatasetReference"
+                },
+                "firstRowOnly": true
+              }
+            },
+            {
+              "name": "SQL source metadata is valid",
+              "type": "IfCondition",
+              "dependsOn": [
+                {
+                  "activity": "Validate SQL source metadata",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ],
+              "userProperties": [],
+              "typeProperties": {
+                "expression": {
+                  "value": "@equals(activity('Validate SQL source metadata').output.firstRow.valid_source_count, 1)",
+                  "type": "Expression"
+                },
+                "ifTrueActivities": [],
+                "ifFalseActivities": [
+                  {
+                    "name": "Fail invalid SQL source metadata",
+                    "type": "Fail",
+                    "dependsOn": [],
+                    "userProperties": [],
+                    "typeProperties": {
+                      "message": "SQL source metadata is invalid, missing, uses an unsupported watermark type, or contains an unsafe identifier. Check schema_name, table_name, and watermark_column.",
+                      "errorCode": "SQL_SOURCE_METADATA_INVALID"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Check any new data",
+              "description": "",
+              "type": "Lookup",
+              "dependsOn": [
+                {
+                  "activity": "SQL source metadata is valid",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ],
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureOutput": false,
+                "secureInput": false
+              },
+              "userProperties": [],
+              "typeProperties": {
+                "source": {
+                  "type": "AzureSqlSource",
+                  "sqlReaderQuery": {
+                    "value": "@concat('SELECT COUNT(*) AS row_count FROM [', item().schema_name, '].[', item().table_name, '] WHERE [', item().watermark_column, '] > ''', string(item().last_watermark_value), '''')",
                     "type": "Expression"
                   },
                   "queryTimeout": "02:00:00",
@@ -125,7 +193,7 @@
                         "queryTimeout": "02:00:00",
                         "partitionOption": "None",
                         "sqlReaderQuery": {
-                          "value": "@concat(\n    'SELECT * FROM dbo.',\n    item().table_name,\n    ' WHERE ',\n    item().watermark_column,\n    ' > ''',\n    item().last_watermark_value,\n    ''' AND ',\n    item().watermark_column,\n    ' <= ''',\n    activity('Get max watermark_copy1').output.firstRow.max_watermark,\n    ''''\n)",
+                          "value": "@concat('SELECT * FROM [', item().schema_name, '].[', item().table_name, '] WHERE [', item().watermark_column, '] > ''', string(item().last_watermark_value), ''' AND [', item().watermark_column, '] <= ''', string(activity('Get max watermark_copy1').output.firstRow.max_watermark), '''')",
                           "type": "Expression"
                         }
                       },
@@ -195,7 +263,7 @@
                       "source": {
                         "type": "AzureSqlSource",
                         "sqlReaderQuery": {
-                          "value": "@concat('SELECT MAX(', item().watermark_column, ') AS max_watermark FROM dbo.', item().table_name)",
+                          "value": "@concat('SELECT MAX([', item().watermark_column, ']) AS max_watermark FROM [', item().schema_name, '].[', item().table_name, ']')",
                           "type": "Expression"
                         },
                         "queryTimeout": "02:00:00",
