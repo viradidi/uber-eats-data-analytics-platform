@@ -1,6 +1,5 @@
 """Guard environment-dependent paths and runtime alignment in Azure exports."""
 import json
-import re
 import unittest
 from pathlib import Path
 from urllib.parse import urlparse
@@ -50,7 +49,7 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
                 )
 
         requirements = (ROOT / "requirements-test.txt").read_text(encoding="utf-8")
-        self.assertRegex(requirements, r"(?m)^pyspark==3\\.5\\.2$")
+        self.assertRegex(requirements, r"(?m)^pyspark==3\.5\.2$")
 
     def test_csv_dispatcher_does_not_depend_on_a_personal_workspace_path(self):
         source = (ROOT / "routing/dispacher_csv_notebook.py").read_text(encoding="utf-8")
