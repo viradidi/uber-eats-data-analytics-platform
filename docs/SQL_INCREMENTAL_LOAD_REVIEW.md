@@ -95,6 +95,12 @@ The landing filename is derived from the control ID and lower/upper watermark va
 
 A deterministic filename does not prove that the ADLS sink safely overwrites an existing object, nor does it guarantee that downstream Silver processing is idempotent. Confirm the sink's write/overwrite behavior and define the downstream merge, deduplication, or replacement strategy before claiming end-to-end idempotency.
 
+### 4.8 External SQL Silver job and replay boundary
+
+The `Job_Silver_copy1` activity invokes Databricks job ID `121055824417886` and passes `table_name`. The repository contains no source-controlled SQL-specific Silver job definition or notebook that can be tied to this job ID. The ADF export therefore does not establish the job's input-file selection, target write mode, merge keys, deduplication policy, or behavior when the same landing interval is processed more than once. This is a repository evidence boundary, not evidence that the historical job failed.
+
+Before enabling overlap, retrying an interval, or claiming current SQL replay safety, inspect/export the deployed job definition and its notebook code. Record the target table and stable business key for each source, identify whether the job overwrites, appends, or merges, and test the exact same lower/upper watermark interval twice. Compare landing object behavior, target key counts, duplicate keys, changed fields, reconciliation results, and checkpoint values. Do not infer replay safety from the successful ADF activity dependency or deterministic file name alone.
+
 ## 5. Failure and recovery behavior
 
 Based on the exported success dependencies:
@@ -164,7 +170,7 @@ The committed pipeline definition contains:
 
 The control dataset now declares `last_watermark_value` as `datetime2(7)`. A preserving migration script widens the physical control column from datetime-family types to `datetime2(7)` without resetting its value or changing nullability. The migration must be run in the target SQL environment before deployment; it has not been run against the decommissioned environment.
 
-The export still does not provide a null-watermark initial-load branch. Its strict lower bound does not capture late/equal-watermark changes automatically, and the deterministic landing filename does not prove replay-safe sink behavior. No per-source lookback/CDC/delete strategy is activated because the exported SQL control metadata does not define the business keys and downstream replay semantics needed to make overlap safe.
+The export still does not provide a null-watermark initial-load branch. Its strict lower bound does not capture late/equal-watermark changes automatically, and the deterministic landing filename does not prove replay-safe sink behavior. The Databricks job invoked by ID `121055824417886` has no matching SQL Silver job definition or notebook in this repository, so its current write mode, business keys, and repeated-interval behavior cannot be verified from committed artifacts. No per-source lookback/CDC/delete strategy is activated because the exported SQL control metadata and repository do not establish the business keys and downstream replay semantics needed to make overlap safe.
 
 The project was successfully executed historically according to the project owner. Its Azure resources were later decommissioned to control costs, so a new Azure runtime acceptance cycle is not currently available from the retained environment. Repository inspection and static validation remain possible; they should not be described as a new live Azure test.
 
