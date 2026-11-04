@@ -50,7 +50,7 @@
         "typeProperties": {
           "source": {
             "type": "AzureSqlSource",
-            "sqlReaderQuery": "SELECT CASE WHEN EXISTS (SELECT 1 FROM dbo.pipeline_control WHERE is_active = 1 GROUP BY control_id HAVING control_id IS NULL OR COUNT(1) > 1) OR EXISTS (SELECT 1 FROM dbo.pipeline_control WHERE is_active = 1 GROUP BY schema_name, table_name, watermark_column HAVING COUNT(1) > 1) THEN 1 ELSE 0 END AS has_duplicate_active_metadata;",
+            "sqlReaderQuery": "SELECT CASE WHEN EXISTS (SELECT 1 FROM dbo.pipeline_control GROUP BY control_id HAVING control_id IS NULL OR COUNT(1) > 1) OR EXISTS (SELECT 1 FROM dbo.pipeline_control WHERE is_active = 1 GROUP BY schema_name, table_name, watermark_column HAVING COUNT(1) > 1) THEN 1 ELSE 0 END AS has_duplicate_active_metadata;",
             "queryTimeout": "02:00:00",
             "partitionOption": "None"
           },
@@ -376,7 +376,7 @@
                         "formatSettings": {
                           "type": "DelimitedTextWriteSettings",
                           "quoteAllText": true,
-                          "fileExtension": ".txt"
+                          "fileExtension": ".csv"
                         }
                       },
                       "enableStaging": false,
