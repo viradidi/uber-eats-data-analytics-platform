@@ -25,7 +25,7 @@ The upper bound therefore makes the extraction window finite and repeatable. It 
 
 The exported pipeline defines this dependency chain inside the per-control-row processing flow:
 
-1. **Read active control configuration** — `Lookup_SQL_Control` reads only rows from `dbo.pipeline_control` where `is_active = 1`. `Require active SQL control rows` checks the length of that exact filtered lookup result and fails with `SQL_NO_ACTIVE_CONTROL_ROWS` if it is empty, preventing the master pipeline from treating an empty SQL branch as a successful refresh before Gold publication.
+1. **Read and validate active control configuration** — `Lookup_SQL_Control` reads only rows from `dbo.pipeline_control` where `is_active = 1`. `Validate active SQL control metadata` rejects null/duplicate control IDs and duplicate `(schema_name, table_name, watermark_column)` mappings; `Active SQL control metadata is unique` fails with `SQL_DUPLICATE_ACTIVE_CONTROL_METADATA` before the loop. `Require active SQL control rows` checks the length of the filtered lookup result and fails with `SQL_NO_ACTIVE_CONTROL_ROWS` if it is empty, preventing the master pipeline from treating an empty SQL branch as a successful refresh before Gold publication.
 2. **Validate source metadata** — `Validate SQL source metadata` checks that the configured `schema_name`, `table_name`, and `watermark_column` exist, use a supported datetime type, and satisfy the simple identifier contract.
 3. **Reject null source cursors** — `Validate SQL watermark nulls` fails the run if any source row has a null value in the configured watermark column.
 4. **Check for new data** — `Check any new data` counts source rows whose watermark is greater than the stored lower watermark.
@@ -150,7 +150,7 @@ For each test, preserve the run ID, input scenario, expected outcome, actual out
 
 The committed pipeline definition contains:
 
-- An active-source control filter (`is_active = 1`) and a pre-loop guard that fails when no SQL control rows are enabled, so the master pipeline cannot mistake an empty SQL branch for a refreshed source set.
+- An active-source control filter (`is_active = 1`), a pre-loop guard that rejects null/duplicate control IDs and duplicate active source mappings, and a separate failure when no SQL control rows are enabled.
 
 - A source-metadata preflight that verifies the configured schema/table/column, rejects unsupported watermark types and unsafe identifier characters, and runs before any source count/copy query.
 - A source-data check that fails before extraction if any record has a null watermark value.
