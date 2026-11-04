@@ -7,6 +7,7 @@ keys are present in the current order/delivery model.
 from __future__ import annotations
 
 from functools import reduce
+from math import isclose
 from operator import or_
 
 from pyspark.sql import DataFrame, functions as F
@@ -23,13 +24,26 @@ ACTIVE_ORDER_STATUSES = ("PLACED", "PREPARING", "ASSIGNED", "OUT_FOR_DELIVERY")
 def _require_columns(frame: DataFrame, required: tuple[str, ...], dataset: str) -> None:
     missing = sorted(set(required) - set(frame.columns))
     if missing:
-        raise ValueError(f"{dataset} Silver input is missing required columns: {missing}")
+        raise ValueError(f"{dataset} input is missing required columns: {missing}")
 
 
 def _assert_non_null(frame: DataFrame, columns: tuple[str, ...], dataset: str) -> None:
     condition = reduce(or_, (F.col(name).isNull() for name in columns))
     if frame.filter(condition).limit(1).count():
-        raise ValueError(f"{dataset} Silver input contains null values in required keys: {list(columns)}")
+        raise ValueError(f"{dataset} contains null values in required fields: {list(columns)}")
+
+
+def _assert_non_blank(frame: DataFrame, columns: tuple[str, ...], dataset: str) -> None:
+    condition = reduce(
+        or_,
+        (
+            F.col(name).isNotNull()
+            & (F.length(F.trim(F.col(name).cast("string"))) == 0)
+            for name in columns
+        ),
+    )
+    if frame.filter(condition).limit(1).count():
+        raise ValueError(f"{dataset} contains blank values in required fields: {list(columns)}")
 
 
 def _assert_unique(frame: DataFrame, keys: tuple[str, ...], dataset: str) -> None:
@@ -41,7 +55,17 @@ def _assert_unique(frame: DataFrame, keys: tuple[str, ...], dataset: str) -> Non
         .count()
     )
     if duplicate:
-        raise ValueError(f"{dataset} Silver input contains duplicate key groups for {list(keys)}")
+        raise ValueError(f"{dataset} contains duplicate key groups for {list(keys)}")
+
+
+def _assert_no_invalid_rows(
+    frame: DataFrame,
+    condition,
+    dataset: str,
+    message: str,
+) -> None:
+    if frame.filter(condition).limit(1).count():
+        raise ValueError(f"{dataset} {message}")
 
 
 def _prepare_inputs(silver: dict[str, DataFrame]) -> dict[str, DataFrame]:
@@ -56,16 +80,50 @@ def _prepare_inputs(silver: dict[str, DataFrame]) -> dict[str, DataFrame]:
         ("delivery_id", "order_id", "driver_id", "pickup_time", "delivery_time", "delivery_status", "updated_at"),
         "deliveries",
     )
-    _assert_non_null(deliveries, ("delivery_id", "order_id"), "deliveries")
+    _assert_non_null(deliveries, ("delivery_id", "order_id", "updated_at"), "deliveries")
+    _assert_non_blank(deliveries, ("delivery_id", "order_id", "delivery_status"), "deliveries")
+    invalid_delivery_timestamps = (
+        F.to_timestamp("updated_at").isNull()
+        | (
+            F.col("pickup_time").isNotNull()
+            & F.to_timestamp("pickup_time").isNull()
+        )
+        | (
+            F.col("delivery_time").isNotNull()
+            & F.to_timestamp("delivery_time").isNull()
+        )
+    )
+    _assert_no_invalid_rows(
+        deliveries,
+        invalid_delivery_timestamps,
+        "deliveries",
+        "contains null or unparseable required/available timestamps",
+    )
     _assert_unique(deliveries, ("delivery_id",), "deliveries")
     deliveries = (
         deliveries
+        .withColumn("delivery_id", F.col("delivery_id").cast("string"))
         .withColumn("order_id", F.col("order_id").cast("string"))
         .withColumn("driver_id", F.col("driver_id").cast("string"))
         .withColumn("pickup_time", F.to_timestamp("pickup_time"))
         .withColumn("delivery_time", F.to_timestamp("delivery_time"))
         .withColumn("updated_at", F.to_timestamp("updated_at"))
         .withColumn("delivery_status", F.upper(F.trim(F.col("delivery_status").cast("string"))))
+    )
+    _assert_no_invalid_rows(
+        deliveries,
+        F.col("pickup_time").isNotNull()
+        & F.col("delivery_time").isNotNull()
+        & (F.col("delivery_time") < F.col("pickup_time")),
+        "deliveries",
+        "contains delivery timestamps earlier than pickup timestamps",
+    )
+    _assert_no_invalid_rows(
+        deliveries,
+        (F.col("delivery_status") == "DELIVERED")
+        & (F.col("pickup_time").isNull() | F.col("delivery_time").isNull()),
+        "deliveries",
+        "marks a delivery DELIVERED without both pickup_time and delivery_time",
     )
 
     payments = silver["payments"]
@@ -74,10 +132,22 @@ def _prepare_inputs(silver: dict[str, DataFrame]) -> dict[str, DataFrame]:
         ("payment_id", "order_id", "payment_method", "amount", "payment_status", "payment_timestamp"),
         "payments",
     )
-    _assert_non_null(payments, ("payment_id", "order_id"), "payments")
+    _assert_non_null(
+        payments,
+        ("payment_id", "order_id", "payment_method", "amount", "payment_status", "payment_timestamp"),
+        "payments",
+    )
+    _assert_non_blank(payments, ("payment_id", "order_id", "payment_method", "payment_status"), "payments")
     _assert_unique(payments, ("payment_id",), "payments")
+    _assert_no_invalid_rows(
+        payments,
+        F.to_timestamp("payment_timestamp").isNull(),
+        "payments",
+        "contains null or unparseable payment_timestamp values",
+    )
     payments = (
         payments
+        .withColumn("payment_id", F.col("payment_id").cast("string"))
         .withColumn("order_id", F.col("order_id").cast("string"))
         .withColumn("amount", F.col("amount").cast("double"))
         .withColumn("payment_timestamp", F.to_timestamp("payment_timestamp"))
@@ -85,14 +155,24 @@ def _prepare_inputs(silver: dict[str, DataFrame]) -> dict[str, DataFrame]:
         .withColumn("payment_status", F.upper(F.trim(F.col("payment_status").cast("string"))))
     )
     invalid_amount = payments.filter(
-        F.col("amount").isNull() | F.isnan("amount") | (F.col("amount") < 0)
+        F.col("amount").isNull()
+        | F.isnan("amount")
+        | (F.col("amount") < 0)
+        | (F.abs(F.col("amount")) == F.lit(float("inf")))
     ).limit(1).count()
     if invalid_amount:
-        raise ValueError("payments Silver input contains null, nonnumeric, NaN, or negative amounts")
+        raise ValueError("payments input contains null, nonnumeric, NaN, infinite, or negative amounts")
 
     order_status = silver["order_status"]
     _require_columns(order_status, ("order_id", "status", "status_timestamp"), "order_status")
     _assert_non_null(order_status, ("order_id", "status", "status_timestamp"), "order_status")
+    _assert_non_blank(order_status, ("order_id", "status"), "order_status")
+    _assert_no_invalid_rows(
+        order_status,
+        F.to_timestamp("status_timestamp").isNull(),
+        "order_status",
+        "contains unparseable status_timestamp values",
+    )
     _assert_unique(order_status, ("order_id", "status_timestamp"), "order_status")
     order_status = (
         order_status
@@ -100,8 +180,6 @@ def _prepare_inputs(silver: dict[str, DataFrame]) -> dict[str, DataFrame]:
         .withColumn("status", F.upper(F.trim(F.col("status").cast("string"))))
         .withColumn("status_timestamp", F.to_timestamp("status_timestamp"))
     )
-    if order_status.filter(F.col("status_timestamp").isNull()).limit(1).count():
-        raise ValueError("order_status Silver input contains unparseable status_timestamp values")
 
     ratings = silver["ratings"]
     _require_columns(
@@ -109,11 +187,24 @@ def _prepare_inputs(silver: dict[str, DataFrame]) -> dict[str, DataFrame]:
         ("rating_id", "order_id", "customer_id", "restaurant_id", "rating", "created_at"),
         "ratings",
     )
-    _assert_non_null(ratings, ("rating_id", "order_id", "restaurant_id"), "ratings")
+    _assert_non_null(
+        ratings,
+        ("rating_id", "order_id", "customer_id", "restaurant_id", "rating", "created_at"),
+        "ratings",
+    )
+    _assert_non_blank(ratings, ("rating_id", "order_id", "customer_id", "restaurant_id"), "ratings")
     _assert_unique(ratings, ("rating_id",), "ratings")
+    _assert_no_invalid_rows(
+        ratings,
+        F.to_timestamp("created_at").isNull(),
+        "ratings",
+        "contains unparseable created_at values",
+    )
     ratings = (
         ratings
+        .withColumn("rating_id", F.col("rating_id").cast("string"))
         .withColumn("order_id", F.col("order_id").cast("string"))
+        .withColumn("customer_id", F.col("customer_id").cast("string"))
         .withColumn("restaurant_id", F.col("restaurant_id").cast("string"))
         .withColumn("rating", F.col("rating").cast("double"))
         .withColumn("created_at", F.to_timestamp("created_at"))
@@ -125,7 +216,22 @@ def _prepare_inputs(silver: dict[str, DataFrame]) -> dict[str, DataFrame]:
         | (F.col("rating") > 5)
     ).limit(1).count()
     if invalid_rating:
-        raise ValueError("ratings Silver input contains null, nonnumeric, NaN, or out-of-range ratings")
+        raise ValueError("ratings input contains null, nonnumeric, NaN, or out-of-range ratings")
+
+    conflicting_rating_parents = (
+        ratings.groupBy("order_id")
+        .agg(
+            F.countDistinct("customer_id").alias("customer_count"),
+            F.countDistinct("restaurant_id").alias("restaurant_count"),
+        )
+        .filter((F.col("customer_count") > 1) | (F.col("restaurant_count") > 1))
+        .limit(1)
+        .count()
+    )
+    if conflicting_rating_parents:
+        raise ValueError(
+            "ratings input assigns more than one customer or restaurant to the same order"
+        )
 
     drivers = silver["drivers"]
     _require_columns(
@@ -134,6 +240,7 @@ def _prepare_inputs(silver: dict[str, DataFrame]) -> dict[str, DataFrame]:
         "drivers",
     )
     _assert_non_null(drivers, ("driver_id",), "drivers")
+    _assert_non_blank(drivers, ("driver_id",), "drivers")
     _assert_unique(drivers, ("driver_id",), "drivers")
     drivers = (
         drivers
@@ -141,6 +248,21 @@ def _prepare_inputs(silver: dict[str, DataFrame]) -> dict[str, DataFrame]:
         .withColumn("vehicle_type", F.upper(F.trim(F.col("vehicle_type").cast("string"))))
         .withColumn("status", F.upper(F.trim(F.col("status").cast("string"))))
     )
+
+    referenced_driver_ids = (
+        deliveries
+        .filter(F.col("driver_id").isNotNull())
+        .select("driver_id")
+        .distinct()
+    )
+    unknown_driver = (
+        referenced_driver_ids
+        .join(drivers.select("driver_id").distinct(), on="driver_id", how="left_anti")
+        .limit(1)
+        .count()
+    )
+    if unknown_driver:
+        raise ValueError("deliveries input references driver_id values absent from the drivers dimension")
 
     return {
         "deliveries": deliveries,
@@ -151,8 +273,196 @@ def _prepare_inputs(silver: dict[str, DataFrame]) -> dict[str, DataFrame]:
     }
 
 
+def validate_gold_outputs(outputs: dict[str, DataFrame]) -> None:
+    """Enforce Gold output grains, KPI bounds, and cross-table reconciliation."""
+    grains = {
+        "gold_order_360": (("order_id",), ("order_id", "current_order_status", "payment_status")),
+        "gold_daily_order_performance": (("order_date",), ("order_date",)),
+        "gold_payment_method_performance": (
+            ("payment_date", "payment_method", "payment_status"),
+            ("payment_date", "payment_method", "payment_status"),
+        ),
+        "gold_restaurant_feedback": (("restaurant_id",), ("restaurant_id",)),
+        "gold_driver_performance": (("driver_id",), ("driver_id",)),
+    }
+    missing_outputs = sorted(set(grains) - set(outputs))
+    if missing_outputs:
+        raise ValueError(f"Gold output set is missing required datasets: {missing_outputs}")
+
+    for dataset, (keys, required_columns) in grains.items():
+        _require_columns(outputs[dataset], required_columns, dataset)
+        _assert_non_null(outputs[dataset], keys, dataset)
+        _assert_non_blank(outputs[dataset], keys, dataset)
+        _assert_unique(outputs[dataset], keys, dataset)
+
+    order_360 = outputs["gold_order_360"]
+    _assert_no_invalid_rows(
+        order_360,
+        (F.col("payment_transaction_count") < 0)
+        | (F.col("successful_payment_count") < 0)
+        | (F.col("failed_payment_count") < 0)
+        | (F.col("successful_payment_count") > F.col("payment_transaction_count"))
+        | (F.col("failed_payment_count") > F.col("payment_transaction_count"))
+        | (F.col("successful_payment_amount") < 0)
+        | (F.col("payment_attempt_amount") < F.col("successful_payment_amount")),
+        "gold_order_360",
+        "violates payment count or amount invariants",
+    )
+
+    daily = outputs["gold_daily_order_performance"]
+    _require_columns(
+        daily,
+        (
+            "order_count", "delivered_orders", "cancelled_orders", "active_orders",
+            "paid_orders", "successful_payment_amount", "average_delivery_minutes",
+            "average_customer_rating",
+        ),
+        "gold_daily_order_performance",
+    )
+    _assert_no_invalid_rows(
+        daily,
+        (F.col("order_count") <= 0)
+        | (F.col("delivered_orders") < 0)
+        | (F.col("cancelled_orders") < 0)
+        | (F.col("active_orders") < 0)
+        | (F.col("paid_orders") < 0)
+        | (F.col("paid_orders") > F.col("order_count"))
+        | (
+            F.col("delivered_orders")
+            + F.col("cancelled_orders")
+            + F.col("active_orders")
+            > F.col("order_count")
+        )
+        | (F.col("successful_payment_amount") < 0)
+        | (F.col("average_delivery_minutes") < 0)
+        | (
+            F.col("average_customer_rating").isNotNull()
+            & (
+                (F.col("average_customer_rating") < 1)
+                | (F.col("average_customer_rating") > 5)
+            )
+        ),
+        "gold_daily_order_performance",
+        "violates daily KPI bounds or mutually exclusive order-state counts",
+    )
+
+    payment = outputs["gold_payment_method_performance"]
+    _require_columns(
+        payment,
+        (
+            "transaction_count", "distinct_order_count", "gross_attempt_amount",
+            "successful_payment_amount",
+        ),
+        "gold_payment_method_performance",
+    )
+    _assert_no_invalid_rows(
+        payment,
+        (F.col("transaction_count") <= 0)
+        | (F.col("distinct_order_count") <= 0)
+        | (F.col("distinct_order_count") > F.col("transaction_count"))
+        | (F.col("gross_attempt_amount") < 0)
+        | (F.col("successful_payment_amount") < 0)
+        | (F.col("successful_payment_amount") > F.col("gross_attempt_amount")),
+        "gold_payment_method_performance",
+        "violates transaction-count or payment-amount invariants",
+    )
+
+    restaurant = outputs["gold_restaurant_feedback"]
+    _require_columns(
+        restaurant,
+        (
+            "rated_order_count", "rating_count", "average_rating",
+            "five_star_rating_count", "five_star_rating_share",
+        ),
+        "gold_restaurant_feedback",
+    )
+    _assert_no_invalid_rows(
+        restaurant,
+        (F.col("rated_order_count") <= 0)
+        | (F.col("rating_count") < F.col("rated_order_count"))
+        | (F.col("average_rating") < 1)
+        | (F.col("average_rating") > 5)
+        | (F.col("five_star_rating_count") < 0)
+        | (F.col("five_star_rating_count") > F.col("rating_count"))
+        | (F.col("five_star_rating_share") < 0)
+        | (F.col("five_star_rating_share") > 1),
+        "gold_restaurant_feedback",
+        "violates rating-count, average-rating, or five-star-share invariants",
+    )
+
+    driver = outputs["gold_driver_performance"]
+    _require_columns(
+        driver,
+        (
+            "delivery_record_count", "distinct_order_count", "delivered_record_count",
+            "cancelled_record_count", "average_delivery_minutes", "delivery_completion_rate",
+        ),
+        "gold_driver_performance",
+    )
+    _assert_no_invalid_rows(
+        driver,
+        (F.col("delivery_record_count") <= 0)
+        | (F.col("distinct_order_count") <= 0)
+        | (F.col("distinct_order_count") > F.col("delivery_record_count"))
+        | (F.col("delivered_record_count") < 0)
+        | (F.col("cancelled_record_count") < 0)
+        | (
+            F.col("delivered_record_count") + F.col("cancelled_record_count")
+            > F.col("delivery_record_count")
+        )
+        | (F.col("average_delivery_minutes") < 0)
+        | (
+            F.col("delivery_completion_rate").isNotNull()
+            & (
+                (F.col("delivery_completion_rate") < 0)
+                | (F.col("delivery_completion_rate") > 1)
+            )
+        ),
+        "gold_driver_performance",
+        "violates delivery-count, duration, or completion-rate invariants",
+    )
+
+    # Every order with a usable order_date must appear once in the daily aggregate.
+    expected_daily_orders = order_360.filter(F.col("order_date").isNotNull()).count()
+    actual_daily_orders = (
+        daily.agg(F.coalesce(F.sum("order_count"), F.lit(0)).alias("total")).first()["total"]
+        or 0
+    )
+    if int(expected_daily_orders) != int(actual_daily_orders):
+        raise ValueError(
+            "Gold daily order_count does not reconcile to gold_order_360 rows with an order_date"
+        )
+
+    # Successful amount is independently derived by order and by payment transaction.
+    order_success_amount = (
+        order_360.agg(
+            F.coalesce(F.sum("successful_payment_amount"), F.lit(0.0)).alias("total")
+        ).first()["total"]
+        or 0.0
+    )
+    daily_success_amount = (
+        daily.agg(
+            F.coalesce(F.sum("successful_payment_amount"), F.lit(0.0)).alias("total")
+        ).first()["total"]
+        or 0.0
+    )
+    payment_success_amount = (
+        payment.agg(
+            F.coalesce(F.sum("successful_payment_amount"), F.lit(0.0)).alias("total")
+        ).first()["total"]
+        or 0.0
+    )
+    if not (
+        isclose(float(order_success_amount), float(daily_success_amount), rel_tol=1e-9, abs_tol=1e-6)
+        and isclose(float(order_success_amount), float(payment_success_amount), rel_tol=1e-9, abs_tol=1e-6)
+    ):
+        raise ValueError(
+            "Gold successful_payment_amount does not reconcile across order, daily, and payment outputs"
+        )
+
+
 def build_gold_outputs(silver: dict[str, DataFrame]) -> dict[str, DataFrame]:
-    """Build five Gold tables with explicit grains and stable business definitions."""
+    """Build five Gold tables, validate their grains, and reconcile core KPIs."""
     prepared = _prepare_inputs(silver)
     deliveries = prepared["deliveries"]
     payments = prepared["payments"]
@@ -228,7 +538,7 @@ def build_gold_outputs(silver: dict[str, DataFrame]) -> dict[str, DataFrame]:
         F.avg("rating").alias("average_customer_rating"),
         F.count("*").alias("rating_count"),
         F.min("restaurant_id").alias("restaurant_id"),
-        F.min("customer_id").cast("string").alias("customer_id"),
+        F.min("customer_id").alias("customer_id"),
         F.min("created_at").alias("first_rating_at"),
     )
 
@@ -313,6 +623,7 @@ def build_gold_outputs(silver: dict[str, DataFrame]) -> dict[str, DataFrame]:
 
     delivery_driver_facts = (
         deliveries
+        .filter(F.col("driver_id").isNotNull())
         .withColumn(
             "delivery_minutes",
             F.when(
@@ -343,10 +654,12 @@ def build_gold_outputs(silver: dict[str, DataFrame]) -> dict[str, DataFrame]:
         )
     )
 
-    return {
+    outputs = {
         "gold_order_360": order_360,
         "gold_daily_order_performance": daily_order_performance,
         "gold_payment_method_performance": payment_method_performance,
         "gold_restaurant_feedback": restaurant_feedback,
         "gold_driver_performance": driver_performance,
     }
+    validate_gold_outputs(outputs)
+    return outputs
