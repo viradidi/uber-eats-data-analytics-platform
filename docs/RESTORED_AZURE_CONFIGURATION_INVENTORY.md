@@ -53,7 +53,7 @@ The only remaining external ADF Job reference is SQL:
 
 If that SQL Job is recreated, update the ADF SQL pipeline job ID and re-run the repository tests before publishing.
 
-The Gold notebook is invoked at `/Shared/UberEats/Gold_Analytics`. Deploy that notebook and the `src.gold` package/module dependencies to the selected workspace path. Confirm the default catalog `ubereats_databricks1` and `silver`/`gold` schemas exist or override the notebook widgets with the approved catalog/schema names.
+The Gold notebook is invoked at `/Shared/UberEats/Gold_Analytics`. The [Databricks workspace import script](../deployment/databricks/import_workspace_assets.ps1) imports the notebook to `/Shared/UberEats/notebooks/Gold_Analytics` and places the `src.gold` package under `/Shared/UberEats/src`. Confirm the default catalog `ubereats_databricks1` and `silver`/`gold` schemas exist or override the notebook widgets with the approved catalog/schema names.
 
 ## 4. API and Key Vault
 
@@ -92,7 +92,7 @@ Two scripts now reduce manual file preparation:
 - `deployment/azure/stage_bronze_metadata.ps1` creates the ADLS filesystem/metadata directory if needed, uploads the two metadata files with Azure CLI login authentication, and verifies the remote files.
 - `deployment/azure/stage_csv_files.ps1` uploads `drivers.csv`, `promotions.csv`, and `zones.csv` into `bronze/csv_source`, downloads each file, and verifies the remote copy by SHA-256.
 
-Neither script configures Azure role assignments or SQL/Databricks permissions; those must be applied to the restored identities.
+Neither staging script configures Azure role assignments or SQL/Databricks permissions; those must be applied to the restored identities. Use `deployment/databricks/import_workspace_assets.ps1` to import notebooks and shared Python modules after authenticating the Databricks CLI.
 
 ## 8. Pre-run configuration checklist
 
@@ -106,7 +106,7 @@ Neither script configures Azure role assignments or SQL/Databricks permissions; 
 - [ ] Confirm API endpoint and Key Vault secret reference.
 - [ ] Confirm Databricks workspace, managed identity, catalog and schemas.
 - [ ] Export/inspect the external SQL Databricks Job `121055824417886`; API and CSV are direct repository-owned Databricks Notebook activities.
-- [ ] Deploy notebooks, shared Python modules and Gold assets to the expected workspace paths.
+- [ ] Run `deployment/databricks/import_workspace_assets.ps1` and verify the notebook and shared `src` package paths.
 - [ ] Confirm current supported runtime and available node SKUs/quotas in the chosen region.
 - [ ] Publish ADF resources and validate all references before the first master run.
 
