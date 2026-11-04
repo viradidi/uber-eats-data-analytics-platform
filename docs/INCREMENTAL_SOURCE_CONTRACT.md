@@ -74,6 +74,23 @@ A composite cursor must be supported by the source query and checkpoint design. 
 
 A query selecting rows above a watermark cannot detect hard deletes unless the source exposes deletion events, tombstones, CDC, soft-delete attributes, or a separate reconciliation process. State whether deletes are captured, how they are applied downstream, or whether they are explicitly out of scope.
 
+### API endpoint snapshot replay policy
+
+The API ingestion pipeline writes timestamped files per endpoint, and the API Silver notebooks read the endpoint folder. Repeated runs can therefore expose the same source record in multiple files. The shared helper `src/common/incremental.py` now prepares these cumulative folders before Silver publication:
+
+| Dataset | Business/event key | Replay/version rule |
+|---|---|---|
+| Payments | payment_id | Keep the greatest parseable updated_at per payment |
+| Deliveries | delivery_id | Keep the greatest parseable updated_at per delivery |
+| Ratings | rating_id | Keep the greatest parseable updated_at per rating |
+| Order status | order_id + status_timestamp | Collapse exact duplicate events; reject conflicting payloads at the same event key |
+
+For versioned entity records, the helper rejects different payloads with the same business key and the same updated_at instead of selecting an arbitrary winner. Null keys and missing or unparseable update timestamps also fail the batch. Exact replay copies are collapsed. The source update timestamp must still advance reliably for every meaningful change; the helper cannot recover a change that the source does not version.
+
+The API Silver tables are still rebuilt from the accumulated landing snapshots after this deterministic preparation. This is replay-safe for repeated snapshots under the stated key/version contracts; it is not a claim of transactional multi-table publication or exactly-once delivery.
+
+This API snapshot policy is separate from the SQL incremental ADF pipeline. The SQL pipeline still uses a strict lower watermark boundary. Its late/equal-watermark and delete limitations remain until each SQL source has a verified cursor contract and a source-appropriate overlap, CDC, tombstone, or reconciliation strategy.
+
 ## 4. Control-table and SQL safety
 
 The exported pipeline interpolates `table_name` and `watermark_column` from `pipeline_control` into SQL text. Treat these values as privileged configuration.
