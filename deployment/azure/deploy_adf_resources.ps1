@@ -191,6 +191,12 @@ foreach ($fileName in $pipelineOrder) {
 }
 
 # Every deployed factory child resource is read back immediately after its PUT.
-Write-Host ""
-Write-Host "ADF resource deployment and read-back verification completed."
+if ($WhatIfPreference) {
+    Write-Host ""
+    Write-Host "WhatIf completed. No Azure resources were written; factory/child-resource read-back checks were skipped."
+}
+else {
+    Write-Host ""
+    Write-Host "ADF resource deployment and read-back verification completed."
+}
 Write-Host "The master pipeline was NOT started. Run it only after SQL source contracts, the external SQL Silver Job review, Key Vault secret, and permissions have passed the acceptance gates."
