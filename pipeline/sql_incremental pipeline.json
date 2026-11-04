@@ -108,12 +108,86 @@
               }
             },
             {
+              "name": "Validate SQL watermark nulls",
+              "type": "Lookup",
+              "dependsOn": [
+                {
+                  "activity": "SQL source metadata is valid",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ],
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureOutput": false,
+                "secureInput": false
+              },
+              "userProperties": [],
+              "typeProperties": {
+                "source": {
+                  "type": "AzureSqlSource",
+                  "sqlReaderQuery": {
+                    "value": "@concat('SELECT CASE WHEN EXISTS (SELECT 1 FROM [', item().schema_name, '].[', item().table_name, '] WHERE [', item().watermark_column, '] IS NULL) THEN 1 ELSE 0 END AS has_null_watermark')",
+                    "type": "Expression"
+                  },
+                  "queryTimeout": "02:00:00",
+                  "partitionOption": "None"
+                },
+                "dataset": {
+                  "referenceName": "ds_sql",
+                  "type": "DatasetReference",
+                  "parameters": {
+                    "p_table_name": {
+                      "value": "@item().table_name",
+                      "type": "Expression"
+                    }
+                  }
+                },
+                "firstRowOnly": true
+              }
+            },
+            {
+              "name": "SQL watermark values are valid",
+              "type": "IfCondition",
+              "dependsOn": [
+                {
+                  "activity": "Validate SQL watermark nulls",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ],
+              "userProperties": [],
+              "typeProperties": {
+                "expression": {
+                  "value": "@equals(activity('Validate SQL watermark nulls').output.firstRow.has_null_watermark, 0)",
+                  "type": "Expression"
+                },
+                "ifTrueActivities": [],
+                "ifFalseActivities": [
+                  {
+                    "name": "Fail null SQL watermark values",
+                    "type": "Fail",
+                    "dependsOn": [],
+                    "userProperties": [],
+                    "typeProperties": {
+                      "message": "The configured SQL source contains NULL values in its watermark column. Resolve or quarantine these source rows before incremental extraction.",
+                      "errorCode": "SQL_SOURCE_NULL_WATERMARK"
+                    }
+                  }
+                ]
+              }
+            },
+            {
               "name": "Check any new data",
               "description": "",
               "type": "Lookup",
               "dependsOn": [
                 {
-                  "activity": "SQL source metadata is valid",
+                  "activity": "SQL watermark values are valid",
                   "dependencyConditions": [
                     "Succeeded"
                   ]
