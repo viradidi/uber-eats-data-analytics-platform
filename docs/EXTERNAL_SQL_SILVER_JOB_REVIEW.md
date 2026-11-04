@@ -10,7 +10,18 @@ The repository does not contain the job definition or its SQL Silver notebook/so
 
 ## 1. Export the job definition
 
-Retrieve the full job configuration from the Databricks workspace that owns job ID `121055824417886`.
+The repository now includes the export helper at ../deployment/databricks/export_sql_silver_job.ps1. Authenticate the Databricks CLI to the workspace that owns job ID 121055824417886, then run it from the repository root:
+
+~~~powershell
+databricks auth login --host <WORKSPACE_HOST> --profile uber-eats-restore
+.\deployment\databricks\export_sql_silver_job.ps1 -WorkspaceHost <WORKSPACE_HOST> -ProfileName uber-eats-restore
+~~~
+
+By default, the export is written outside the repository under $HOME/UberEats-SQL-Silver-Job-Export. It saves a sanitized job settings JSON, exports workspace notebook/script sources for workspace-backed tasks, and writes a manifest for Git/DBFS/volume paths, child jobs, and potential literal credentials. It does not run or modify the job. Inspect each source file and resolve the manifest's external references before sharing the folder. It does not automatically export notebooks stored only in Git/DBFS/volumes or recursively fetch referenced child jobs; use the recorded manifest references to include those.
+
+If you prefer to export manually, the supported Jobs API endpoint is:
+
+Retrieve the full job configuration from the Databricks workspace that owns job ID 121055824417886.
 
 The supported Jobs API endpoint is:
 
