@@ -7,14 +7,12 @@ param(
     [Parameter(Mandatory = $false)]
     [string]$ProfileName,
 
-    [Parameter(Mandatory = $false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$WorkspaceRoot = "/Shared/UberEats"
 )
 
 $ErrorActionPreference = "Stop"
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "../..")).Path
+$WorkspaceRoot = "/Shared/UberEats"
 $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("uber-eats-databricks-" + [guid]::NewGuid().ToString("N"))
 $notebookStage = Join-Path $tempRoot "notebooks"
 $routingStage = Join-Path $tempRoot "routing"
