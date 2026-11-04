@@ -19,10 +19,12 @@ param(
 $ErrorActionPreference = "Stop"
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "../..")).Path
 
-if (-not (Get-Module -ListAvailable -Name Az.Accounts)) {
-    throw "Az.Accounts is required. Install it with: Install-Module Az.Accounts -Scope CurrentUser"
+foreach ($moduleName in @("Az.Accounts", "Az.Resources")) {
+    if (-not (Get-Module -ListAvailable -Name $moduleName)) {
+        throw "$moduleName is required. Install it with: Install-Module $moduleName -Scope CurrentUser"
+    }
+    Import-Module $moduleName -ErrorAction Stop
 }
-Import-Module Az.Accounts -ErrorAction Stop
 
 $context = Get-AzContext
 if (-not $context) {
@@ -65,13 +67,11 @@ function Invoke-AdfPut {
 
     $resourcePath = "$resourceBase/$RelativePath?api-version=$ApiVersion"
     $body = ConvertTo-Json -InputObject $Payload -Depth 100 -Compress
-    if ($PSCmdlet.ShouldProcess($Description, "Create or update Azure Data Factory resource")) {
-        $response = Invoke-AzRestMethod -Path $resourcePath -Method PUT -Payload $body -ErrorAction Stop
-        if ($response.StatusCode -notin @(200, 201, 202)) {
-            throw "ADF deployment returned HTTP $($response.StatusCode) for $Description. Response: $($response.Content)"
-        }
-        Write-Host "PUT $Description -> HTTP $($response.StatusCode)"
+    $response = Invoke-AzRestMethod -Path $resourcePath -Method PUT -Payload $body -ErrorAction Stop
+    if ($response.StatusCode -notin @(200, 201, 202)) {
+        throw "ADF deployment returned HTTP $($response.StatusCode) for $Description. Response: $($response.Content)"
     }
+    Write-Host "PUT $Description -> HTTP $($response.StatusCode)"
 }
 
 function Invoke-AdfGet {
@@ -115,7 +115,7 @@ if ($factoryExport.tags) {
 
 if ($PSCmdlet.ShouldProcess("Data Factory $FactoryName", "Create or update")) {
     $body = ConvertTo-Json -InputObject $factoryBody -Depth 100 -Compress
-    $response = Invoke-AzRestMethod -Path $factoryPath -Method PUT -Payload $body -ErrorAction Stop
+    $response = Invoke-AzRestMethod -Path $factoryPath -Method PUT -Payload $body -WaitForCompletion -ErrorAction Stop
     if ($response.StatusCode -notin @(200, 201, 202)) {
         throw "Data Factory deployment returned HTTP $($response.StatusCode). Response: $($response.Content)"
     }
@@ -131,7 +131,10 @@ foreach ($file in $linkedServiceFiles) {
         throw "Invalid linked-service export: $relative"
     }
     $payload = @{ name = $resource.name; properties = $resource.properties }
-    Invoke-AdfPut -RelativePath "linkedservices/$([uri]::EscapeDataString($resource.name))" -Description "linked service $($resource.name)" -Payload $payload
+    $description = "linked service $($resource.name)"
+    if ($PSCmdlet.ShouldProcess($description, "Create or update Azure Data Factory resource")) {
+        Invoke-AdfPut -RelativePath "linkedservices/$([uri]::EscapeDataString($resource.name))" -Description $description -Payload $payload
+    }
 }
 
 $datasetFiles = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot "dataset") -Filter "*.json" -File | Sort-Object Name)
@@ -142,7 +145,10 @@ foreach ($file in $datasetFiles) {
         throw "Invalid dataset export: $relative"
     }
     $payload = @{ name = $resource.name; properties = $resource.properties }
-    Invoke-AdfPut -RelativePath "datasets/$([uri]::EscapeDataString($resource.name))" -Description "dataset $($resource.name)" -Payload $payload
+    $description = "dataset $($resource.name)"
+    if ($PSCmdlet.ShouldProcess($description, "Create or update Azure Data Factory resource")) {
+        Invoke-AdfPut -RelativePath "datasets/$([uri]::EscapeDataString($resource.name))" -Description $description -Payload $payload
+    }
 }
 
 # Deploy the master pipeline last, after its child ExecutePipeline targets.
@@ -162,10 +168,14 @@ foreach ($fileName in $pipelineOrder) {
         $resource.properties.Remove("lastPublishTime")
     }
     $payload = @{ name = $resource.name; properties = $resource.properties }
-    Invoke-AdfPut -RelativePath "pipelines/$([uri]::EscapeDataString($resource.name))" -Description "pipeline $($resource.name)" -Payload $payload
+    $description = "pipeline $($resource.name)"
+    if ($PSCmdlet.ShouldProcess($description, "Create or update Azure Data Factory resource")) {
+        Invoke-AdfPut -RelativePath "pipelines/$([uri]::EscapeDataString($resource.name))" -Description $description -Payload $payload
+    }
 }
 
 # Read each deployed resource back to confirm the Data Factory API recognizes it.
+if (-not $WhatIfPreference) {
 Invoke-AdfGet -RelativePath "linkedservices/AzureDataLakeStorage1" -Description "ADLS linked service"
 Invoke-AdfGet -RelativePath "linkedservices/ls_sql_control" -Description "SQL control linked service"
 Invoke-AdfGet -RelativePath "linkedservices/LS_db_silver" -Description "Databricks SQL Silver linked service"
@@ -175,6 +185,10 @@ Invoke-AdfGet -RelativePath "pipelines/api_src_inital%20load" -Description "API 
 Invoke-AdfGet -RelativePath "pipelines/csv_initial%20load" -Description "CSV ingestion pipeline"
 Invoke-AdfGet -RelativePath "pipelines/sql_incremental%20pipeline" -Description "SQL incremental pipeline"
 Invoke-AdfGet -RelativePath "pipelines/uber_eats_master" -Description "Master pipeline"
+}
+else {
+    Write-Host "WhatIf selected: no resources were written and read-back verification was skipped."
+}
 
 Write-Host ""
 Write-Host "ADF resource deployment and read-back verification completed."
