@@ -60,11 +60,11 @@ The Gold notebook is invoked at `/Shared/UberEats/notebooks/Gold_Analytics`. The
 | Repository artifact | Current reference | Required restore action |
 |---|---|---|
 | `linkedService/LS_restapi.json` | `https://ubereats-mock-api.onrender.com` | Confirm the API endpoint is available and returns the expected paginated payloads |
-| `pipeline/api_src_inital load.json` | Hard-coded API watermark URL at the same host | Keep it aligned with the REST linked-service endpoint |
-| `linkedService/LS_AzureKeyVault.json` | `https://ubereatskeyvalut.vault.azure.net/` | Confirm the restored Key Vault endpoint and grant the Data Factory identity secret-read access |
-| API key secret | `ubereatsapikey`, with a pinned historical version in the export | Create/restore the secret and update the secret reference to the approved version; never commit the secret value |
+| `pipeline/api_src_inital load.json` | API watermark URL is driven by factory global parameter `api_base_url` | The local restore configuration script sets it to the restored API host |
+| `linkedService/LS_AzureKeyVault.json` | Key Vault URI is driven from the restore configuration script | Confirm the restored Key Vault endpoint and grant the Data Factory identity secret-read access |
+| API key secret | `ubereatsapikey`, with no secret version pinned | Create/restore the secret; the latest version is retrieved at runtime. Never commit the secret value |
 
-Do not put API keys, tokens, or passwords in GitHub. The existing secret version is an environment-specific reference, not a portable secret.
+Do not put API keys, tokens, or passwords in GitHub. The API Key Vault URL uses the current secret version; the API key value remains in Key Vault and is hidden from ADF activity logs.
 
 ## 5. CSV source staging in ADLS Gen2
 
