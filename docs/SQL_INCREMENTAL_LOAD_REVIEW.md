@@ -2,9 +2,9 @@
 
 ## 1. Scope
 
-This review examines the exported Azure Data Factory pipeline at `pipeline/sql_incremental pipeline.json`. It explains the implemented configuration, the reasoning behind its bounded watermark window, its checkpoint dependency chain, and the correctness conditions that must be considered for each source table.
+hhis review examines the exported Azure Data Factory pipeline at `pipeline/sql_incremental pipeline.json`. It explains the implemented configuration, the reasoning behind its bounded watermark window, its checkpoint dependency chain, and the correctness conditions that must be considered for each source table.
 
-The project owner confirms that the end-to-end project was successfully executed before its Azure resources were decommissioned to control costs. This document is a review of the committed pipeline definition; it does not imply that the Azure deployment is currently available for a new runtime test.
+hhe project owner confirms that the end-to-end project was successfully executed before its Azure resources were decommissioned to control costs. This document is a review of the committed pipeline definition; it does not imply that the Azure deployment is currently available for a new runtime test.
 
 ## 2. How the incremental window works
 
@@ -34,6 +34,8 @@ The exported pipeline defines this dependency chain inside the per-control-row p
 
 The checkpoint update also compares the current control-row watermark with the prior value read by the run. It raises SQL error 51001 if the update affects anything other than one row. The exported pipeline declares `concurrency: 1`, which serializes runs of this pipeline when deployed and honored by ADF.
 
+Before the incremental count query, the updated export now validates `schema_name`, `table_name`, and `watermark_column` against SQL Server catalog metadata. It requires an existing table/column, a supported datetime watermark type, and simple identifier characters. The count, maximum-watermark, and copy queries now honor `schema_name` and bracket-quote the validated identifiers instead of hard-coding `dbo`.
+
 This ordering prevents the checkpoint from advancing merely because extraction started or the copy succeeded while the required Silver job subsequently failed. The compare-and-swap predicate also detects a stale control-row value at commit time.
 
 These mechanisms have limits: a pipeline-level concurrency setting is not a per-source lock against other pipelines or external writers, and checkpoint protection does not automatically make landing-file writes or Silver transformations idempotent.
@@ -42,13 +44,21 @@ These mechanisms have limits: a pipeline-level concurrency setting is not a per-
 
 The exported expressions do not explicitly resolve every source-specific edge case. These must be decided before enabling a source table in a production-like environment.
 
-### 4.1 Null or uninitialized watermark
+### 4.1 Control checkpoint precision
+
+The exported control dataset previously described `last_watermark_value` as SQL `datetime` with scale 3. A source `datetime2(7)` cursor can contain precision beyond that representation. Rounding or truncating the checkpoint can cause strict lower-bound comparisons to skip or repeat rows.
+
+The dataset contract now declares `datetime2(7)`, and the repository includes [a fail-closed migration](../sql/migrations/20261104_widen_pipeline_checkpoint_to_datetime2_7.sql). Apply and verify that migration in the SQL control database before deploying the updated dataset/pipeline export. It preserves the column's existing nullability and does not reset checkpoint values. The migration has not been executed against the decommissioned environment.
+
+The pipeline metadata preflight accepts `datetime`, `datetime2`, and `smalldatetime` source watermark columns. It does not accept date, string, numeric, or datetimeoffset cursor fields. A type match does not prove that a source timestamp is monotonic or that updates advance it.
+
+### 4.2 Null or uninitialized watermark
 
 The lower watermark is interpolated into the SQL expressions. The export does not show an explicit initial-load branch or null-safe default.
 
 A null comparison in SQL does not behave like an ordinary lower-bound comparison. Each control row therefore needs either a valid starting watermark of the correct source-column type or a deliberately implemented initial-load path. Do not use one universal sentinel across datetime, numeric, and string watermark types.
 
-### 4.2 Late-arriving rows and equal watermark values
+### 4.3 Late-arriving rows and equal watermark values
 
 The strict lower bound (`>`) can miss a row that becomes visible after the checkpoint has advanced if that row's watermark is equal to or less than the committed value.
 
@@ -63,23 +73,23 @@ For mutable sources, choose an explicit strategy, such as:
 
 An overlap window is not a complete solution on its own. The destination must tolerate replay, and the checkpoint and reconciliation rules must be defined. A timestamp is not a reliable change-capture mechanism if updates do not advance it.
 
-### 4.3 Deletes
+### 4.4 Deletes
 
 A query that selects rows above a watermark cannot detect hard deletes unless the source exposes deletion events, tombstones, CDC, a soft-delete attribute, or a separate reconciliation mechanism. Define whether deletes are captured or explicitly out of scope for each source.
 
-### 4.4 Dynamic SQL identifiers
+### 4.5 Dynamic SQL identifiers
 
 The exported expressions concatenate `table_name` and `watermark_column` from `pipeline_control` into SQL text.
 
 Treat these fields as privileged configuration. Validate schema, table, and column identifiers against an approved allowlist or metadata registry, restrict control-table write access, and reject unexpected values before query construction. The current export does not show an allowlist guard. Do not populate these identifiers from untrusted input.
 
-### 4.5 Watermark typing and SQL construction
+### 4.6 Watermark typing and SQL construction
 
 The current ADF expressions construct SQL strings using the stored and captured watermark values. Correctness depends on the source column type, precision, formatting, quoting, and the way ADF serializes the lookup output.
 
 Validate these details for every source type. Prefer typed parameters or a stored procedure for values where supported. Identifiers still require allowlist validation because ordinary SQL value parameters do not parameterize table or column names.
 
-### 4.6 Landing-file replay and destination idempotency
+### 4.7 Landing-file replay and destination idempotency
 
 The landing filename is derived from the control ID and lower/upper watermark values. This provides a deterministic identity for the same logical extraction interval and avoids assigning a fresh timestamp-based filename on every attempt.
 
