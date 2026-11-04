@@ -56,7 +56,10 @@ class SqlIncrementalHardeningContractTests(unittest.TestCase):
         self.assertIn("GROUP BY control_id", query)
         self.assertIn("control_id IS NULL", query)
         self.assertIn("GROUP BY schema_name, table_name, watermark_column", query)
-        self.assertIn("WHERE is_active = 1", query)
+        control_id_check = query.split("OR EXISTS")[0]
+        source_mapping_check = query.split("OR EXISTS")[1]
+        self.assertNotIn("WHERE is_active", control_id_check)
+        self.assertIn("WHERE is_active = 1", source_mapping_check)
         self.assertEqual(
             ["Validate active SQL control metadata"],
             [item["activity"] for item in gate["dependsOn"]],
@@ -80,7 +83,7 @@ class SqlIncrementalHardeningContractTests(unittest.TestCase):
         self.assertIn("length(activity('Lookup_SQL_Control').output.value)", expression)
         self.assertNotIn("Count active SQL control rows", [item["name"] for item in self.top])
         self.assertEqual(
-            ["Lookup_SQL_Control"],
+            ["Active SQL control metadata is unique"],
             [item["activity"] for item in gate["dependsOn"]],
         )
         self.assertEqual(
@@ -145,6 +148,16 @@ class SqlIncrementalHardeningContractTests(unittest.TestCase):
             self.assertIn("item().table_name", query)
             self.assertIn("item().watermark_column", query)
             self.assertIn("[', item().schema_name, '].[', item().table_name, ']", query)
+
+    def test_sql_landing_filename_suffix_matches_delimited_sink_extension(self):
+        copy = self.copy
+        sink = copy["typeProperties"]["sink"]
+        self.assertEqual(".csv", sink["formatSettings"]["fileExtension"])
+        output = copy["outputs"][0]
+        self.assertEqual("ds_adls", output["referenceName"])
+        filename = output["parameters"]["p_file_name"]["value"]
+        self.assertIn("'.csv')", filename)
+        self.assertIn("p_file_name", output["parameters"])
 
     def test_bounded_window_and_checkpoint_success_dependency_are_preserved(self):
         copy_query = self.copy["typeProperties"]["source"]["sqlReaderQuery"]["value"]
