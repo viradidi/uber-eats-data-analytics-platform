@@ -132,7 +132,7 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
             "pipelines/",
             "uber_eats_master.json",
             "lastPublishTime",
-            "WhatIf selected",
+            "WhatIf completed. No Azure resources were written",
         ):
             with self.subTest(token=token):
                 self.assertIn(token, script)
@@ -144,6 +144,7 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
         self.assertIn('Invoke-AdfGet -RelativePath "linkedservices/$([uri]::EscapeDataString($resource.name))"', script)
         self.assertIn('Invoke-AdfGet -RelativePath "datasets/$([uri]::EscapeDataString($resource.name))"', script)
         self.assertIn('Invoke-AdfGet -RelativePath "pipelines/$([uri]::EscapeDataString($resource.name))"', script)
+
     def test_external_sql_job_export_script_collects_settings_and_workspace_sources_safely(self):
         script = (
             ROOT / "deployment/databricks/export_sql_silver_job.ps1"
