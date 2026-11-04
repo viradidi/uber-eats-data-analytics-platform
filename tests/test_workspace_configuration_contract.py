@@ -100,6 +100,17 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
             "AzureBlobFSReadSettings",
             copy["typeProperties"]["source"]["storeSettings"]["type"],
         )
+        job = next(
+            activity for activity in loop["typeProperties"]["activities"]
+            if activity["name"] == "silver_csv_job_copy1"
+        )
+        self.assertEqual("DatabricksNotebook", job["type"])
+        self.assertEqual(
+            "/Shared/UberEats/routing/dispacher_csv_notebook",
+            job["typeProperties"]["notebookPath"],
+        )
+        self.assertIn("file_name", job["typeProperties"]["baseParameters"])
+        self.assertIn("bronze_root", job["typeProperties"]["baseParameters"])
         self.assertNotIn("connectVia", source_dataset["properties"])
         self.assertFalse((ROOT / "linkedService/FileServer1.json").exists())
         self.assertFalse((ROOT / "integrationRuntime/integrationRuntime2.json").exists())
@@ -131,6 +142,17 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
             if activity["name"] == "Job_api"
         )
         self.assertIn("endpoint_name", job["typeProperties"]["jobParameters"])
+        self.assertEqual("DatabricksNotebook", job["type"])
+        self.assertEqual(
+            "/Shared/UberEats/routing/api-dispacher-notebook",
+            job["typeProperties"]["notebookPath"],
+        )
+        self.assertIn("bronze_root", job["typeProperties"]["baseParameters"])
+        self.assertEqual(
+            "@pipeline().globalParameters.bronze_root",
+            job["typeProperties"]["baseParameters"]["bronze_root"]["value"],
+        )
+
 
     def test_csv_dispatcher_does_not_depend_on_a_personal_workspace_path(self):
         source = (ROOT / "routing/dispacher_csv_notebook.py").read_text(encoding="utf-8")
