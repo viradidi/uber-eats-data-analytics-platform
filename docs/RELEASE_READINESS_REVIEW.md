@@ -39,7 +39,9 @@ A restore-specific configuration inventory is now available at [RESTORED_AZURE_C
 
 The current exports retain historic SQL, ADLS, Key Vault, API, Databricks workspace, and factory references. The CSV pipeline additionally reads from a Windows share (`\\\\DESKTOP-P63LGSO\\UberEats`) through a self-hosted Integration Runtime; that share and encrypted File Server credential will not be portable to a newly provisioned environment. Recreate/re-authorize the share and runtime, or deliberately move CSV source staging to ADLS. Resolve the linked Integration Runtime reference, which points to a different historic factory/resource-group path than the committed factory export.
 
-The Silver notebook Bronze-root defaults have been corrected to match the ADLS linked service, and the personal workspace path in the CSV dispatcher has been replaced by a configurable relative notebook root. A regression test now checks these contracts.
+The Silver notebook Bronze-root defaults have been corrected to match the ADLS linked service, and the personal workspace path in the CSV dispatcher has been replaced by a configurable relative notebook root. A regression test now checks these contracts. Repeatable PowerShell scripts now stage the API/CSV metadata JSON into ADLS and copy/hash-verify the three CSV fixtures to an already configured share.
+
+The ADF linked-service cluster defaults and local PySpark tests are aligned on Databricks Runtime 16.4 LTS / Spark 3.5.2. The API, CSV, and SQL Jobs may independently pin older runtimes in their own definitions, so their exports must be reviewed before deployment.
 
 ### P0 — Complete the external SQL Silver job review
 
@@ -68,7 +70,7 @@ Before deploying the updated control dataset, back up the SQL control database a
 
 Execute API, CSV, and SQL ingestion; validate Silver quality and reconciliation; prove SQL same-interval replay; run the master pipeline; verify Gold publication and `gold_run_audit`; and test controlled failure/recovery scenarios in an isolated environment.
 
-Use [Restored Azure Acceptance Plan](RESTORED_AZURE_ACCEPTANCE_PLAN.md) as the execution record and [Run Evidence and Retention](RUN_EVIDENCE_RETENTION.md) to preserve actual run evidence.
+Use [Restored Azure Acceptance Plan](RESTORED_AZURE_ACCEPTANCE_PLAN.md) as the execution record, [Restored Azure Configuration Inventory](RESTORED_AZURE_CONFIGURATION_INVENTORY.md) to resolve historic references, and [Run Evidence and Retention](RUN_EVIDENCE_RETENTION.md) to preserve actual run evidence.
 
 ## 4. Known technical limitations to retain
 
