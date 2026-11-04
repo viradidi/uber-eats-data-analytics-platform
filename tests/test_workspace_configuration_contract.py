@@ -94,7 +94,7 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
         )
         copy = next(
             activity for activity in loop["typeProperties"]["activities"]
-            if activity["name"] == "onpremise migration_copy1"
+            if activity["name"] == "adls csv migration_copy1"
         )
         self.assertEqual(
             "AzureBlobFSReadSettings",
