@@ -64,6 +64,14 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
             self.assertIn(file_name, csv_script)
         self.assertIn("Get-FileHash", csv_script)
 
+    def test_factory_export_does_not_pin_historical_managed_identity_ids(self):
+        factory = json.loads(
+            (ROOT / "factory/ubereatssri.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual("SystemAssigned", factory["identity"]["type"])
+        self.assertNotIn("principalId", factory["identity"])
+        self.assertNotIn("tenantId", factory["identity"])
+
     def test_csv_pipeline_reads_staged_adls_source_without_self_hosted_runtime(self):
         source_dataset = json.loads(
             (ROOT / "dataset/DS_source_csv.json").read_text(encoding="utf-8")
