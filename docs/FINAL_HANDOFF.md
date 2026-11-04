@@ -42,6 +42,7 @@ Start with the [README](../README.md), then use these documents for deeper revie
 14. [Databricks workspace import script](../deployment/databricks/import_workspace_assets.ps1)
 15. [Restored Azure configuration script](../deployment/azure/configure_restore_environment.ps1)
 16. [ADF REST deployment script](../deployment/azure/deploy_adf_resources.ps1)
+17. [External SQL Silver Job export script](../deployment/databricks/export_sql_silver_job.ps1)
 
 ## Validation and evidence boundaries
 
