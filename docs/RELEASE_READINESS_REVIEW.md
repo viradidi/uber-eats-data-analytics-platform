@@ -7,7 +7,7 @@
 
 ## 1. Release decision
 
-<badge>Repository checks passed; cloud release pending</badge>
+**Status: repository checks passed; cloud release pending.**
 
 **Repository-side status: READY FOR CONTROLLED HANDOFF. Restored Azure release status: NOT YET ACCEPTED.**
 
