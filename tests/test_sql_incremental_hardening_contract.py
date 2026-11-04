@@ -67,7 +67,6 @@ class SqlIncrementalHardeningContractTests(unittest.TestCase):
         )
         self.assertEqual("bit", active_field["type"])
         self.assertIn("WHERE is_active = 1", PREFLIGHT)
-        self.assertIn("WHERE is_active = 1", PREFLIGHT)
         self.assertIn("inspect_source_contract_candidates.sql", PREFLIGHT)
 
     def test_duplicate_active_control_metadata_fails_before_loop(self):
