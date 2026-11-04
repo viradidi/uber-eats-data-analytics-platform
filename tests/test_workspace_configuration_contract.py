@@ -104,6 +104,34 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
         self.assertFalse((ROOT / "linkedService/FileServer1.json").exists())
         self.assertFalse((ROOT / "integrationRuntime/integrationRuntime2.json").exists())
 
+    def test_api_dispatcher_matches_adf_endpoint_parameter_and_uses_portable_paths(self):
+        source_path = ROOT / "routing/api-dispacher-notebook.py"
+        source = source_path.read_text(encoding="utf-8")
+        self.assertNotIn("/Workspace/Users/", source)
+        self.assertIn('dbutils.widgets.text("endpoint_name"', source)
+        self.assertIn('dbutils.widgets.text("notebook_root"', source)
+        for endpoint, notebook in (
+            ("payments", "Silver_Payments"),
+            ("deliveries", "Silver_Deliveries"),
+            ("ratings", "Silver_Ratings"),
+            ("order-status", "Silver_Order_Status"),
+        ):
+            with self.subTest(endpoint=endpoint):
+                self.assertIn(f'"{endpoint}": "{notebook}"', source)
+
+        pipeline = json.loads(
+            (ROOT / "pipeline/api_src_inital load.json").read_text(encoding="utf-8")
+        )
+        foreach = next(
+            activity for activity in pipeline["properties"]["activities"]
+            if activity.get("type") == "ForEach"
+        )
+        job = next(
+            activity for activity in foreach["typeProperties"]["activities"]
+            if activity["name"] == "Job_api"
+        )
+        self.assertIn("endpoint_name", job["typeProperties"]["jobParameters"])
+
     def test_csv_dispatcher_does_not_depend_on_a_personal_workspace_path(self):
         source = (ROOT / "routing/dispacher_csv_notebook.py").read_text(encoding="utf-8")
         self.assertNotIn("/Workspace/Users/", source)
