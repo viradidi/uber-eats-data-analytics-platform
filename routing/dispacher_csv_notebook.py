@@ -1,6 +1,6 @@
 # Databricks notebook source
 dbutils.widgets.text("file_name", "")
-dbutils.widgets.text("notebook_root", "../notebooks", "Silver notebook folder")
+dbutils.widgets.text("notebook_root", "/Shared/UberEats/notebooks", "Silver notebook folder")
 dbutils.widgets.text("bronze_root", "abfss://bronze@ubereatsrisstorage.dfs.core.windows.net", "Bronze storage root")
 
 file_name = dbutils.widgets.get("file_name").strip().lower()
