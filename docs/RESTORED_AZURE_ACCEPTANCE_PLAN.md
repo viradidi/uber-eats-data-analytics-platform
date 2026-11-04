@@ -10,7 +10,7 @@ Do not recreate Azure resources just to create portfolio screenshots. Use this p
 
 ## 1. Entry criteria — do not start the full master run until these pass
 
-Start with the [restored Azure configuration inventory](RESTORED_AZURE_CONFIGURATION_INVENTORY.md). It records the historic SQL, ADLS, Key Vault, API, Databricks and factory bindings that must be confirmed or replaced. The CSV branch has been moved from the retired Windows File Server/self-hosted Integration Runtime to the `bronze/csv_source` folder in ADLS.
+Start with the [restored Azure configuration inventory](RESTORED_AZURE_CONFIGURATION_INVENTORY.md). Before publishing ADF artifacts, run `deployment/azure/configure_restore_environment.ps1` from PowerShell 7 with the approved values from the restored environment. It updates historic SQL, ADLS, Key Vault, API, Databricks and factory bindings together; review the local `git diff` before publishing. The CSV branch has been moved from the retired Windows File Server/self-hosted Integration Runtime to the `bronze/csv_source` folder in ADLS.
 
 ### Repository and release identity
 
@@ -45,8 +45,6 @@ If the job export is unavailable, do not claim SQL Silver replay safety. Do not 
 - [ ] Restore the required Azure SQL source/control database, ADLS Gen2 storage, Data Factory, and Databricks workspace in a budgeted environment.
 - [ ] Configure managed identities/service principals, Key Vault-backed secrets, least-privilege storage/SQL/catalog permissions, and network access.
 - [ ] Deploy and verify the API source endpoint and its authentication setting.
-- [ ] Deploy the Silver notebooks and repository-owned shared Spark utilities required by those notebooks.
-- [ ] Deploy the `src.gold` package so the Gold notebook can import its transformations.
 - [ ] Authenticate the Databricks CLI to the restored workspace and run `deployment/databricks/import_workspace_assets.ps1`; it imports the canonical Silver/Gold notebooks, both dispatchers, and the shared `src` modules to the exact workspace paths used by ADF.
 - [ ] Verify Databricks linked services, workspace URL, the SQL Silver job ID, cluster/runtime configuration, catalog/schema/table permissions, and library dependencies. API and CSV now invoke repository-owned notebooks directly; only the SQL Silver job remains external.
 - [ ] Confirm `src` modules can be imported from `/Workspace/Shared/UberEats` and that the Silver/Gold notebooks receive the factory-level `bronze_root` parameter. The committed ADF linked services are aligned on 16.4 LTS and local Spark CI uses PySpark 3.5.2.
