@@ -19,10 +19,10 @@ PAIRED_NOTEBOOKS = (
 def databricks_source_cells(source):
     """Convert Databricks SOURCE export markers into ordered Jupyter cells."""
     source = source.replace("\r\n", "\n").replace("\r", "\n")
-    sections = re.split(r"(?m)^# COMMAND ----------\\s*$", source)
+    sections = re.split(r"(?m)^# COMMAND ----------\s*$", source)
     cells = []
     for section in sections:
-        section = re.sub(r"^# Databricks notebook source\\s*\\n?", "", section, count=1)
+        section = re.sub(r"^# Databricks notebook source\s*\n?", "", section, count=1)
         lines = section.split("\n")
         while lines and not lines[0].strip():
             lines.pop(0)
