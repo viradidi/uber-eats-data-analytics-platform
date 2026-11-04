@@ -51,7 +51,25 @@ If the job export is unavailable, do not claim SQL Silver replay safety. Do not 
 - [ ] Verify the restored CSV File Server share and self-hosted Integration Runtime, or approve and implement the documented cloud-source redesign before publishing the CSV pipeline.
 - [ ] Import and publish the ADF datasets, linked services, integration runtimes, child pipelines, SQL incremental pipeline, and master pipeline. Resolve all parameter, path, and dependency references before execution.
 
-## 2. Pre-run smoke tests
+## 2. Pre-run input staging
+
+After signing in with an identity allowed to write to the restored ADLS account, stage the two metadata JSON files expected by the ADF datasets:
+
+```powershell
+az login
+az account set --subscription <RESTORED_SUBSCRIPTION_ID>
+.\\deployment\\azure\\stage_bronze_metadata.ps1 -StorageAccountName <STORAGE_ACCOUNT_NAME>
+```
+
+After recreating and authorizing the CSV share and self-hosted Integration Runtime, copy and hash-verify the committed CSV fixtures to the share:
+
+```powershell
+.\\deployment\\azure\\stage_csv_files.ps1 -DestinationPath \\\\<HOST>\\UberEats
+```
+
+The second script does not create a Windows share or configure the Integration Runtime. Those are environment setup steps. Keep the ADLS metadata and CSV share inputs separate because the current ADF CSV source still reads from the File Server linked service.
+
+## 3. Pre-run smoke tests
 
 Run these before processing business data:
 
@@ -66,7 +84,7 @@ Run these before processing business data:
 
 Do not proceed if a smoke test requires a manual permission bypass or embedded credential.
 
-## 3. Execute the ingestion and Silver acceptance
+## 4. Execute the ingestion and Silver acceptance
 
 Use a controlled source data snapshot and record the run start time, commit SHA, ADF pipeline name, and run ID.
 
@@ -92,7 +110,7 @@ Use a controlled source data snapshot and record the run start time, commit SHA,
 
 The checkpoint transaction protects the control-row compare-and-swap. It does not create a distributed transaction across SQL, ADLS, and Databricks. Inspect partial writes before every retry.
 
-## 4. Execute the master pipeline and Gold publication
+## 5. Execute the master pipeline and Gold publication
 
 After the child paths have passed their individual checks:
 
@@ -111,7 +129,7 @@ After the child paths have passed their individual checks:
 
 Validate counts, distinct keys, nullability, domain constraints, relationships, and agreed aggregate tolerances. Do not accept a table merely because it exists or the notebook task reports success.
 
-## 5. Recovery and controlled failure tests
+## 6. Recovery and controlled failure tests
 
 Perform failure injection only in an isolated environment where the impact is understood and approved.
 
@@ -126,7 +144,7 @@ Perform failure injection only in an isolated environment where the impact is un
 
 After each recovery, use the [recovery and rerun runbook](RECOVERY_AND_RERUN_RUNBOOK.md). Never advance a checkpoint manually merely to make a pipeline green.
 
-## 6. Evidence to retain
+## 7. Evidence to retain
 
 For the same acceptance cycle, retain:
 
@@ -142,7 +160,7 @@ For the same acceptance cycle, retain:
 
 Store evidence under the process in [Run Evidence and Retention](RUN_EVIDENCE_RETENTION.md). Redact secrets and personal data. Do not invent missing historical run IDs, row counts, screenshots, or success records.
 
-## 7. Final go/no-go decision
+## 8. Final go/no-go decision
 
 The restored release is accepted only when all of the following are true:
 
