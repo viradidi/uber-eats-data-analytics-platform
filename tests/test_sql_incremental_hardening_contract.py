@@ -193,6 +193,14 @@ class SqlIncrementalHardeningContractTests(unittest.TestCase):
         ):
             self.assertIn(token, MIGRATION)
 
+    def test_sql_silver_job_is_external_and_replay_contract_is_not_assumed(self):
+        branch = find_activity(self.activities, "rowscount is there")["typeProperties"]["ifTrueActivities"]
+        silver = find_activity(branch, "Job_Silver_copy1")
+        self.assertEqual("121055824417886", silver["typeProperties"]["jobId"])
+        self.assertIn("no source-controlled SQL-specific Silver job definition", REVIEW)
+        self.assertIn("same landing interval is processed more than once", REVIEW)
+        self.assertIn("target write mode", SOURCE_CONTRACT)
+
     def test_equal_or_older_late_arrivals_and_deletes_are_not_claimed_as_solved(self):
         self.assertIn("Late-arriving rows and equal watermark values", REVIEW)
         self.assertIn("strict lower bound", REVIEW)
