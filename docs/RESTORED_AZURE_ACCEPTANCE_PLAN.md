@@ -48,7 +48,7 @@ If the job export is unavailable, do not claim SQL Silver replay safety. Do not 
 - [ ] Deploy the Silver notebooks and repository-owned shared Spark utilities required by those notebooks.
 - [ ] Deploy the `src.gold` package so the Gold notebook can import its transformations.
 - [ ] Import `notebooks/Gold_Analytics` to the exact ADF-linked notebook path `/Shared/UberEats/Gold_Analytics`, or update the ADF export and review the change.
-- [ ] Verify Databricks linked services, workspace URL, job IDs, cluster/runtime configuration, catalog/schema/table permissions, and library dependencies. The committed ADF linked services are aligned on 16.4 LTS and local Spark CI uses PySpark 3.5.2; export all three Jobs and verify their own runtime settings separately.
+- [ ] Verify Databricks linked services, workspace URL, the SQL Silver job ID, cluster/runtime configuration, catalog/schema/table permissions, and library dependencies. API and CSV now invoke repository-owned notebooks directly; only the SQL Silver job remains external. The committed ADF linked services are aligned on 16.4 LTS and local Spark CI uses PySpark 3.5.2.
 - [ ] Verify the restored ADLS source filesystem and permissions for `bronze/csv_source`.
 - [ ] Import and publish the ADF datasets, linked services, integration runtimes, child pipelines, SQL incremental pipeline, and master pipeline. Resolve all parameter, path, and dependency references before execution.
 
