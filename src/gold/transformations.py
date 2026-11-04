@@ -16,6 +16,9 @@ from pyspark.sql.window import Window
 
 SUCCESS_PAYMENT_STATUSES = ("SUCCESS", "COMPLETED")
 FAILED_PAYMENT_STATUSES = ("FAILED", "DECLINED", "ERROR")
+PAYMENT_STATUS_VALUES = SUCCESS_PAYMENT_STATUSES + FAILED_PAYMENT_STATUSES + ("PENDING", "PROCESSING")
+DELIVERY_STATUS_VALUES = ("DELIVERED", "CANCELLED", "PREPARING", "ASSIGNED", "OUT_FOR_DELIVERY")
+ORDER_STATUS_VALUES = ("PLACED", "PREPARING", "ASSIGNED", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED")
 DELIVERED_STATUSES = ("DELIVERED",)
 CANCELLED_STATUSES = ("CANCELLED",)
 ACTIVE_ORDER_STATUSES = ("PLACED", "PREPARING", "ASSIGNED", "OUT_FOR_DELIVERY")
@@ -112,6 +115,12 @@ def _prepare_inputs(silver: dict[str, DataFrame]) -> dict[str, DataFrame]:
     )
     _assert_no_invalid_rows(
         deliveries,
+        ~F.col("delivery_status").isin(*DELIVERY_STATUS_VALUES),
+        "deliveries",
+        f"contains unsupported delivery_status values; allowed values are {list(DELIVERY_STATUS_VALUES)}",
+    )
+    _assert_no_invalid_rows(
+        deliveries,
         F.col("pickup_time").isNotNull()
         & F.col("delivery_time").isNotNull()
         & (F.col("delivery_time") < F.col("pickup_time")),
@@ -154,6 +163,12 @@ def _prepare_inputs(silver: dict[str, DataFrame]) -> dict[str, DataFrame]:
         .withColumn("payment_method", F.upper(F.trim(F.col("payment_method").cast("string"))))
         .withColumn("payment_status", F.upper(F.trim(F.col("payment_status").cast("string"))))
     )
+    _assert_no_invalid_rows(
+        payments,
+        ~F.col("payment_status").isin(*PAYMENT_STATUS_VALUES),
+        "payments",
+        f"contains unsupported payment_status values; allowed values are {list(PAYMENT_STATUS_VALUES)}",
+    )
     invalid_amount = payments.filter(
         F.col("amount").isNull()
         | F.isnan("amount")
@@ -179,6 +194,12 @@ def _prepare_inputs(silver: dict[str, DataFrame]) -> dict[str, DataFrame]:
         .withColumn("order_id", F.col("order_id").cast("string"))
         .withColumn("status", F.upper(F.trim(F.col("status").cast("string"))))
         .withColumn("status_timestamp", F.to_timestamp("status_timestamp"))
+    )
+    _assert_no_invalid_rows(
+        order_status,
+        ~F.col("status").isin(*ORDER_STATUS_VALUES),
+        "order_status",
+        f"contains unsupported status values; allowed values are {list(ORDER_STATUS_VALUES)}",
     )
 
     ratings = silver["ratings"]
