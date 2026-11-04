@@ -41,7 +41,7 @@ The shared build_gold_outputs transformation validates its inputs and outputs be
 Input gates include:
 
 - Required fields and nonblank business keys/statuses.
-- Explicit status contracts: order/delivery states are PLACED, PREPARING, ASSIGNED, OUT_FOR_DELIVERY, DELIVERED, or CANCELLED; payment states are SUCCESS, COMPLETED, FAILED, DECLINED, ERROR, PENDING, or PROCESSING. New source states must be added deliberately with tests before they are accepted.
+- Explicit status contracts: order states are PLACED, PREPARING, ASSIGNED, OUT_FOR_DELIVERY, DELIVERED, or CANCELLED; delivery states are PREPARING, ASSIGNED, OUT_FOR_DELIVERY, DELIVERED, or CANCELLED; payment states are SUCCESS, COMPLETED, FAILED, DECLINED, ERROR, PENDING, or PROCESSING. New source states must be added deliberately with tests before they are accepted.
 - Unique delivery, payment, status-event, rating, and driver keys at their documented source grains.
 - Parseable required timestamps and parseable optional delivery timestamps when supplied.
 - Nonnegative, numeric payment amounts and ratings in the inclusive 1–5 range.
