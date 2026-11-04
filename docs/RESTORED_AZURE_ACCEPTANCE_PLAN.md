@@ -37,7 +37,7 @@ Start with the [restored Azure configuration inventory](RESTORED_AZURE_CONFIGURA
 
 ### External SQL Silver job
 
-- [ ] Export job `121055824417886` settings and every referenced SQL Silver notebook/script.
+- [ ] Run deployment/databricks/export_sql_silver_job.ps1 against the current workspace to export job 121055824417886 settings and every workspace-backed SQL Silver notebook/script; resolve Git/DBFS/volume and child-job references from its manifest.
 - [ ] Complete [the external SQL Silver job review](EXTERNAL_SQL_SILVER_JOB_REVIEW.md).
 - [ ] Verify the table-to-input-folder and table-to-target mappings.
 - [ ] Define the stable business/event key and destination write strategy for every enabled SQL source.
