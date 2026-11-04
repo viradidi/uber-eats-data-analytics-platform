@@ -76,6 +76,72 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
             factory["properties"]["globalParameters"]["bronze_root"]["value"],
         )
 
+    def test_workspace_import_script_deploys_exact_adf_notebook_paths_and_src_modules(self):
+        script = (
+            ROOT / "deployment/databricks/import_workspace_assets.ps1"
+        ).read_text(encoding="utf-8")
+        for token in (
+            "databricks workspace import-dir",
+            "databricks workspace import $target --file $source --format RAW --overwrite",
+            "Silver_Deliveries.py",
+            "Silver_Drivers.py",
+            "Silver_Order_Status.py",
+            "Silver_Payments.py",
+            "Silver_Promotions.py",
+            "Silver_Ratings.py",
+            "Silver_Zones.ipynb",
+            "Gold_Analytics.py",
+            "api-dispacher-notebook.py",
+            "dispacher_csv_notebook.py",
+            "src/common/quality_events.py",
+            "src/common/incremental.py",
+            "src/gold/transformations.py",
+            "$WorkspaceRoot = \"/Shared/UberEats\"",
+        ):
+            with self.subTest(token=token):
+                self.assertIn(token, script)
+
+        master = json.loads(
+            (ROOT / "pipeline/uber_eats_master.json").read_text(encoding="utf-8")
+        )
+        gold_activity = next(
+            activity for activity in master["properties"]["activities"]
+            if activity["name"] == "Publish_Gold_Analytics"
+        )
+        self.assertEqual(
+            "/Shared/UberEats/notebooks/Gold_Analytics",
+            gold_activity["typeProperties"]["notebookPath"],
+        )
+
+    def test_silver_and_gold_notebooks_add_shared_workspace_package_root_before_imports(self):
+        notebook_paths = (
+            "notebooks/Silver_Deliveries.py",
+            "notebooks/Silver_Drivers.py",
+            "notebooks/Silver_Order_Status.py",
+            "notebooks/Silver_Payments.py",
+            "notebooks/Silver_Promotions.py",
+            "notebooks/Silver_Ratings.py",
+            "notebooks/Silver_Zones.ipynb",
+            "notebooks/Gold_Analytics.py",
+        )
+        for relative_path in notebook_paths:
+            path = ROOT / relative_path
+            source = path.read_text(encoding="utf-8")
+            if path.suffix == ".ipynb":
+                notebook = json.loads(source)
+                source = "\\n".join(
+                    "".join(cell.get("source", []))
+                    for cell in notebook.get("cells", [])
+                    if cell.get("cell_type") == "code"
+                )
+            bootstrap = 'dbutils.widgets.text("project_root", "/Workspace/Shared/UberEats"'
+            self.assertIn(bootstrap, source, relative_path)
+            self.assertIn("sys.path.insert(0, PROJECT_ROOT)", source, relative_path)
+            first_src_import = source.find("from src.")
+            first_sys_insert = source.find("sys.path.insert(0, PROJECT_ROOT)")
+            self.assertGreaterEqual(first_src_import, 0, relative_path)
+            self.assertLess(first_sys_insert, first_src_import, relative_path)
+
     def test_csv_pipeline_reads_staged_adls_source_without_self_hosted_runtime(self):
         source_dataset = json.loads(
             (ROOT / "dataset/DS_source_csv.json").read_text(encoding="utf-8")
