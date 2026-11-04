@@ -33,7 +33,8 @@ If the job export is unavailable, do not claim SQL Silver replay safety. Do not 
 
 - [ ] Complete [the incremental source contract](INCREMENTAL_SOURCE_CONTRACT.md) for every active row in `dbo.pipeline_control`.
 - [ ] Verify each source table, schema, watermark column, cursor type/precision/timezone, business key, initial-load position, late-arrival semantics, and delete strategy.
-- [ ] Confirm the control table has unique, non-null `control_id` values and unique active source mappings.
+- [ ] Apply [the idempotent control-table bootstrap](../sql/migrations/20261104_create_ingestion_control_tables.sql) to create/verify the API and SQL ADF control tables and seed the four documented API endpoints.
+- [ ] Add only reviewed SQL source-control rows; confirm the control table has unique, non-null `control_id` values and unique active source mappings.
 - [ ] Confirm each active control row has an approved, non-null starting watermark. The current export does not implement a null-checkpoint initial-load branch; do not use an arbitrary universal sentinel.
 - [ ] Review the configured schema/table/column identifiers against an approved allowlist and restrict control-table write access.
 - [ ] Back up the SQL control database and review the migration plan before applying [the datetime2(7) checkpoint migration](../sql/migrations/20261104_widen_pipeline_checkpoint_to_datetime2_7.sql).
