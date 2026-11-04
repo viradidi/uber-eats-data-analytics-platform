@@ -34,11 +34,43 @@
         }
       },
       {
+        "name": "Require CSV metadata rows",
+        "type": "IfCondition",
+        "dependsOn": [
+          {
+            "activity": "metadata lookup",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "userProperties": [],
+        "typeProperties": {
+          "expression": {
+            "value": "@greater(length(activity('metadata lookup').output.value), 0)",
+            "type": "Expression"
+          },
+          "ifTrueActivities": [],
+          "ifFalseActivities": [
+            {
+              "name": "Fail when no CSV source files are configured",
+              "type": "Fail",
+              "dependsOn": [],
+              "userProperties": [],
+              "typeProperties": {
+                "message": "The CSV metadata file did not contain any source rows. Stage the three committed CSV source files and metadata before running Gold analytics.",
+                "errorCode": "CSV_NO_SOURCE_FILES"
+              }
+            }
+          ]
+        }
+      },
+      {
         "name": "ForEach1",
         "type": "ForEach",
         "dependsOn": [
           {
-            "activity": "metadata lookup",
+            "activity": "Require CSV metadata rows",
             "dependencyConditions": [
               "Succeeded"
             ]
