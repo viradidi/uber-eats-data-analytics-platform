@@ -50,13 +50,13 @@ The exported control dataset previously described `last_watermark_value` as SQL 
 
 The dataset contract now declares `datetime2(7)`, and the repository includes [a fail-closed migration](../sql/migrations/20261104_widen_pipeline_checkpoint_to_datetime2_7.sql). Apply and verify that migration in the SQL control database before deploying the updated dataset/pipeline export. It preserves the column's existing nullability and does not reset checkpoint values. The migration has not been executed against the decommissioned environment.
 
-The pipeline metadata preflight accepts `datetime`, `datetime2`, and `smalldatetime` source watermark columns. It does not accept date, string, numeric, or datetimeoffset cursor fields. A type match does not prove that a source timestamp is monotonic or that updates advance it.
+The pipeline metadata preflight accepts `datetime`, `datetime2`, and `smalldatetime` source watermark columns. It does not accept date, string, numeric, or datetimeoffset cursor fields. A type match does not prove that a source timestamp is monotonic or that updates advance it. A separate pre-extraction check fails the run when any source row has a `NULL` watermark, because such rows cannot satisfy the incremental comparison.
 
 ### 4.2 Null or uninitialized watermark
 
 The lower watermark is interpolated into the SQL expressions. The export does not show an explicit initial-load branch or null-safe default.
 
-A null comparison in SQL does not behave like an ordinary lower-bound comparison. Each control row therefore needs either a valid starting watermark of the correct source-column type or a deliberately implemented initial-load path. Do not use one universal sentinel across datetime, numeric, and string watermark types.
+A null comparison in SQL does not behave like an ordinary lower-bound comparison. The new source-data guard rejects rows with a `NULL` watermark before extraction, but the control table's own `last_watermark_value` still requires a valid starting watermark. The export does not implement a null-safe initial-load branch. Each control row therefore needs a valid starting watermark of the correct source-column type until that branch is deliberately implemented. Do not use one universal sentinel across datetime, numeric, and string watermark types.
 
 ### 4.3 Late-arriving rows and equal watermark values
 
@@ -149,6 +149,7 @@ For each test, preserve the run ID, input scenario, expected outcome, actual out
 The committed pipeline definition contains:
 
 - A source-metadata preflight that verifies the configured schema/table/column, rejects unsupported watermark types and unsafe identifier characters, and runs before any source count/copy query.
+- A source-data check that fails before extraction if any record has a null watermark value.
 - Schema-aware, bracket-quoted source queries.
 - A strict lower watermark and captured upper watermark for bounded extraction.
 - A dependency from the copy activity to the Databricks Silver job.
