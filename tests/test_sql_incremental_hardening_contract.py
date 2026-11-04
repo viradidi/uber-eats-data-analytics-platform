@@ -50,12 +50,15 @@ class SqlIncrementalHardeningContractTests(unittest.TestCase):
         self.assertIn("WHERE pc.is_active = 1", PREFLIGHT)
 
     def test_pipeline_fails_when_no_sql_control_rows_are_active(self):
-        count = find_activity(self.top, "Count active SQL control rows")
         gate = find_activity(self.top, "Require active SQL control rows")
         loop = find_activity(self.top, "ForEach item")
-        self.assertIn("COUNT(1)", count["typeProperties"]["source"]["sqlReaderQuery"])
-        self.assertIn("WHERE [is_active] = 1", count["typeProperties"]["source"]["sqlReaderQuery"])
-        self.assertIn("active_control_count", gate["typeProperties"]["expression"]["value"])
+        expression = gate["typeProperties"]["expression"]["value"]
+        self.assertIn("length(activity('Lookup_SQL_Control').output.value)", expression)
+        self.assertNotIn("Count active SQL control rows", [item["name"] for item in self.top])
+        self.assertEqual(
+            ["Lookup_SQL_Control"],
+            [item["activity"] for item in gate["dependsOn"]],
+        )
         self.assertEqual(
             ["Require active SQL control rows"],
             [item["activity"] for item in loop["dependsOn"]],
