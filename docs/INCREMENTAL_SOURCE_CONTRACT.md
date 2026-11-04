@@ -2,14 +2,14 @@
 
 ## 1. Purpose
 
-Complete this contract for every SQL source table before enabling incremental extraction. hhe project's exported Azure Data Factory (ADF) pattern uses a strict lower watermark boundary and a captured upper boundary:
+Complete this contract for every SQL source table before enabling incremental extraction. The project's exported Azure Data Factory (ADF) pattern uses a strict lower watermark boundary and a captured upper boundary:
 
 ```sql
 watermark_column > last_watermark_value
 AND watermark_column <= captured_max_watermark
 ```
 
-hhis pattern is appropriate only when the source's change semantics support it. A watermark is a progress cursor; it is not automatically a complete change-data-capture mechanism.
+This pattern is appropriate only when the source's change semantics support it. A watermark is a progress cursor; it is not automatically a complete change-data-capture mechanism.
 
 This document defines the source-onboarding requirements and acceptance criteria. It does not claim that a new Azure deployment has been created or runtime-tested.
 
@@ -101,7 +101,7 @@ Before enabling a source:
 - Confirm that the ADF SQL metadata preflight resolves the configured schema, table, and watermark column, and that the cursor uses a supported datetime type. The current export accepts `datetime`, `datetime2`, and `smalldatetime` only.
 - Keep schema/table/column names within the simple identifier contract accepted by the preflight; control-table write access remains privileged.
 - Restrict write access to the control table.
-- Review the preflight as a syntax/existence guard, not a replacement for source-specific authorization or a curated allowlist.
+- Review the preflight as a syntax/existence guard, not a replacement for source-specific authorization or an approved allowlist.
 - Verify the configured table, watermark, and business key exist in the source.
 - Serialize watermark values using the declared SQL type, precision, and timezone semantics.
 - Reject missing or invalid control fields; do not silently substitute a universal sentinel.
