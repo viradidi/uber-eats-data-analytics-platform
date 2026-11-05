@@ -16,6 +16,7 @@ PREFLIGHT = (ROOT / "docs/SQL_INCREMENTAL_CONTROL_PREFLIGHT.sql").read_text(enco
 SOURCE_DIAGNOSTIC = (ROOT / "sql/diagnostics/inspect_source_contract_candidates.sql").read_text(encoding="utf-8")
 SQL_SILVER_MIGRATION = (ROOT / "sql/migrations/20261105_create_sql_silver_control.sql").read_text(encoding="utf-8")
 SQL_SILVER_NOTEBOOK = (ROOT / "notebooks/Silver_SQL_Incremental.py").read_text(encoding="utf-8")
+ACCEPTANCE_PLAN = (ROOT / "docs/RESTORED_AZURE_ACCEPTANCE_PLAN.md").read_text(encoding="utf-8")
 SQL_SILVER_HELPER = (ROOT / "src/common/sql_silver.py").read_text(encoding="utf-8")
 DATABRICKS_IMPORTER = (ROOT / "deployment/databricks/import_workspace_assets.ps1").read_text(encoding="utf-8")
 
@@ -297,6 +298,16 @@ class SqlIncrementalHardeningContractTests(unittest.TestCase):
             find_activity(branch, "update watermark_copy1")["dependsOn"][0]["dependencyConditions"][0],
         )
         self.assertEqual("Job_Silver_copy1", find_activity(branch, "update watermark_copy1")["dependsOn"][0]["activity"])
+
+    def test_restored_acceptance_plan_uses_repository_owned_sql_silver_notebook(self):
+        self.assertIn("/Shared/UberEats/notebooks/Silver_SQL_Incremental", ACCEPTANCE_PLAN)
+        self.assertIn("DatabricksNotebook", ACCEPTANCE_PLAN)
+        self.assertIn("20261105_create_sql_silver_control.sql", ACCEPTANCE_PLAN)
+        self.assertIn("SQL Silver notebook or audit failure", ACCEPTANCE_PLAN)
+        self.assertNotIn("Run deployment/databricks/export_sql_silver_job.ps1", ACCEPTANCE_PLAN)
+        self.assertNotIn("job 121055824417886 settings", ACCEPTANCE_PLAN)
+        self.assertNotIn("only the SQL Silver job remains external", ACCEPTANCE_PLAN)
+        self.assertNotIn("Run the exported SQL Silver job", ACCEPTANCE_PLAN)
 
     def test_active_sql_sources_require_enabled_silver_contract_before_copy(self):
         lookup = find_activity(self.top, "Lookup_SQL_Control")
