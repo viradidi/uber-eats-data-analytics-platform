@@ -101,6 +101,7 @@ $notebooks = @(
     @{ Source = "notebooks/Silver_Payments.py"; Name = "Silver_Payments"; Format = "SOURCE" },
     @{ Source = "notebooks/Silver_Promotions.py"; Name = "Silver_Promotions"; Format = "SOURCE" },
     @{ Source = "notebooks/Silver_Ratings.py"; Name = "Silver_Ratings"; Format = "SOURCE" },
+    @{ Source = "notebooks/Silver_SQL_Incremental.py"; Name = "Silver_SQL_Incremental"; Format = "SOURCE" },
     @{ Source = "notebooks/Silver_Zones.ipynb"; Name = "Silver_Zones"; Format = "JUPYTER" },
     @{ Source = "notebooks/Gold_Analytics.py"; Name = "Gold_Analytics"; Format = "SOURCE" },
     @{ Source = "routing/api-dispacher-notebook.py"; Name = "api-dispacher-notebook"; Format = "SOURCE" },
@@ -127,6 +128,7 @@ $pythonFiles = @(
     "src/common/incremental.py",
     "src/common/quality_events.py",
     "src/common/spark_utils.py",
+    "src/common/sql_silver.py",
     "src/gold/__init__.py",
     "src/gold/transformations.py"
 )
@@ -143,6 +145,7 @@ $expectedPaths = @(
     "$WorkspaceRoot/notebooks/Silver_Payments",
     "$WorkspaceRoot/notebooks/Silver_Promotions",
     "$WorkspaceRoot/notebooks/Silver_Ratings",
+    "$WorkspaceRoot/notebooks/Silver_SQL_Incremental",
     "$WorkspaceRoot/notebooks/Silver_Zones",
     "$WorkspaceRoot/notebooks/Gold_Analytics",
     "$WorkspaceRoot/routing/api-dispacher-notebook",
@@ -158,4 +161,4 @@ foreach ($workspacePath in $expectedPaths) {
 Write-Host ""
 Write-Host "Databricks notebooks, dispatchers, and shared Python modules imported and verified."
 Write-Host "Workspace root: $WorkspaceRoot"
-Write-Host "Configure the SQL Silver Job separately; it is not source-controlled in this repository."
+Write-Host "SQL Silver is repository-owned; configure the approved per-source metadata in dbo.sql_silver_control before enabling SQL sources."
