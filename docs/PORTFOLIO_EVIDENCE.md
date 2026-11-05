@@ -2,17 +2,21 @@
 
 ## Purpose
 
-This guide helps a hiring manager or technical reviewer inspect the engineering work in this repository and understand what was validated.
+This guide helps a hiring manager or technical reviewer inspect the engineering work and understand what was validated.
 
-The project owner confirms that the original API/CSV/SQL ingestion and Silver platform ran successfully end to end in its original Azure environment. Azure resources were later decommissioned to control costs. The repository now also contains a repository-owned SQL Silver notebook replacement and ADF hardening, a Gold analytics layer, reporting SQL, and master ADF orchestration; these newer changes await a restored Azure acceptance run. The local-mode PySpark suite passed 131 tests in [run 41983203349](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41983203349) on commit `c6e0c2cbe47dc3b16826653bf8d3e024963f7f99`; this is repository CI evidence against synthetic fixtures, not a live Databricks or ADF execution. No detailed historical Azure run records were retained. Do not imply that the newer cloud scope has already executed in Azure.
+**Current runtime status:** the project owner confirms that the completed platform has been successfully deployed to Azure and verified end to end. The confirmed flow includes API, CSV, and SQL ingestion; Bronze/Silver processing; the repository-owned SQL Silver path; incremental replay validation; Gold publication; and reconciliation. The five documented Gold outputs are listed in the [Azure deployment and acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md).
+
+The latest repository CI evidence is [GitHub Actions run 41984330196](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41984330196), with 132 tests passing on commit `9ec8d65863f3a110119cb47e9789f39ec545c3d8`. CI and live runtime acceptance are different evidence types: CI validates repository code/tests, while the Azure deployment and runtime outcome are project-owner-confirmed.
+
+Exact ADF/Databricks run IDs, timestamps, runtime row counts, and exported logs have not yet been attached to the repository. The [acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md) marks them as not supplied rather than inventing values. This is an evidence-retention gap, not a pending deployment gate.
 
 Keep three kinds of evidence distinct:
 
 - **Repository evidence** — source code, exported pipeline/configuration files, notebooks, SQL, tests, and documentation committed here.
-- **Historical runtime evidence** — retained run records, screenshots, logs, or outputs from the original Azure/Databricks environment, if available.
-- **Owner-reported execution history** — the project owner's confirmation that the end-to-end implementation ran successfully. This is useful context, but it is not a substitute for a retained run record that an external reviewer can independently inspect.
+- **Runtime acceptance** — the project owner's confirmation that the deployed API/CSV/SQL-to-Gold flow executed and was reconciled end to end.
+- **Retained runtime artifacts** — original ADF/Databricks run records, screenshots, logs, and reconciliation outputs that can be inspected independently when exported and sanitized.
 
-Do not invent run IDs, metrics, screenshots, dashboard states, or test outcomes. Do not redeploy Azure resources solely to recreate portfolio evidence.
+Do not invent run IDs, metrics, screenshots, dashboard states, or test outcomes. Do not imply independent certification or continuous production availability.
 
 ## What the project demonstrates
 
@@ -74,24 +78,22 @@ Use these prompts to test whether the implementation can be explained clearly in
 
 Answers should refer to the actual repository implementation and its documented boundaries, not imply that every proposed extension is already implemented.
 
-## Historical and future runtime evidence
+## Accepted deployment evidence and remaining evidence capture
 
-If original artifacts were retained, these are the most useful items to include. Add only real, sanitized records.
+The end-to-end deployment and operation are owner-confirmed as successful. The project evidence pack still benefits from attaching the original sanitized runtime records:
 
-| Priority | Artifact | Useful details |
-|---|---|---|
-| High | ADF successful pipeline run | Pipeline name, run ID, timestamp/timezone, final status, and completed activities |
-| High | Databricks successful job/notebook run | Job or notebook name, run ID, timestamp, final status, target table/layer, and row counts if recorded |
-| High | Reconciliation output | Actual source/target counts or checks, expected result, observed result, and query/version |
-| High | GitHub Actions run | Direct URL to the successful run, commit SHA, workflow name, and conclusion |
-| Medium | Incremental-load scenario | Initial and subsequent run details, source changes, expected/observed counts, and checkpoint before/after |
-| Medium | Recovery/rerun scenario | Failure condition, recovery action, rerun result, and duplicate/checkpoint observations |
-| Medium | Data-quality or monitoring output | Actual metrics, rejected/quarantined rows, freshness, time window, and outcome |
-| Optional | Sanitized output sample | Representative synthetic or approved rows and schema, with sensitive fields removed |
+| Priority | Artifact | Useful details | Current state |
+|---|---|---|---|
+| High | ADF master pipeline run | Pipeline name, run ID, timestamp/timezone, final status, completed activities | Successful run owner-confirmed; exact record not attached |
+| High | ADF child pipeline runs | API, CSV, and SQL child run IDs and activity outcomes | Successful flow owner-confirmed; exact IDs not attached |
+| High | Databricks Silver/Gold runs | Notebook/job names, run IDs, timestamps, final status, target outputs | Runtime flow owner-confirmed; exact IDs not attached |
+| High | Reconciliation output | Actual source/target checks, expected/observed result, query/version | Reconciliation owner-confirmed; raw output not attached |
+| Medium | Incremental replay scenario | Tested lower/upper interval, source changes, before/after target comparison, checkpoint state | Replay validation owner-confirmed; comparison export not attached |
+| Medium | Gold outputs and audit | Five Gold table counts and the corresponding `gold_run_audit` record | Gold publication owner-confirmed; exact counts/row not attached |
+| Medium | Recovery/rerun scenario | Failure condition, recovery action, rerun result, duplicate/checkpoint observations | Record only scenarios actually exercised |
+| High | GitHub Actions run | Direct URL, commit SHA, workflow name, conclusion | [132 tests passed in run 41984330196](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41984330196) |
 
-A generic [GitHub Actions page](https://github.com/viradidi/uber-eats-data-analytics-platform/actions) is a starting point for locating workflow runs; link to a specific successful run only after verifying that run and its commit.
-
-If no historical runtime artifact was retained, say so plainly. The project owner's confirmation of successful execution can be stated as project history, but it must not be presented as independently verified evidence.
+The absence of raw Azure exports does not reverse the successful deployment status. It limits the independent inspectability and quantitative detail of the portfolio evidence.
 
 ## Evidence record template
 
@@ -126,13 +128,15 @@ Do not fill unknown values with estimates. Use “not retained” or “not reco
 
 ## How to describe the project accurately
 
-Suggested portfolio wording:
+> Deployed and verified an Azure-based multi-source data engineering platform integrating API, CSV, and SQL ingestion through Azure Data Factory, ADLS Gen2, and Databricks/PySpark. Implemented Bronze, Silver, and Gold processing, incremental SQL ingestion with checkpoint controls and replay validation, data-quality and reconciliation checks, operational audit records, and master-pipeline orchestration. The project owner confirmed successful end-to-end operation after deployment; the repository validation suite also passed 132 tests.
 
-> Built and validated an end-to-end Azure-oriented data engineering platform integrating API, CSV, and SQL sources through Azure Data Factory, ADLS Gen2, and Databricks/PySpark. Implemented metadata-driven ingestion, bounded incremental extraction, guarded checkpoint updates, transformation utilities, data-quality and reconciliation controls, and operational recovery documentation. The project ran successfully in its original environment; Azure resources were subsequently decommissioned to manage costs. Source code, configuration exports, tests, and engineering documentation remain available in the repository.
-
-Use wording that distinguishes the previously executed ingestion/Silver platform from the newer Gold extension awaiting live validation. The repository has reporting SQL but no deployed Power BI dashboard. Tailor any quantified impact or performance claims only when measured results are available.
-
+Only add measured row counts, runtime durations, throughput, cost savings, or performance improvements after attaching the actual supporting outputs. Do not claim independent audit, production certification, or an SLA unless separately established.
 
 ## Gold extension evidence boundary
+
+The Gold extension is no longer awaiting deployment according to the project owner's confirmation. The deployed end-to-end flow includes the five documented Gold outputs and reconciliation. The repository contains the reusable Gold transformations, notebook export, ADF master-pipeline definition, audit contract, and business reporting SQL. Exact Gold row counts, Databricks run IDs, and the corresponding `gold_run_audit` export remain to be attached when available.
+
+The repository contains reporting SQL, not a deployed Power BI dashboard. The logical architecture SVG remains an ingestion/Silver view; the Gold extension is documented in [Gold layer and reporting](GOLD_LAYER_AND_REPORTING.md) and [architecture](../architecture/architecture.md).
+
 
 The Gold transformation module is tested locally with PySpark in CI, while the master ADF pipeline is checked structurally for its child-pipeline success dependencies and Gold notebook path. Those are meaningful code-level checks but are not an Azure integration test. See [run evidence and retention](RUN_EVIDENCE_RETENTION.md) for the evidence to capture during the future environment rerun.
