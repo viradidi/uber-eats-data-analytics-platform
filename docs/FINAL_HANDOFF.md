@@ -84,9 +84,4 @@ Use measured row counts, performance improvements, run durations, or cost figure
 
 The deployed end-to-end flow is complete according to the project owner. Preserve the corresponding ADF/Databricks run history, sanitized logs, reconciliation outputs, and deployment metadata when available. The repository includes an [Azure deployment and acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md) with the accepted scope and the runtime fields still to be populated.
 
-For future redeployment, use a budgeted environment, least-privilege identities, secret management, explicit source contracts, and the documented PowerShell 7 deployment/import procedures. Do not treat a future redeployment procedure as an outstanding task for the already accepted deployment.
-
-
-The source code, exported resource definitions, sample fixtures, tests, and documentation remain reviewable in GitHub. There is no requirement to recreate Azure resources just to keep the portfolio online or to produce screenshots.
-
-If the project is redeployed in the future, use a budgeted environment, least-privilege identities, secret management, explicit source contracts, and the documented release gates. Run the PowerShell 7 restore-configuration script to update environment-bound linked services and endpoints, review the diff, run the ADF REST deployment script to publish the factory/linked services/datasets/pipelines, then run the Databricks workspace import script to deploy the Silver/Gold notebooks, dispatchers, and shared `src` modules; verify the master pipeline's child-pipeline references and notebook paths; run ADF/Databricks end to end; reconcile Gold table counts; and retain the resulting evidence before making new runtime or performance claims.
+For future redeployment, use a budgeted environment, least-privilege identities, secret management, explicit source contracts, and the documented PowerShell 7 deployment/import procedures. This is a reusable procedure, not an outstanding task for the already accepted deployment.
