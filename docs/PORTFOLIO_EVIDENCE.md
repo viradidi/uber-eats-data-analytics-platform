@@ -137,6 +137,3 @@ Only add measured row counts, runtime durations, throughput, cost savings, or pe
 The Gold extension is no longer awaiting deployment according to the project owner's confirmation. The deployed end-to-end flow includes the five documented Gold outputs and reconciliation. The repository contains the reusable Gold transformations, notebook export, ADF master-pipeline definition, audit contract, and business reporting SQL. Exact Gold row counts, Databricks run IDs, and the corresponding `gold_run_audit` export remain to be attached when available.
 
 The repository contains reporting SQL, not a deployed Power BI dashboard. The logical architecture SVG remains an ingestion/Silver view; the Gold extension is documented in [Gold layer and reporting](GOLD_LAYER_AND_REPORTING.md) and [architecture](../architecture/architecture.md).
-
-
-The Gold transformation module is tested locally with PySpark in CI, while the master ADF pipeline is checked structurally for its child-pipeline success dependencies and Gold notebook path. Those are meaningful code-level checks but are not an Azure integration test. See [run evidence and retention](RUN_EVIDENCE_RETENTION.md) for the evidence to capture during the future environment rerun.
