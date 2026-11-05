@@ -1,99 +1,112 @@
-# SQL Silver Job Reconstruction
+# SQL Silver Job Replacement and Source Contract
 
-## Decision and current state
+## Decision
 
-The original Databricks workspace that contained SQL Silver job `121055824417886` has been deleted. The ADF pipeline still references that external job ID through `Job_Silver_copy1`, but the repository does not contain the job definition or its SQL Silver notebook/source.
+The original Databricks workspace containing SQL Silver job `121055824417886` was deleted. Its workspace-scoped job definition cannot be exported from that deleted workspace. Rather than preserving an unusable Job ID, the ADF pipeline now calls a repository-owned Databricks notebook directly.
 
-Unless an archived workspace, exported job JSON, notebook export, Git commit, or other backup is recovered, the original job cannot be inspected or reproduced exactly. A fresh Databricks workspace should not be expected to contain the old workspace-scoped job ID.
+The replacement is committed as:
 
-**Required change:** replace the external `DatabricksJob` activity with a repository-owned SQL Silver notebook activity and deploy its source with the existing Databricks workspace import process. The old job export script is only a fallback if an independent backup becomes available.
+- `notebooks/Silver_SQL_Incremental.py` — Databricks SOURCE notebook entry point.
+- `src/common/sql_silver.py` — reusable metadata parsing, typed batch validation, version-aware Delta MERGE, reconciliation, and run-audit helpers.
+- `sql/migrations/20261105_create_sql_silver_control.sql` — per-source SQL Silver contract table in the control database.
+- `deployment/databricks/import_workspace_assets.ps1` — imports the notebook and shared module into the restored workspace.
+- `pipeline/sql_incremental pipeline.json` — invokes the notebook directly after the bounded SQL copy and advances the watermark only after notebook success.
 
-## What can be retained
+The historical job source itself is not reconstructed byte-for-byte. The replacement is an explicit, repository-owned implementation with a documented contract.
 
-The committed ADF SQL extraction pattern provides a bounded, deterministic landing batch:
+## Preserved ADF extraction boundary
 
-- One approved active row from `dbo.pipeline_control` is processed at a time.
-- The source query uses the configured schema, table, watermark column, prior checkpoint, and captured maximum watermark.
-- The copied rows are written as CSV under the ADLS folder associated with `table_name`.
-- The output filename encodes the control ID and lower/upper watermark interval, using the pattern `ctl{control_id}_{lower}_{upper}.csv`.
-- The checkpoint update depends on the Silver activity succeeding.
+The SQL ADF branch retains its bounded extraction pattern:
 
-This is enough to define the new notebook's input boundary. It is **not** enough to infer the SQL target write mode, merge keys, schema rules, or delete policy.
+- It processes approved active rows from `dbo.pipeline_control`.
+- It queries the configured source schema/table and watermark column.
+- It captures an upper watermark and copies rows where the cursor is strictly greater than the prior checkpoint and at or below the captured maximum.
+- It writes one deterministic CSV file under the ADLS Bronze folder named after the source table.
+- The batch filename encodes the control ID and lower/upper watermark interval: `ctl{control_id}_{lower}_{upper}.csv`.
+- The SQL checkpoint update depends on successful completion of `Job_Silver_copy1`, now a direct `DatabricksNotebook` activity.
 
-## Why a generic append is not an acceptable replacement
+The notebook receives the exact CSV filename, never a table-folder wildcard. Its file path is constructed from the configured `bronze_root`, source table folder, and batch filename.
 
-The SQL extraction is incremental. Re-reading an existing interval or retrying after a partial Silver write can duplicate records if the destination simply appends. A Delta `MERGE` is not automatically safe either: it needs a verified business key, deterministic source version/tie-breaking rules, and an explicit update/insert/delete policy.
+## Per-source metadata contract
 
-The current `pipeline_control` metadata contains `target_table`, but it does not define a Silver business key, source schema contract, write strategy, or replay policy. Do not invent those values from index candidates or table names.
+The new `dbo.sql_silver_control` table is created in the **control SQL database**. It stores one configuration row per SQL `control_id`:
 
-## Required source contract before implementation
+| Field | Purpose |
+|---|---|
+| `control_id` | Foreign key to `dbo.pipeline_control.control_id` |
+| `is_enabled` | Explicit approval gate; defaults to disabled |
+| `write_strategy` | Currently constrained to `DELTA_MERGE` |
+| `business_key_columns_json` | JSON array of stable single/composite key column names |
+| `required_columns_json` | JSON array of fields that must be populated; business keys and watermark are required automatically |
+| `column_types_json` | JSON object mapping every source CSV column to an approved Spark type |
 
-Complete and approve [the incremental source contract](INCREMENTAL_SOURCE_CONTRACT.md) for every SQL source that will be enabled. Use [the read-only source catalog inventory](../sql/diagnostics/inspect_source_contract_candidates.sql) against the source SQL database after exporting approved active control rows from the control database.
+The migration does not invent or enable source contracts. The ADF pipeline checks that every active `pipeline_control` row has an enabled and structurally populated SQL Silver configuration before the per-source copy loop begins.
 
-For every source, establish and record:
+Before setting `is_enabled = 1`, complete [the incremental source contract](INCREMENTAL_SOURCE_CONTRACT.md) and obtain source-owner approval for the target table, key, cursor, type mapping, update semantics, and deletes. The target table stored in `dbo.pipeline_control.target_table` must be a fully qualified `catalog.schema.table` name. The notebook rejects unsafe or incomplete metadata.
 
-1. Exact source schema/table and source owner.
-2. Exact Silver target catalog/schema/table.
-3. Stable business key (single or composite) and uniqueness evidence.
-4. Watermark type, precision, timezone, and insert/update behavior.
-5. Whether rows can arrive late or share cursor values.
-6. Delete/tombstone/CDC treatment.
-7. Explicit target write strategy and deterministic version rule.
-8. Required columns, types, nullability, and transformation rules.
-9. Same-interval replay and reconciliation expectations.
-10. A source-owner approval for the contract.
+Example shape only — replace every placeholder with values verified from the actual source; this is not an executable source mapping:
 
-A primary/unique index provides candidate uniqueness evidence, not proof that its columns represent the correct business entity key.
+```sql
+UPDATE dbo.sql_silver_control
+SET
+    business_key_columns_json = N'["<approved_key_column>"]',
+    required_columns_json = N'["<approved_key_column>","<watermark_column>"]',
+    column_types_json = N'{"<approved_key_column>":"string","<watermark_column>":"timestamp"}',
+    write_strategy = 'DELTA_MERGE',
+    is_enabled = 1,
+    updated_at = SYSUTCDATETIME()
+WHERE control_id = <approved_control_id>;
+```
 
-## Repository-owned replacement design
+The JSON type map must include every column present in the ADF CSV header, not only the key and watermark. Supported Spark types are explicitly allowlisted in `src/common/sql_silver.py`, including primitive numeric/string/boolean/date/timestamp/binary types and bounded `decimal(p,s)` types.
 
-The replacement should be implemented as a canonical Databricks SOURCE notebook under `notebooks/` (for example, `Silver_SQL_Incremental.py`) and imported by `deployment/databricks/import_workspace_assets.ps1`.
+## Notebook behavior and safety
 
-ADF should invoke the notebook directly and pass the exact metadata and batch identity needed for one control row. At minimum, the dispatch contract should include:
+For every non-empty bounded SQL batch, the repository-owned notebook:
 
-- `control_id`
-- `schema_name` and `table_name`
-- `target_table`
-- Exact landing file path or exact deterministic filename (not the whole table folder)
-- Lower and captured upper watermark values
-- Approved business-key columns
-- Approved write/replay strategy and source schema contract reference
+1. Validates control IDs, source identifiers, target table, JSON contract, and the exact `.csv` filename.
+2. Reads only that exact batch file with header parsing and schema inference disabled.
+3. Applies the source-approved Spark column types; it fails on header drift or non-empty values that cannot be cast.
+4. Requires the business keys and watermark to be non-null; validates configured required fields.
+5. Verifies every row is within the declared exclusive lower/inclusive upper watermark interval.
+6. Rejects duplicate business keys in the batch; it never selects an arbitrary winner.
+7. Creates the Delta target on the first approved batch or applies a Delta MERGE by approved business key.
+8. Updates a matched target row only when the incoming watermark is strictly newer. Exact same-version replay is a no-op; conflicting payloads at the same key/version fail. Older versions cannot overwrite newer target rows.
+9. Reconciles that every source key exists in the target after publication.
+10. Appends a run outcome to `catalog.schema.sql_incremental_run_audit`.
 
-If these fields are not available in `pipeline_control`, add them through a reviewed, backward-compatible migration or a separate SQL Silver metadata table. Keep source-specific decisions in metadata rather than hard-coding them in notebook branches.
+If publishing or the required audit write fails, the notebook raises an error and ADF does not advance the checkpoint. A replay of the same interval is protected by the same key/version merge. The MERGE is not a global transaction with ADLS and SQL; the checkpoint remains an ADF dependency gate.
 
-### Required notebook stages
+## Explicit boundaries
 
-1. Validate all parameters and reject missing/unsafe identifiers or an unapproved write strategy.
-2. Resolve and read only the exact landing batch file. Do not read every historical CSV in the table folder for an incremental run.
-3. Apply an explicit source schema and deterministic column/type mapping; do not rely on uncontrolled schema inference for production-like ingestion.
-4. Validate required columns, null keys, duplicate keys, cursor bounds, and supported record versions.
-5. Reject or quarantine invalid rows and preserve failure details without masking the original exception.
-6. Publish using the approved replay-safe strategy. For a key-based Delta merge, verify source key uniqueness before merge and define exact match/update conditions.
-7. Reconcile expected source keys/counts to the destination and record a durable run/quality outcome.
-8. Return success only after target publication and required reconciliation complete. ADF must advance the watermark checkpoint only after this success.
+- The target is a current-state Delta table. Hard-delete propagation is not implemented because it requires a verified delete signal or a separate reconciliation design.
+- The current ADF source cursor is a strict timestamp watermark. It can miss equal/older late-visible rows unless the source contract proves that cannot happen or a future approved overlap/CDC strategy is introduced.
+- The notebook rejects duplicate business keys within a batch. Sources that legitimately emit multiple events per key need an event-grain key or another explicit source contract; do not weaken the check without defining the model.
+- The type map is source-specific and must match the exact SQL CSV output. Schema drift fails closed rather than silently widening or inferring types.
+- The helper's validation tests run with local PySpark; Delta MERGE, catalog access, ADLS permissions, and SQL/ADF execution still require restored-environment acceptance.
 
-Do not implement hard-delete propagation unless the approved source contract provides a reliable delete signal.
+## Restore and deploy
 
-## ADF integration and acceptance
+1. Back up the control database.
+2. Apply `20261104_create_ingestion_control_tables.sql` if the ADF control tables do not already exist.
+3. Apply `20261104_widen_pipeline_checkpoint_to_datetime2_7.sql` and verify the checkpoint precision.
+4. Apply `20261105_create_sql_silver_control.sql` to the control database.
+5. Add approved SQL rows to `dbo.pipeline_control`, but keep them inactive until their source and target contract is reviewed.
+6. Restore ADF, Databricks, and ADLS; configure identities and least-privilege permissions.
+7. Run `deployment/databricks/import_workspace_assets.ps1` and verify `/Shared/UberEats/notebooks/Silver_SQL_Incremental` and `/Shared/UberEats/src/common/sql_silver.py`.
+8. Populate and approve one `dbo.sql_silver_control` row per source; enable only the source being accepted.
+9. Publish ADF and run one bounded interval in an isolated target.
+10. Re-run the exact same lower/upper interval; verify stable key counts/values, no target duplicates, and unchanged checkpoint on a forced Silver failure.
+11. Retain ADF/Databricks run IDs, exact batch file, target counts, audit records, and reconciliation evidence.
 
-The ADF change must remove the old `DatabricksJob` reference and replace it with a repository-owned notebook activity. Keep the checkpoint dependency after the new activity succeeds. Pass the precise file and source contract for the current `ForEach` item; do not derive a batch by scanning an entire Bronze folder.
+## Current implementation status
 
-Before activating SQL source rows in a restored environment:
+- [x] Replace the deleted external Job ID with a repository-owned ADF notebook activity.
+- [x] Add the metadata-driven SQL Silver SOURCE notebook and shared Spark helper.
+- [x] Add a disabled-by-default per-source contract table and ADF preflight gate.
+- [x] Update the workspace importer and local contract tests.
+- [ ] Discover and approve real source target/key/type contracts after source SQL access is restored.
+- [ ] Apply the control database migration and populate the approved metadata.
+- [ ] Execute the same-interval replay and failure/checkpoint acceptance tests in restored Azure/Databricks.
 
-- Confirm source and control SQL services are correctly separated.
-- Apply and verify the control-table migrations.
-- Deploy the replacement notebook and shared modules.
-- Verify storage/catalog permissions with least-privilege identities.
-- Test a normal bounded interval and capture source/landing/target counts.
-- Reprocess the exact same lower/upper interval and prove no unintended target duplicates or data changes.
-- Force a Silver failure and verify the checkpoint does not advance.
-- Retain ADF/Databricks run IDs, file paths, counts, reconciliation results, and failure/retry evidence.
-
-## Current release status
-
-- Original external job export: **unavailable because the original workspace was deleted**, unless a separate backup is recovered.
-- Repository-owned SQL Silver notebook: **not yet implemented**.
-- ADF SQL activity replacement: **not yet implemented**.
-- Source-specific target/key contracts: **pending source catalog discovery and owner approval**.
-- Same-interval replay acceptance: **not run**.
-- Existing local CI: validates the repository's current tests and contracts; it does not validate this not-yet-implemented SQL Silver replacement or a live Azure/Databricks environment.
+The code replacement is now present in GitHub. It is not a claim that the new SQL Silver branch has already run in the decommissioned or a restored cloud environment.
