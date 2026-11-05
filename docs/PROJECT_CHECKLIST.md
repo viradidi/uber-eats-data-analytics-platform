@@ -120,7 +120,7 @@ See the [consolidated release-readiness review](RELEASE_READINESS_REVIEW.md) and
 - [x] Execute ADF pipeline validation and controlled recovery scenarios in the original target Azure environment (owner-confirmed historical execution); rerun the newer ADF SQL guards and checkpoint transaction after redeployment
 - [x] Execute the original Spark/Delta notebooks and audit SQL against the target Databricks environment (owner-confirmed historical execution); run the newer Gold scope and changed Silver/SQL paths after redeployment
 - [ ] Complete and retain the source-specific incremental contract for every enabled SQL table before claiming reliable late-arrival, update, or delete capture
-- [ ] Export and review Databricks SQL Silver job `121055824417886`; verify its input selection, target write mode, business keys, and same-interval replay behavior using [the review procedure](EXTERNAL_SQL_SILVER_JOB_REVIEW.md)
+- [ ] Replace deleted-workspace SQL Silver job `121055824417886` with a repository-owned notebook; define approved per-source target tables, business keys, schema rules, and replay/write semantics using [the reconstruction plan](SQL_SILVER_JOB_RECONSTRUCTION.md)
 - [ ] Collect and retain any available successful-run, failure, retry, and reconciliation artifacts; otherwise record the evidence as not retained rather than reconstructing it
 - [x] Complete final README link/render review (portfolio-site listing remains optional)
 
