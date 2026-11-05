@@ -91,7 +91,7 @@ class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
         master_parameters = master_sql["typeProperties"]["parameters"]
         self.assertEqual("@pipeline().RunId", master_parameters["parent_pipeline_run_id"]["value"])
         self.assertEqual("String", PIPELINE["properties"]["parameters"]["parent_pipeline_run_id"]["type"])
-        sql_notebook = find_activity(self.loop, "Job_Silver_copy1")
+        sql_notebook = find_activity(self.branch, "Job_Silver_copy1")
         base_parameters = sql_notebook["typeProperties"]["baseParameters"]
         self.assertEqual("@pipeline().parameters.parent_pipeline_run_id", base_parameters["parent_pipeline_run_id"]["value"])
         self.assertEqual("@pipeline().RunId", base_parameters["child_pipeline_run_id"]["value"])
