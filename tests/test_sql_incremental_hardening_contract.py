@@ -63,8 +63,9 @@ class SqlIncrementalHardeningContractTests(unittest.TestCase):
     def test_only_active_control_rows_are_processed(self):
         lookup = find_activity(self.top, "Lookup_SQL_Control")
         query = lookup["typeProperties"]["source"]["sqlReaderQuery"]
-        self.assertIn("FROM [dbo].[pipeline_control]", query)
-        self.assertIn("WHERE [is_active] = 1", query)
+        self.assertIn("FROM dbo.pipeline_control AS pc", query)
+        self.assertIn("LEFT JOIN dbo.sql_silver_control AS cfg", query)
+        self.assertIn("WHERE pc.is_active = 1", query)
         active_field = next(
             column for column in CONTROL_DATASET["properties"]["schema"]
             if column["name"] == "is_active"
@@ -111,8 +112,13 @@ class SqlIncrementalHardeningContractTests(unittest.TestCase):
             [item["activity"] for item in gate["dependsOn"]],
         )
         self.assertEqual(
-            ["Require active SQL control rows"],
+            ["Require approved SQL Silver metadata"],
             [item["activity"] for item in loop["dependsOn"]],
+        )
+        silver_gate = find_activity(self.top, "Require approved SQL Silver metadata")
+        self.assertEqual(
+            ["Require active SQL control rows"],
+            [item["activity"] for item in silver_gate["dependsOn"]],
         )
         fail = gate["typeProperties"]["ifFalseActivities"][0]
         self.assertEqual("Fail", fail["type"])
