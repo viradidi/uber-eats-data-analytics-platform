@@ -68,7 +68,7 @@ The project is a strong implementation and design portfolio, but reviewers shoul
 - Source correctness depends on an explicit cursor contract and suitable overlap, replay, CDC, or reconciliation strategy where required.
 - Pipeline concurrency set to one serializes runs of that pipeline; it does not coordinate unrelated pipelines or external writers.
 - Compare-and-swap protects checkpoint advancement against stale updates, but does not alone make landing and Silver writes idempotent.
-- The SQL ADF pipeline still references external Databricks job ID `121055824417886`, but the original workspace was deleted and the job definition/notebook is not present in this repository. A repository-owned SQL Silver replacement is required before a fresh workspace deployment; source-specific targets, keys, and replay semantics must be approved rather than inferred.
+- The deleted external Databricks job reference has been replaced with a repository-owned `Silver_SQL_Incremental` notebook activity. Per-source target/key/type contracts are stored in the disabled-by-default `dbo.sql_silver_control` table and must be completed/approved before SQL sources are enabled. The new notebook and Delta MERGE have not yet been executed in a restored Databricks workspace.
 - Dynamic SQL identifiers must be validated against an allowlist and protected control metadata.
 - Repository tests do not substitute for a current live Azure integration run.
 
