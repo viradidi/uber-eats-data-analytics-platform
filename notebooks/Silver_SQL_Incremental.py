@@ -12,7 +12,7 @@ dbutils.widgets.text("upper_watermark", "")
 dbutils.widgets.text("business_key_columns_json", "")
 dbutils.widgets.text("required_columns_json", "")
 dbutils.widgets.text("column_types_json", "")
-dbutils.widgets.text("bronze_root", "")
+dbutils.widgets.text("bronze_root", "abfss://bronze@ubereatsrisstorage.dfs.core.windows.net")
 dbutils.widgets.text("batch_file_name", "")
 dbutils.widgets.text("project_root", "/Workspace/Shared/UberEats", "Shared project code root")
 
