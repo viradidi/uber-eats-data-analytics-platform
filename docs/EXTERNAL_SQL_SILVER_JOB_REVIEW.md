@@ -2,13 +2,11 @@
 
 ## Review status
 
-**Blocked for the original job: the owner confirms that the Databricks workspace containing job `121055824417886` was deleted.** The export procedure below is now a recovery fallback only if an archived workspace, exported job JSON, notebook source, or equivalent backup is found. A new workspace should not be expected to contain that workspace-scoped job ID.
+**Historical recovery note:** the Databricks workspace containing job `121055824417886` was deleted, so its workspace-scoped definition cannot be exported from that workspace. This file is retained only if an independent backup, archived job JSON, or exported notebook source is later recovered.
 
-The current delivery path is to replace the external job with a repository-owned SQL Silver notebook. See [SQL Silver job reconstruction](SQL_SILVER_JOB_RECONSTRUCTION.md). Do not claim the replacement is implemented until the notebook, ADF activity, source contracts, and replay acceptance tests are complete.
+The active ADF path no longer depends on that job ID. It now calls the repository-owned SQL Silver notebook directly. See [SQL Silver job replacement and source contract](SQL_SILVER_JOB_RECONSTRUCTION.md) for the implemented code and remaining source-onboarding/runtime acceptance gates.
 
-The ADF export at `pipeline/sql_incremental pipeline.json` invokes Databricks job ID `121055824417886` through `Job_Silver_copy1` and passes the current `table_name`. The activity depends on the ADLS copy succeeding. The checkpoint update depends on this Databricks activity succeeding.
-
-The repository does not contain the job definition or its SQL Silver notebook/source. Therefore, repository evidence cannot establish which landing files the job reads, which target table it writes, its business keys, or whether a repeated interval is safe. This is an evidence gap, not proof that the historical job failed.
+The ADF export previously invoked job ID `121055824417886`. That reference has been removed and replaced with a repository-owned `DatabricksNotebook` activity at `/Shared/UberEats/notebooks/Silver_SQL_Incremental`. The old job's exact behavior remains unrecoverable from the deleted workspace, but the current deployment path is source-controlled. Per-source target, business-key, required-field, and type configuration now lives in `dbo.sql_silver_control` and remains disabled until approved.
 
 ## 1. Export the job definition
 
