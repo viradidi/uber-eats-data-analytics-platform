@@ -199,6 +199,7 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
             "dispacher_csv_notebook.py",
             "src/common/quality_events.py",
             "src/common/incremental.py",
+            "src/common/sql_silver.py",
             "src/gold/transformations.py",
             "$WorkspaceRoot = \"/Shared/UberEats\"",
             "Import-Notebook",
@@ -207,6 +208,23 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
         ):
             with self.subTest(token=token):
                 self.assertIn(token, script)
+
+        # Every imported Python workspace file must be read back after deployment.
+        expected_paths = script.split("$expectedPaths = @(", 1)[1].split(")", 1)[0]
+        for relative_path in (
+            "src/__init__.py",
+            "src/common/__init__.py",
+            "src/common/incremental.py",
+            "src/common/quality_events.py",
+            "src/common/spark_utils.py",
+            "src/common/sql_silver.py",
+            "src/gold/__init__.py",
+            "src/gold/transformations.py",
+        ):
+            with self.subTest(verified_path=relative_path):
+                normalized = relative_path.replace("/", "\\")
+                self.assertIn(f'$WorkspaceRoot/{relative_path}', expected_paths)
+                self.assertIn(f'$WorkspaceRoot/{normalized}', expected_paths)
 
         master = json.loads(
             (ROOT / "pipeline/uber_eats_master.json").read_text(encoding="utf-8")

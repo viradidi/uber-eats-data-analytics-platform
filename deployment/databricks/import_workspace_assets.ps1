@@ -150,8 +150,13 @@ $expectedPaths = @(
     "$WorkspaceRoot/notebooks/Gold_Analytics",
     "$WorkspaceRoot/routing/api-dispacher-notebook",
     "$WorkspaceRoot/routing/dispacher_csv_notebook",
+    "$WorkspaceRoot/src/__init__.py",
+    "$WorkspaceRoot/src/common/__init__.py",
     "$WorkspaceRoot/src/common/incremental.py",
     "$WorkspaceRoot/src/common/quality_events.py",
+    "$WorkspaceRoot/src/common/spark_utils.py",
+    "$WorkspaceRoot/src/common/sql_silver.py",
+    "$WorkspaceRoot/src/gold/__init__.py",
     "$WorkspaceRoot/src/gold/transformations.py"
 )
 foreach ($workspacePath in $expectedPaths) {
