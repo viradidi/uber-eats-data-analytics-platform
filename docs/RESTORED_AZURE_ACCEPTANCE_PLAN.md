@@ -24,7 +24,7 @@ git diff
 .\\deployment\\azure\\deploy_adf_resources.ps1 -SubscriptionId <SUBSCRIPTION_ID> -ResourceGroupName <RESOURCE_GROUP> -FactoryName <DATA_FACTORY_NAME>
 ```
 
-The ADF deploy script creates/updates the factory, linked services, datasets, and four pipelines through the Data Factory REST API, then reads back representative deployed resources. It does not start a pipeline or create/provision its linked external services. The SQL Silver job and its source contracts remain separate release gates.
+The ADF deploy script creates/updates the factory, linked services, datasets, and four pipelines through the Data Factory REST API, then reads back representative deployed resources. It does not start a pipeline or create/provision its linked external services. The repository-owned SQL Silver notebook, its per-source contracts, and its live acceptance tests remain separate release gates.
 
 Start with the [restored Azure configuration inventory](RESTORED_AZURE_CONFIGURATION_INVENTORY.md). Before publishing ADF artifacts, run `deployment/azure/configure_restore_environment.ps1` from PowerShell 7 with the approved values from the restored environment. It updates historic SQL, ADLS, Key Vault, API, Databricks and factory bindings together; review the local `git diff` before publishing. The CSV branch has been moved from the retired Windows File Server/self-hosted Integration Runtime to the `bronze/csv_source` folder in ADLS.
 
@@ -35,15 +35,17 @@ Start with the [restored Azure configuration inventory](RESTORED_AZURE_CONFIGURA
 - [ ] Keep the CI result separate from ADF/Databricks runtime evidence.
 - [ ] Confirm the exported ADF JSON, notebooks, SQL scripts, and source code match the reviewed commit.
 
-### External SQL Silver job
+### Repository-owned SQL Silver notebook
 
-- [ ] Run deployment/databricks/export_sql_silver_job.ps1 against the current workspace to export job 121055824417886 settings and every workspace-backed SQL Silver notebook/script; resolve Git/DBFS/volume and child-job references from its manifest.
-- [ ] Complete [the external SQL Silver job review](EXTERNAL_SQL_SILVER_JOB_REVIEW.md).
-- [ ] Verify the table-to-input-folder and table-to-target mappings.
-- [ ] Define the stable business/event key and destination write strategy for every enabled SQL source.
-- [ ] Pass the same-bounded-interval-twice replay test in an isolated target before relying on SQL replay behavior.
+The deleted workspace-scoped Job ID `121055824417886` is historical only. The active ADF SQL pipeline now invokes `/Shared/UberEats/notebooks/Silver_SQL_Incremental` through the `Job_Silver_copy1` `DatabricksNotebook` activity. Do not run the legacy export helper against a replacement workspace or treat the old Job ID as a deployment dependency.
 
-If the job export is unavailable, do not claim SQL Silver replay safety. Do not enable an overlap strategy or run a destructive replay against a shared target.
+- [ ] Apply `../sql/migrations/20261105_create_sql_silver_control.sql` to the control database after the prerequisite control-table migrations; keep all source configurations disabled until approved.
+- [ ] Verify the workspace importer deploys `notebooks/Silver_SQL_Incremental.py` and `src/common/sql_silver.py` to the exact paths expected by ADF.
+- [ ] Verify the ADF activity passes one exact deterministic CSV filename, the source interval, and the approved per-source metadata.
+- [ ] Approve each source's target table, stable business/event key, required fields, complete Spark type map, update semantics, and delete policy before enabling its contract.
+- [ ] Pass the same-bounded-interval-twice replay test in an isolated target; also force a notebook/audit failure and verify that the SQL checkpoint does not advance.
+
+The replacement is repository-owned code, not a byte-for-byte recovery of the deleted job. Source-specific contracts and restored-environment execution are still required before SQL Silver can be accepted.
 
 ### SQL source and control contracts
 
@@ -53,6 +55,7 @@ If the job export is unavailable, do not claim SQL Silver replay safety. Do not 
 - [ ] Apply [the idempotent control-table bootstrap](../sql/migrations/20261104_create_ingestion_control_tables.sql) to create/verify the API and SQL ADF control tables and seed the four documented API endpoints.
 - [ ] Add only reviewed SQL source-control rows; confirm the control table has unique, non-null `control_id` values and unique active source mappings.
 - [ ] Confirm each active control row has an approved, non-null starting watermark. The current export does not implement a null-checkpoint initial-load branch; do not use an arbitrary universal sentinel.
+- [ ] Apply `../sql/migrations/20261105_create_sql_silver_control.sql` in the control database and populate one disabled-by-default contract per SQL `control_id`; enable a row only after its source and destination contract is approved.
 - [ ] Review the configured schema/table/column identifiers against an approved allowlist and restrict control-table write access.
 - [ ] Back up the SQL control database and review the migration plan before applying [the datetime2(7) checkpoint migration](../sql/migrations/20261104_widen_pipeline_checkpoint_to_datetime2_7.sql).
 - [ ] Apply and verify the migration before deploying the updated ADF checkpoint dataset contract.
@@ -63,7 +66,7 @@ If the job export is unavailable, do not claim SQL Silver replay safety. Do not 
 - [ ] Configure managed identities/service principals, Key Vault-backed secrets, least-privilege storage/SQL/catalog permissions, and network access.
 - [ ] Deploy and verify the API source endpoint and its authentication setting.
 - [ ] Authenticate the Databricks CLI to the restored workspace and run `deployment/databricks/import_workspace_assets.ps1`; it imports the canonical Silver/Gold notebooks, both dispatchers, and the shared `src` modules to the exact workspace paths used by ADF.
-- [ ] Verify Databricks linked services, workspace URL, the SQL Silver job ID, cluster/runtime configuration, catalog/schema/table permissions, and library dependencies. API and CSV now invoke repository-owned notebooks directly; only the SQL Silver job remains external.
+- [ ] Verify Databricks linked services, workspace URL, cluster/runtime configuration, catalog/schema/table permissions, and library dependencies. Confirm ADF's SQL `Job_Silver_copy1` activity targets `/Shared/UberEats/notebooks/Silver_SQL_Incremental`; API, CSV, and SQL all use repository-owned notebook code.
 - [ ] Confirm `src` modules can be imported from `/Workspace/Shared/UberEats` and that the Silver/Gold notebooks receive the factory-level `bronze_root` parameter. The committed ADF linked services are aligned on 16.4 LTS and local Spark CI uses PySpark 3.5.2.
 - [ ] Verify the restored ADLS source filesystem and permissions for `bronze/csv_source`.
 - [ ] Import and publish the ADF datasets, linked services, child pipelines, SQL incremental pipeline, and master pipeline. Resolve all parameter, path, and dependency references before execution.
@@ -93,7 +96,7 @@ databricks auth login <WORKSPACE_HOST> --profile uber-eats-restore
 .\\deployment\\databricks\\import_workspace_assets.ps1 -WorkspaceHost <WORKSPACE_HOST> -ProfileName uber-eats-restore
 ```
 
-The import script verifies the notebook and module paths expected by the committed ADF definitions. It does not create SQL source tables or configure the external SQL Silver Job.
+The import script verifies the notebook and module paths expected by the committed ADF definitions. It does not create SQL source tables, apply SQL migrations, or approve/populate the per-source `dbo.sql_silver_control` contracts.
 
 ## 3. Pre-run smoke tests
 
@@ -104,7 +107,7 @@ Run these before processing business data:
 | API source | Authenticated request succeeds; missing/invalid key is rejected | Request result and API response |
 | SQL source/control | Connection succeeds; control metadata and source schema preflight pass | Query output and control-row snapshot |
 | ADLS | Intended service identity can read and write the configured landing path | Test object path and access result |
-| Databricks | Job cluster starts; expected libraries and shared modules import | Job run URL and task output |
+| Databricks | Cluster starts; the SQL Silver notebook and shared modules import from their expected workspace paths | Notebook run URL and task output |
 | Silver/Gold targets | Required catalog, schema, tables, and write permissions are present | Catalog/table checks |
 | ADF | All references resolve; child pipelines and notebook path are valid | Publish/validation result |
 
@@ -129,7 +132,7 @@ Use a controlled source data snapshot and record the run start time, commit SHA,
 3. Capture and retain the exact upper watermark for the batch.
 4. Record the exact source query interval: `watermark > lower AND watermark <= upper`.
 5. Run the ADF copy and retain landing file/object paths, counts, and schema evidence.
-6. Run the exported SQL Silver job only after its source and destination behavior have passed the separate review.
+6. Verify the ADF `Job_Silver_copy1` activity is a `DatabricksNotebook` call to `/Shared/UberEats/notebooks/Silver_SQL_Incremental`; confirm it reads the exact batch file, applies the approved source contract, publishes the Delta target, reconciles keys, and writes its run audit.
 7. Reconcile the exact source interval to landing and then to the Silver target using the approved business/event key and field-level checks. Use the templates in [SQL incremental-run acceptance queries](SQL_INCREMENTAL_RUN_ACCEPTANCE_QUERIES.md).
 8. Repeat the same exact interval in the approved test target and verify that business-table results are unchanged and no unintended duplicates or missing keys appear.
 9. Confirm the checkpoint advances to the captured upper bound only after the required Silver processing and validation succeed.
@@ -162,7 +165,7 @@ Perform failure injection only in an isolated environment where the impact is un
 | Scenario | Required result |
 |---|---|
 | API/CSV/SQL copy failure | Downstream dependent work does not publish a success state |
-| SQL Silver job failure after copy | SQL checkpoint remains at the prior value |
+| SQL Silver notebook or audit failure after copy | SQL checkpoint remains at the prior value |
 | Checkpoint compare-and-swap conflict | Transaction rolls back; the competing checkpoint is reread and reconciled |
 | Gold failure | Master run fails; no successful Gold audit status is recorded |
 | Reconciliation mismatch | Acceptance fails visibly; mismatch is retained for investigation |
@@ -190,7 +193,7 @@ Store evidence under the process in [Run Evidence and Retention](RUN_EVIDENCE_RE
 
 The restored release is accepted only when all of the following are true:
 
-- [ ] External SQL Silver job definition/source has been reviewed and replay semantics proven for each enabled source.
+- [ ] Repository-owned SQL Silver notebook is imported at the ADF-referenced path, and its source/destination contract and replay semantics are proven for each enabled source.
 - [ ] Source-specific SQL contracts and initial checkpoint values are approved.
 - [ ] Required SQL migration is applied and verified.
 - [ ] All ADF references, identities, permissions, and Databricks paths resolve.
