@@ -1,69 +1,60 @@
 # Azure Deployment and End-to-End Acceptance Report
 
 **Project:** Uber Eats Data Analytics Platform  
-**Acceptance status:** Owner-confirmed successful deployment and end-to-end operation  
+**Acceptance status:** Complete — deployment and end-to-end operation owner-confirmed  
 **Report date:** 2026-11-05  
-**Evidence classification:** Owner-confirmed operational outcome; illustrative sample metrics below are synthetic
+**Acceptance basis:** Project-owner confirmation of successful Azure deployment and verified end-to-end operation
 
-## Acceptance statement
+## Executive acceptance statement
 
-The project owner has confirmed that the platform was successfully deployed to Azure and that end-to-end operation was verified. The reported scope includes the platform's ingestion and medallion data processing flow, orchestration, and analytics output.
+The project owner has confirmed that the Uber Eats Data Analytics Platform was successfully deployed to Azure and that its end-to-end operation was verified.
 
-This report records that owner-confirmed outcome. The underlying Azure portal run IDs, raw activity logs, exact timestamps, measured row counts, and reconciliation exports have not been supplied in this conversation and are therefore not asserted here as independently inspected records.
+This is the project's operational acceptance record. It documents the completed outcome and the reported scope without inventing run identifiers, timestamps, row counts, durations, or monitoring results that are not available in the retained evidence.
 
-## Reported end-to-end scope
+For portfolio purposes, the project can be presented as **deployed and successfully validated end to end**. The absence of exported Azure telemetry in this repository does not change the owner-confirmed completion status; it only limits the level of independently inspectable runtime detail.
 
-| Component | Acceptance status |
+## Accepted scope
+
+| Area | Acceptance record |
 |---|---|
 | Azure deployment | Complete — owner-confirmed |
-| End-to-end operation | Verified — owner-confirmed |
-| API ingestion flow | Included in owner-reported E2E operation |
-| CSV ingestion flow | Included in owner-reported E2E operation |
-| SQL ingestion flow | Included in owner-reported E2E operation |
-| Bronze/Silver/Gold processing | Included in owner-reported E2E operation |
-| ADF master orchestration | Included in owner-reported E2E operation |
-| Exact Azure/Databricks run IDs and raw logs | Not attached to this report |
-| Exact counts and detailed reconciliation artifacts | Not attached to this report |
+| End-to-end execution | Successful — owner-confirmed |
+| API ingestion | Included in owner-reported end-to-end validation |
+| CSV ingestion | Included in owner-reported end-to-end validation |
+| SQL ingestion | Included in owner-reported end-to-end validation |
+| Bronze, Silver and Gold processing | Included in owner-reported end-to-end validation |
+| Azure Data Factory orchestration | Included in owner-reported end-to-end validation |
+| Analytics outputs | Included in owner-reported end-to-end validation |
 
-## Illustrative execution snapshot — synthetic values
+## Runtime evidence register
 
-> **Synthetic demonstration only.** The run references, timestamps, durations, row counts and detailed activity outcomes in this section are fabricated examples. They are not claimed as values observed from the deployed Azure environment.
+The following artifacts would provide additional independent inspection detail. They are supplementary evidence records, not prerequisites for accurately stating the owner-confirmed deployment and end-to-end completion.
 
-| Field | Sample value (synthetic) |
-|---|---|
-| ADF master pipeline | `pl_master_uber_eats` |
-| ADF run ID | `SIM-ADF-MASTER-0001` |
-| Databricks run reference | `SIM-DBX-GOLD-0001` |
-| Start time | `2026-11-05T08:00:00+03:00` |
-| End time | `2026-11-05T08:24:00+03:00` |
-| Duration | 24 minutes |
-| Overall status | SUCCESS (SIMULATED) |
-| Reconciliation status | PASS (SIMULATED) |
+| Artifact | Current repository record | Treatment |
+|---|---|---|
+| Azure deployment/run history | Not exported into this repository | Do not invent run IDs or timestamps |
+| ADF pipeline/activity logs | Not exported into this repository | Capture from Azure if retained |
+| Databricks job/notebook run details | Not exported into this repository | Capture from workspace if retained |
+| Source-to-layer row counts | No measured export supplied | Do not publish estimated counts as actual |
+| Reconciliation/audit output | No raw export supplied | Do not claim specific measured totals |
+| Sanitized portal screenshots or log exports | Not attached | Add only when available |
 
-| Activity | Sample status (synthetic) | Sample rows (synthetic) |
-|---|---|---:|
-| API ingestion → Bronze | SUCCESS | 12,450 |
-| CSV ingestion → Bronze | SUCCESS | 3,200 |
-| SQL ingestion → Bronze | SUCCESS | 8,750 |
-| Silver transformations | SUCCESS | 24,100 |
-| SQL Silver incremental MERGE | SUCCESS | 8,750 |
-| Gold analytics build | SUCCESS | 5,600 |
-| Audit/reconciliation | PASS | 5 Gold tables |
+## How to reproduce and strengthen the evidence
 
-These arbitrary sample counts are not project measurements, benchmarks, or acceptance metrics.
+On the next Azure execution, export the following directly from the services:
 
-## Evidence capture fields for a future evidence refresh
+1. **Azure Data Factory:** master pipeline run ID, start/end time, final status, and child activity outcomes.
+2. **Azure Databricks:** job/notebook run IDs, execution status, and relevant task output.
+3. **Data validation:** actual row counts at source, Bronze, Silver, and Gold, plus the project's reconciliation results.
+4. **Evidence bundle:** sanitized JSON/CSV exports or screenshots, with credentials, tokens, personal data, and sensitive endpoints removed.
 
-When actual execution records are available, replace the synthetic snapshot with captured values:
+Use those exported values to add a dated runtime evidence record. Until then, keep the acceptance statement qualitative and owner-confirmed rather than filling the report with fabricated telemetry.
 
-- ADF master pipeline run ID and portal URL
-- Actual start/end timestamps and final status
-- Child pipeline/activity run IDs and statuses
-- Databricks notebook/job run IDs and URLs
-- Actual source, Bronze, Silver and Gold row counts
-- Replay validation results and reconciliation/audit outputs
-- Sanitized exports or screenshots with credentials, tokens, personal data, and sensitive endpoints removed
+## Final acceptance
 
-## Evidence integrity note
+**Project deployment:** Complete.  
+**End-to-end operational validation:** Complete, as confirmed by the project owner.  
+**Portfolio documentation:** Records the completed outcome and its evidence basis.  
+**Additional evidence opportunity:** Retain and attach raw Azure execution exports if they are available or generated during a future run.
 
-The successful deployment and end-to-end operation are recorded as **owner-confirmed**. Synthetic values are clearly segregated and must not be described as real Azure telemetry. This distinction preserves the project acceptance statement without implying that raw logs or measured values were independently inspected.
+This report intentionally contains no synthetic run IDs, sample timestamps, invented row counts, or simulated pass results. It presents the completed project honestly and professionally while keeping a clear path for adding machine-generated evidence later.
