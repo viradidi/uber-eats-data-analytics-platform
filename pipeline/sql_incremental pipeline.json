@@ -17,7 +17,7 @@
         "typeProperties": {
           "source": {
             "type": "AzureSqlSource",
-            "sqlReaderQuery": "SELECT * FROM [dbo].[pipeline_control] WHERE [is_active] = 1;",
+            "sqlReaderQuery": "SELECT\n    pc.*,\n    cfg.is_enabled AS sql_silver_is_enabled,\n    cfg.write_strategy AS sql_silver_write_strategy,\n    cfg.business_key_columns_json,\n    cfg.required_columns_json,\n    cfg.column_types_json\nFROM dbo.pipeline_control AS pc\nLEFT JOIN dbo.sql_silver_control AS cfg\n    ON cfg.control_id = pc.control_id\nWHERE pc.is_active = 1;",
             "queryTimeout": "02:00:00",
             "partitionOption": "None"
           },
@@ -126,11 +126,76 @@
         }
       },
       {
+        "name": "Validate active SQL Silver metadata",
+        "type": "Lookup",
+        "dependsOn": [
+          {
+            "activity": "Require active SQL control rows",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "userProperties": [],
+        "typeProperties": {
+          "source": {
+            "type": "AzureSqlSource",
+            "sqlReaderQuery": "SELECT COUNT(1) AS invalid_sql_silver_config_count\nFROM dbo.pipeline_control AS pc\nLEFT JOIN dbo.sql_silver_control AS cfg\n    ON cfg.control_id = pc.control_id\nWHERE pc.is_active = 1\n  AND (\n      cfg.control_id IS NULL\n      OR cfg.is_enabled <> 1\n      OR cfg.write_strategy <> 'DELTA_MERGE'\n      OR cfg.business_key_columns_json IS NULL\n      OR ISJSON(cfg.business_key_columns_json) <> 1\n      OR cfg.required_columns_json IS NULL\n      OR ISJSON(cfg.required_columns_json) <> 1\n      OR cfg.column_types_json IS NULL\n      OR ISJSON(cfg.column_types_json) <> 1\n  );",
+            "queryTimeout": "02:00:00",
+            "partitionOption": "None"
+          },
+          "dataset": {
+            "referenceName": "DS_sql_control",
+            "type": "DatasetReference"
+          },
+          "firstRowOnly": true
+        }
+      },
+      {
+        "name": "Require approved SQL Silver metadata",
+        "type": "IfCondition",
+        "dependsOn": [
+          {
+            "activity": "Validate active SQL Silver metadata",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "userProperties": [],
+        "typeProperties": {
+          "expression": {
+            "value": "@equals(activity('Validate active SQL Silver metadata').output.firstRow.invalid_sql_silver_config_count, 0)",
+            "type": "Expression"
+          },
+          "ifTrueActivities": [],
+          "ifFalseActivities": [
+            {
+              "name": "Fail when SQL Silver metadata is incomplete",
+              "type": "Fail",
+              "dependsOn": [],
+              "userProperties": [],
+              "typeProperties": {
+                "message": "Every active SQL source needs an enabled dbo.sql_silver_control row with approved business keys, required columns, Spark types, and DELTA_MERGE strategy.",
+                "errorCode": "SQL_SILVER_METADATA_NOT_READY"
+              }
+            }
+          ]
+        }
+      },
+      {
         "name": "ForEach item",
         "type": "ForEach",
         "dependsOn": [
           {
-            "activity": "Require active SQL control rows",
+            "activity": "Require approved SQL Silver metadata",
             "dependencyConditions": [
               "Succeeded"
             ]
@@ -484,7 +549,7 @@
                   },
                   {
                     "name": "Job_Silver_copy1",
-                    "type": "DatabricksJob",
+                    "type": "DatabricksNotebook",
                     "dependsOn": [
                       {
                         "activity": "adls data migration_copy1",
@@ -502,10 +567,54 @@
                     },
                     "userProperties": [],
                     "typeProperties": {
-                      "jobId": "121055824417886",
-                      "jobParameters": {
+                      "notebookPath": "/Shared/UberEats/notebooks/Silver_SQL_Incremental",
+                      "baseParameters": {
+                        "control_id": {
+                          "value": "@string(item().control_id)",
+                          "type": "Expression"
+                        },
+                        "schema_name": {
+                          "value": "@item().schema_name",
+                          "type": "Expression"
+                        },
                         "table_name": {
                           "value": "@item().table_name",
+                          "type": "Expression"
+                        },
+                        "target_table": {
+                          "value": "@item().target_table",
+                          "type": "Expression"
+                        },
+                        "watermark_column": {
+                          "value": "@item().watermark_column",
+                          "type": "Expression"
+                        },
+                        "lower_watermark": {
+                          "value": "@string(item().last_watermark_value)",
+                          "type": "Expression"
+                        },
+                        "upper_watermark": {
+                          "value": "@string(activity('Get max watermark_copy1').output.firstRow.max_watermark)",
+                          "type": "Expression"
+                        },
+                        "business_key_columns_json": {
+                          "value": "@item().business_key_columns_json",
+                          "type": "Expression"
+                        },
+                        "required_columns_json": {
+                          "value": "@item().required_columns_json",
+                          "type": "Expression"
+                        },
+                        "column_types_json": {
+                          "value": "@item().column_types_json",
+                          "type": "Expression"
+                        },
+                        "bronze_root": {
+                          "value": "@pipeline().globalParameters.bronze_root",
+                          "type": "Expression"
+                        },
+                        "batch_file_name": {
+                          "value": "@concat('ctl',string(item().control_id),'_',replace(replace(replace(replace(replace(string(item().last_watermark_value),'-',''),':',''),'.',''),' ',''),'+',''),'_',replace(replace(replace(replace(replace(string(activity('Get max watermark_copy1').output.firstRow.max_watermark),'-',''),':',''),'.',''),' ',''),'+',''),'.csv')",
                           "type": "Expression"
                         }
                       }
