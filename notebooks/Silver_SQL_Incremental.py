@@ -3,6 +3,8 @@
 # ADF calls this notebook after landing one deterministic SQL extraction file.
 
 dbutils.widgets.text("control_id", "")
+dbutils.widgets.text("parent_pipeline_run_id", "")
+dbutils.widgets.text("child_pipeline_run_id", "")
 dbutils.widgets.text("schema_name", "")
 dbutils.widgets.text("table_name", "")
 dbutils.widgets.text("target_table", "")
@@ -72,7 +74,12 @@ required_columns = parse_identifier_list(
 column_types = parse_column_types(column_types_json)
 
 landing_file_path = f"{BRONZE_ROOT}/{table_name}/{batch_file_name}"
-run_id = str(uuid.uuid4())
+parent_pipeline_run_id = dbutils.widgets.get("parent_pipeline_run_id").strip()
+child_pipeline_run_id = dbutils.widgets.get("child_pipeline_run_id").strip()
+# Prefer the master ADF run ID so SQL Silver audit rows can be joined to Gold audit.
+# Fall back to the SQL child run ID for direct child-pipeline execution, then UUID for manual runs.
+run_id = parent_pipeline_run_id or child_pipeline_run_id or str(uuid.uuid4())
+notebook_execution_id = str(uuid.uuid4())
 audit_base = {
     "run_id": run_id,
     "control_id": control_id,
@@ -91,7 +98,12 @@ audit_base = {
 }
 
 try:
-    print(f"SQL Silver run_id={run_id}")
+    print(
+        f"SQL Silver run_id={run_id}; "
+        f"parent_pipeline_run_id={parent_pipeline_run_id or '<not-provided>'}; "
+        f"child_pipeline_run_id={child_pipeline_run_id or '<not-provided>'}; "
+        f"notebook_execution_id={notebook_execution_id}"
+    )
     print(f"SQL Silver landing_file={landing_file_path}")
     print(f"SQL Silver target={target_table}")
 
