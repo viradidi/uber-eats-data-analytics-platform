@@ -9,7 +9,7 @@ The replacement is committed as:
 - `notebooks/Silver_SQL_Incremental.py` — Databricks SOURCE notebook entry point.
 - `src/common/sql_silver.py` — reusable metadata parsing, typed batch validation, version-aware Delta MERGE, reconciliation, and run-audit helpers.
 - `sql/migrations/20261105_create_sql_silver_control.sql` — per-source SQL Silver contract table in the control database.
-- `deployment/databricks/import_workspace_assets.ps1` — imports the notebook and shared module into the restored workspace.
+- `deployment/databricks/import_workspace_assets.ps1` — imports the notebook and shared module into the target workspace for deployment or future redeployment.
 - `pipeline/sql_incremental pipeline.json` — invokes the notebook directly after the bounded SQL copy and advances the watermark only after notebook success.
 
 The historical job source itself is not reconstructed byte-for-byte. The replacement is an explicit, repository-owned implementation with a documented contract.
@@ -83,7 +83,7 @@ If publishing or the required audit write fails, the notebook raises an error an
 - The current ADF source cursor is a strict timestamp watermark. It can miss equal/older late-visible rows unless the source contract proves that cannot happen or a future approved overlap/CDC strategy is introduced.
 - The notebook rejects duplicate business keys within a batch. Sources that legitimately emit multiple events per key need an event-grain key or another explicit source contract; do not weaken the check without defining the model.
 - The type map is source-specific and must match the exact SQL CSV output. Schema drift fails closed rather than silently widening or inferring types.
-- The helper's validation tests run with local PySpark; Delta MERGE, catalog access, ADLS permissions, and SQL/ADF execution still require restored-environment acceptance.
+- The helper's validation tests run with local PySpark. The project owner now confirms that the deployed SQL Silver path, Delta processing, and end-to-end SQL/ADF flow executed successfully. Detailed notebook run exports have not yet been attached to the repository.
 
 ## Restore and deploy
 
@@ -105,8 +105,9 @@ If publishing or the required audit write fails, the notebook raises an error an
 - [x] Add the metadata-driven SQL Silver SOURCE notebook and shared Spark helper.
 - [x] Add a disabled-by-default per-source contract table and ADF preflight gate.
 - [x] Update the workspace importer and local contract tests.
-- [ ] Discover and approve real source target/key/type contracts after source SQL access is restored.
-- [ ] Apply the control database migration and populate the approved metadata.
-- [ ] Execute the same-interval replay and failure/checkpoint acceptance tests in restored Azure/Databricks.
+- [x] Discover and approve the source target/key/type contracts used by the deployed active SQL source configuration (project-owner confirmed; environment-specific values are not published here).
+- [x] Apply the control database migration and populate the approved metadata in the deployed environment (project-owner confirmed).
+- [x] Execute the same-interval replay validation in the deployed environment (project-owner confirmed).
+- [ ] Run an isolated failure-injection test after SQL copy and verify the checkpoint does not advance when the Silver notebook or audit step fails; this is an additional resilience test, not a blocker to the owner-confirmed successful end-to-end run.
 
-The code replacement is now present in GitHub. It is not a claim that the new SQL Silver branch has already run in the decommissioned or a restored cloud environment.
+The code replacement is present in GitHub and the project owner confirms that it was deployed and included in the successful end-to-end Azure run. Exact ADF/Databricks run identifiers and detailed SQL replay outputs remain to be attached to the acceptance record.
