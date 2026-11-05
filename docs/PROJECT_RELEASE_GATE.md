@@ -60,7 +60,7 @@ Do not claim a currently deployed service, independent production certification,
 - [x] Add reusable PySpark transformations and local synthetic-fixture tests.
 - [x] Add a master ADF definition with success dependencies for the API, CSV, and SQL child pipelines.
 - [x] Add business reporting SQL and run-audit retention contract.
-- [x] Run the local-mode PySpark suite in GitHub Actions; 131 tests passed in [run 41983035191](${newRun}).
+- [x] Run the local-mode PySpark suite in GitHub Actions; 131 tests passed in [run 41983035191](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41983035191).
 - [ ] Import the Gold notebook and make the src.gold module available in the target Databricks workspace.
 - [ ] Publish and validate the master ADF pipeline in the restored environment.
 - [ ] Run the end-to-end flow and reconcile actual Gold row counts and audit records.
