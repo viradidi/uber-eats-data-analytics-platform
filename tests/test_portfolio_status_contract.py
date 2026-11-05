@@ -37,16 +37,19 @@ class PortfolioStatusContractTests(unittest.TestCase):
         self.assertIn("[ ] Import Gold_Analytics into the target Databricks workspace", checklist)
         self.assertIn("[ ] Complete and retain the source-specific incremental contract", checklist)
 
-    def test_external_sql_silver_job_is_not_claimed_as_repository_verified(self):
+    def test_deleted_external_job_is_replaced_by_repository_owned_sql_silver(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         handoff = (ROOT / "docs/FINAL_HANDOFF.md").read_text(encoding="utf-8")
         release_gate = (ROOT / "docs/PROJECT_RELEASE_GATE.md").read_text(encoding="utf-8")
-        for content in (readme, handoff, release_gate):
-            self.assertIn("121055824417886", content)
-        self.assertIn("not included in this repository", readme.lower())
-        self.assertIn("not present in this repository", handoff.lower())
-        self.assertIn("not source-controlled here", release_gate.lower())
-        self.assertIn("same bounded interval twice", release_gate)
+        pipeline = (ROOT / "pipeline/sql_incremental pipeline.json").read_text(encoding="utf-8")
+        importer = (ROOT / "deployment/databricks/import_workspace_assets.ps1").read_text(encoding="utf-8")
+        self.assertIn("Silver_SQL_Incremental", readme)
+        self.assertIn("deleted", handoff.lower())
+        self.assertIn("sql_silver_control", release_gate.lower())
+        self.assertIn('"type": "DatabricksNotebook"', pipeline)
+        self.assertIn("/Shared/UberEats/notebooks/Silver_SQL_Incremental", pipeline)
+        self.assertIn('Silver_SQL_Incremental.py', importer)
+        self.assertIn("SQL_SILVER_JOB_RECONSTRUCTION.md", readme)
 
 
 if __name__ == "__main__":
