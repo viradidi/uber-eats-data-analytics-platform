@@ -19,6 +19,7 @@ The exact Azure deployment timestamp, ADF/Databricks run IDs, row counts, and ex
 - Incremental SQL extraction with captured upper bounds, checkpoint controls, and replay validation for the accepted source configuration.
 - Five Gold analytics outputs: `gold_order_360`, `gold_daily_order_performance`, `gold_payment_method_performance`, `gold_restaurant_feedback`, and `gold_driver_performance`.
 - Master ADF orchestration that gates Gold publication on successful API, CSV, and SQL ingestion.
+- Gold Analytics workspace notebook path: `/Shared/UberEats/notebooks/Gold_Analytics`.
 - Data-quality checks, reconciliation helpers, operational SQL, run-audit records, CI validation, and recovery documentation.
 
 ## Acceptance outcomes
