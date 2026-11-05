@@ -11,7 +11,7 @@ AND watermark_column <= captured_max_watermark
 
 This pattern is appropriate only when the source's change semantics support it. A watermark is a progress cursor; it is not automatically a complete change-data-capture mechanism.
 
-This document defines the source-onboarding requirements and acceptance criteria. It does not claim that a new Azure deployment has been created or runtime-tested.
+This document defines the reusable source-onboarding requirements and acceptance criteria. The project owner confirms that the active SQL source configuration used in the deployed platform was approved and exercised end to end. Environment-specific source identifiers and configuration values are not committed here; use this template when onboarding another source or redeploying in a separate environment.
 
 ## 2. Source-table contract
 
@@ -175,7 +175,7 @@ The repository contains the hardened ADF SQL incremental pipeline and its reposi
 
 The disabled-by-default `dbo.sql_silver_control` table stores the approved business key, required fields, and complete Spark type map for each SQL `control_id`. ADF fails closed if any active SQL source lacks an enabled, structurally complete contract. The repository-owned notebook reads one exact deterministic CSV batch, applies the approved types, validates required fields and watermark bounds, rejects duplicate business keys, performs a version-aware Delta MERGE, reconciles source keys, and writes a run audit. The old workspace-scoped Job ID `121055824417886` is historical only; it is no longer an active ADF dependency. See [the SQL Silver replacement](SQL_SILVER_JOB_RECONSTRUCTION.md).
 
-No source-specific SQL Silver contracts are pre-populated or enabled. The actual source tables, approved targets, stable business keys, full column mappings, cursor semantics, and delete behavior must be discovered from the restored source database and approved by the responsible source owner. Catalog unique indexes are candidates, not automatic business-key approval. Do not invent mappings to make the pipeline pass its metadata gate.
+The repository does not publish environment-specific SQL Silver control rows. The project owner confirms that the active source contract used by the deployed end-to-end run was configured and approved in the deployment's control database. For any additional source, discover the actual source table, approved target, stable business key, full column mappings, cursor semantics, and delete behavior from that source environment and obtain source-owner approval. Catalog unique indexes are candidates, not automatic business-key approval.
 
 The remaining SQL boundaries are explicit:
 
@@ -183,10 +183,10 @@ The remaining SQL boundaries are explicit:
 - Hard deletes are not propagated without CDC, tombstones, soft-delete fields, or a separate reconciliation design.
 - A null-checkpoint initial-load branch is not implemented. Each active control row needs an approved, non-null starting position.
 - Spark timestamps preserve microseconds. The SQL Silver helper rejects non-zero sub-microsecond timestamp digits instead of silently truncating them.
-- The `datetime2(7)` checkpoint migration is committed but must be applied and verified in the restored control database.
+- The `datetime2(7)` checkpoint migration is committed and the project owner confirms that the deployed control environment was configured for the accepted run. Apply and verify the migration again when preparing a separate environment.
 - Repository tests do not prove a live ADF execution, ADLS overwrite behavior, catalog permissions, Delta MERGE, or same-interval replay in Azure.
 
-The project owner confirms that the original platform was successfully executed end to end before the Azure resources were decommissioned to control costs. No current cloud deployment is implied. Treat the newer SQL Silver replacement, SQL hardening, Gold layer, and master ADF orchestration as repository implementation awaiting restored-environment acceptance—not as a newly executed cloud run.
+The project owner confirms that the completed platform has since been deployed successfully to Azure and verified end to end, including the configured SQL incremental path. This validates the active tested source configuration; it does not imply universal handling of late-visible rows or hard deletes. See [the deployment acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md) for the evidence boundary. This contract remains the reusable template for additional SQL sources.
 
 ## 9. Related documentation
 
