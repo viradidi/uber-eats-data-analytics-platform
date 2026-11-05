@@ -2,7 +2,9 @@
 
 ## Review status
 
-**Pending: exported Databricks job settings and source code are required.**
+**Blocked for the original job: the owner confirms that the Databricks workspace containing job `121055824417886` was deleted.** The export procedure below is now a recovery fallback only if an archived workspace, exported job JSON, notebook source, or equivalent backup is found. A new workspace should not be expected to contain that workspace-scoped job ID.
+
+The current delivery path is to replace the external job with a repository-owned SQL Silver notebook. See [SQL Silver job reconstruction](SQL_SILVER_JOB_RECONSTRUCTION.md). Do not claim the replacement is implemented until the notebook, ADF activity, source contracts, and replay acceptance tests are complete.
 
 The ADF export at `pipeline/sql_incremental pipeline.json` invokes Databricks job ID `121055824417886` through `Job_Silver_copy1` and passes the current `table_name`. The activity depends on the ADLS copy succeeding. The checkpoint update depends on this Databricks activity succeeding.
 
