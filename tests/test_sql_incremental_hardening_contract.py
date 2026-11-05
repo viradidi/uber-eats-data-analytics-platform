@@ -117,8 +117,13 @@ class SqlIncrementalHardeningContractTests(unittest.TestCase):
         )
         silver_gate = find_activity(self.top, "Require approved SQL Silver metadata")
         self.assertEqual(
-            ["Require active SQL control rows"],
+            ["Validate active SQL Silver metadata"],
             [item["activity"] for item in silver_gate["dependsOn"]],
+        )
+        silver_validation = find_activity(self.top, "Validate active SQL Silver metadata")
+        self.assertEqual(
+            ["Require active SQL control rows"],
+            [item["activity"] for item in silver_validation["dependsOn"]],
         )
         fail = gate["typeProperties"]["ifFalseActivities"][0]
         self.assertEqual("Fail", fail["type"])
