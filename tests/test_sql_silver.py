@@ -71,6 +71,23 @@ class SqlSilverContractTests(unittest.TestCase):
             ),
         )
 
+        # The landing CSV must be rejected before Spark truncates a non-zero
+        # seventh fractional digit from a datetime2(7) source value.
+        raw = self.spark.createDataFrame(
+            [("O-3", "2026-01-01 10:00:00.1234567")],
+            ["order_id", "modified_at"],
+        )
+        with self.assertRaisesRegex(ValueError, "non-zero sub-microsecond digits"):
+            prepare_sql_silver_batch(
+                raw,
+                business_key_columns='["order_id"]',
+                required_columns='["order_id","modified_at"]',
+                column_types='{"order_id":"string","modified_at":"timestamp"}',
+                watermark_column="modified_at",
+                lower_watermark="2026-01-01T10:00:00",
+                upper_watermark="2026-01-01T10:01:00",
+            )
+
     def test_batch_is_typed_bounded_and_rejects_duplicate_keys(self):
         raw = self.spark.createDataFrame(
             [
