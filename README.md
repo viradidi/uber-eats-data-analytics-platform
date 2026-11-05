@@ -20,7 +20,7 @@ This project brings together three ingestion patterns:
 - **CSV files:** file-based datasets such as drivers, promotions, and delivery zones.
 - **SQL:** an incremental extraction pattern using source watermarks and a control table.
 
-Azure Data Factory coordinates the ingestion workflows. API and CSV Silver processing use repository-owned Databricks notebook dispatchers. The SQL Silver branch still references the original external Databricks Job, but that workspace was deleted and the job source is not retained in this repository; a repository-owned replacement is a required deployment task. Data is landed in Azure Data Lake Storage Gen2 and processed through Azure Databricks/Spark transformations. A downstream Gold layer now builds order, payment, driver, and restaurant-feedback analytics for SQL-based business reporting.
+Azure Data Factory coordinates the ingestion workflows. API and CSV Silver processing use repository-owned Databricks notebook dispatchers. SQL Silver processing now uses a repository-owned metadata-driven Databricks notebook and a version-aware Delta MERGE. Active sources are blocked until their approved key, required-column, and type contracts are configured. Data is landed in Azure Data Lake Storage Gen2 and processed through Azure Databricks/Spark transformations. A downstream Gold layer now builds order, payment, driver, and restaurant-feedback analytics for SQL-based business reporting.
 
 The project also includes engineering controls and supporting documentation for incremental-load correctness, checkpoint handling, data quality, reconciliation, security considerations, and recovery.
 
@@ -64,7 +64,7 @@ The repository contains separate ingestion patterns for API resources, CSV files
 
 ### Metadata-driven orchestration
 
-Azure Data Factory exports define pipelines, datasets, linked services, and factory-level configuration. API and CSV processing invoke repository-owned Databricks notebook dispatchers directly. SQL Silver still points to deleted-workspace job ID `121055824417886`; replace that dependency with a repository-owned notebook before deploying the SQL branch in a new workspace.
+Azure Data Factory exports define pipelines, datasets, linked services, and factory-level configuration. API and CSV processing invoke repository-owned Databricks notebook dispatchers directly. SQL Silver invokes the repository-owned `Silver_SQL_Incremental` notebook directly; the deleted-workspace job ID is no longer part of the ADF deployment path.
 
 ### Incremental extraction and checkpoint control
 
@@ -72,7 +72,7 @@ The SQL incremental-load design uses a lower watermark and a captured upper wate
 
 The SQL pipeline now processes only `pipeline_control` rows marked `is_active = 1`; a pre-loop metadata check rejects null/duplicate control IDs across the control table and duplicate active source mappings with `SQL_DUPLICATE_ACTIVE_CONTROL_METADATA`, and a separate guard fails with `SQL_NO_ACTIVE_CONTROL_ROWS` when none are enabled, rather than allowing the master pipeline to publish Gold after a no-op SQL branch. It validates the configured schema, table, watermark column, identifier syntax, and datetime-family cursor type before querying a source. It also fails closed when a source has null watermark values. Source queries honor the configured schema. The SQL output dataset supplies a deterministic `.csv` filename from the control ID and watermark interval; the sink extension is also set to `.csv` for consistency. ADF uses the explicit dataset filename when configured, so this does not by itself prove replay-safe overwrites ([ADF file naming behavior](https://learn.microsoft.com/en-us/azure/data-factory/format-delimited-text)). The control dataset uses a `datetime2(7)` checkpoint contract. Apply the [non-destructive checkpoint precision migration](sql/migrations/20261104_widen_pipeline_checkpoint_to_datetime2_7.sql) before deploying that updated contract.
 
-These controls reduce specific failure and concurrency risks, but a watermark alone does not guarantee complete change capture. The strict lower boundary still does not capture equal/older late arrivals or hard deletes. A per-source overlap or CDC strategy must be paired with a known business key and replay-safe Silver merge before it is enabled. The ADF SQL branch still invokes external Databricks job ID `121055824417886`, but its original workspace was deleted. The job definition/notebook is not included in this repository, so that reference cannot be treated as deployable in a replacement workspace. Rebuild SQL Silver as a repository-owned notebook using approved source-specific target and key contracts; verify its write mode and same-interval replay behavior before claiming SQL destination idempotency. See [SQL Silver job reconstruction](docs/SQL_SILVER_JOB_RECONSTRUCTION.md).
+These controls reduce specific failure and concurrency risks, but a watermark alone does not guarantee complete change capture. The strict lower boundary still does not capture equal/older late arrivals or hard deletes. A per-source overlap or CDC strategy must be paired with a known business key and replay-safe Silver merge before it is enabled. The ADF SQL branch now invokes repository-owned `Silver_SQL_Incremental` after copying one bounded CSV interval. The notebook requires an enabled `dbo.sql_silver_control` contract, explicit Spark types, required columns, and stable business keys; it reads only the exact batch file, validates cursor bounds/keys, and applies a version-aware Delta MERGE. The same-version conflict and replay rules are covered by local tests for batch validation and static contract checks. The actual source-specific metadata and live same-interval Delta replay test remain required before enabling any SQL control row. See [SQL Silver job reconstruction](docs/SQL_SILVER_JOB_RECONSTRUCTION.md).
 
 For API endpoints, timestamped landing snapshots accumulate in the endpoint folders. The API Silver notebooks now use a shared PySpark replay helper: exact snapshot replays are collapsed, payment/delivery/rating entities retain the greatest source `updated_at`, and order-status history uses the composite event key `(order_id, status_timestamp)`. Conflicting payloads with the same key and source version fail before publication. This does not remove the separate late/equal-watermark and delete limitations in the SQL incremental source pattern.
 
@@ -241,8 +241,8 @@ Historical end-to-end validation is the project owner's reported completion stat
 - [Portfolio evidence pack](docs/PORTFOLIO_EVIDENCE.md)
 - [Project release gate](docs/PROJECT_RELEASE_GATE.md)
 - [Consolidated release-readiness review](docs/RELEASE_READINESS_REVIEW.md)
-- [SQL Silver job reconstruction plan](docs/SQL_SILVER_JOB_RECONSTRUCTION.md)
-- [Legacy external SQL Silver job review](docs/EXTERNAL_SQL_SILVER_JOB_REVIEW.md)
+- [SQL Silver notebook, metadata contract, and acceptance plan](docs/SQL_SILVER_JOB_RECONSTRUCTION.md)
+- [Legacy external SQL Silver job recovery notes](docs/EXTERNAL_SQL_SILVER_JOB_REVIEW.md)
 - [Restored Azure acceptance plan](docs/RESTORED_AZURE_ACCEPTANCE_PLAN.md)
 - [Restored Azure configuration inventory](docs/RESTORED_AZURE_CONFIGURATION_INVENTORY.md)
 - [ADF control-table bootstrap migration](sql/migrations/20261104_create_ingestion_control_tables.sql)
