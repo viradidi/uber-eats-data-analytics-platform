@@ -92,6 +92,13 @@ def parse_watermark_bound(value: str | datetime, name: str) -> datetime:
         text = str(value or "").strip()
         if not text:
             raise ValueError(f"{name} is required")
+        fractional = re.search(r"\\.(\\d+)", text)
+        if fractional and len(fractional.group(1)) > 6 and any(
+            digit != "0" for digit in fractional.group(1)[6:]
+        ):
+            raise ValueError(
+                f"{name} has sub-microsecond precision that Spark TimestampType cannot preserve"
+            )
         try:
             parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
         except ValueError as exc:
@@ -142,9 +149,25 @@ def prepare_sql_silver_batch(
     if lower_bound >= upper_bound:
         raise ValueError("lower_watermark must be earlier than upper_watermark")
 
+    # Spark TimestampType stores microseconds. Refuse any non-zero seventh
+    # fractional digit rather than silently rounding a SQL datetime2(7) cursor.
+    for column, spark_type in types.items():
+        if spark_type != "timestamp":
+            continue
+        fractional = F.regexp_extract(F.col(f"`{column}`"), r"\\.(\\d+)", 1)
+        has_lost_precision = (
+            (F.length(fractional) > 6)
+            & F.substring(fractional, 7, 100).rlike("[1-9]")
+        )
+        if raw_df.filter(has_lost_precision).limit(1).count():
+            raise ValueError(
+                f"Column {column!r} contains non-zero sub-microsecond digits; "
+                "Spark TimestampType cannot preserve that source precision"
+            )
+
     casted = raw_df.select(
         *[
-            F.col(f"`{column}`").cast(types[column]).alias(column)
+            F.expr(f"try_cast(`{column}` AS {types[column]})").alias(column)
             for column in types
         ]
     )
@@ -157,7 +180,7 @@ def prepare_sql_silver_batch(
         invalid_cast_conditions.append(
             raw_value.isNotNull()
             & (F.trim(raw_value) != "")
-            & raw_value.cast(spark_type).isNull()
+            & F.expr(f"try_cast(`{column}` AS {spark_type})").isNull()
         )
     if invalid_cast_conditions:
         invalid_cast = invalid_cast_conditions[0]
