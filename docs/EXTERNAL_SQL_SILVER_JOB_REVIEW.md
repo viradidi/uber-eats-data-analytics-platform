@@ -33,9 +33,9 @@ Do not run the old export procedure against a newly created workspace expecting 
 
 If a backup is recovered later, compare its source logic with the repository-owned replacement as historical reference material. Do not reintroduce the old Job ID into ADF without an explicit technical review and a reason to depart from the repository-owned notebook.
 
-## Remaining acceptance work
+## Future environment restore checklist — not a current release gate
 
-The replacement implementation is source-controlled, but SQL source contracts are environment-specific and intentionally not fabricated.
+The project owner has since confirmed successful deployment and end-to-end operation of the repository-owned replacement, including the SQL Silver path. The checklist below is retained for a future rebuild or environment migration; it is not outstanding work for the accepted deployment. SQL source contracts remain environment-specific and should never be guessed.
 
 Before enabling a source:
 
