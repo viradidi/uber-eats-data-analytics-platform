@@ -1,5 +1,7 @@
 # Runtime evidence folder
 
-This folder is reserved for real, sanitized ADF, Databricks, and reconciliation evidence captured during a future environment rerun.
+The project owner confirms that the Uber Eats platform has been deployed successfully to Azure and that its end-to-end operation has been verified. The current acceptance scope is summarized in [DEPLOYMENT_ACCEPTANCE_RECORD.md](../DEPLOYMENT_ACCEPTANCE_RECORD.md).
 
-No runtime evidence is fabricated or pre-populated. The original Azure environment was decommissioned and its detailed run IDs, logs, and reconciliation exports were not retained; the owner-confirmed historical execution is documented separately. Use the runtime evidence template for each scenario in the next restored environment. Redact secrets and sensitive infrastructure details before storing any screenshot or export.
+This folder is the location for **actual, sanitized** ADF, Databricks, SQL replay, and reconciliation exports. The exact runtime run IDs, logs, timestamps, screenshots, and row counts have not yet been added here. Do not manufacture placeholders that look like real evidence; use `runtime-evidence-template.md` and mark unavailable fields explicitly until original exports are collected.
+
+Redact secrets, access tokens, connection strings, personal information, customer/payment data, and sensitive infrastructure details before adding any evidence. The absence of exported run records is an evidence-retention gap, not a pending deployment or execution task.
