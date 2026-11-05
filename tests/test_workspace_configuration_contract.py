@@ -438,5 +438,42 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
         self.assertIn('{"bronze_root": bronze_root}', source)
 
 
+
+    def test_scoped_sql_silver_deployment_scripts_validate_and_publish_only_the_run_correlation_delta(self):
+        databricks_script = (
+            ROOT / "deployment/databricks/import_sql_silver_assets.ps1"
+        ).read_text(encoding="utf-8")
+        for token in (
+            "notebooks/Silver_SQL_Incremental.py",
+            "src/common/sql_silver.py",
+            "/Shared/UberEats/notebooks/Silver_SQL_Incremental",
+            "/Shared/UberEats/src/common/sql_silver.py",
+            "workspace",
+            "get-status",
+            "This updates only the SQL Silver notebook/module paths",
+        ):
+            with self.subTest(databricks_token=token):
+                self.assertIn(token, databricks_script)
+
+        adf_script = (
+            ROOT / "deployment/azure/deploy_run_correlation_update.ps1"
+        ).read_text(encoding="utf-8")
+        for token in (
+            "pipeline/uber_eats_master.json",
+            "pipeline/sql_incremental pipeline.json",
+            "@pipeline().RunId",
+            "@pipeline().parameters.parent_pipeline_run_id",
+            "/Shared/UberEats/notebooks/Silver_SQL_Incremental",
+            "pipelines/$([uri]::EscapeDataString($pipelineName))",
+            "Invoke-AzRestMethod",
+            "readback",
+            "No factory, linked service, dataset, storage, SQL, or Databricks resource was modified",
+        ):
+            with self.subTest(adf_token=token):
+                self.assertIn(token, adf_script)
+
+        self.assertNotIn("linkedservices/", adf_script)
+        self.assertNotIn("datasets/", adf_script)
+
 if __name__ == "__main__":
     unittest.main()
