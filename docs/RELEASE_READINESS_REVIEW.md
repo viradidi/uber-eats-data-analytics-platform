@@ -2,8 +2,8 @@
 
 **Review date:** 2026-11-05  
 **Repository:** [viradidi/uber-eats-data-analytics-platform](https://github.com/viradidi/uber-eats-data-analytics-platform)  
-**Reviewed repository commit for CI evidence:** `221d5ae44daf47f139da6372e0f0728b9ce16b24`  
-**CI evidence:** [GitHub Actions run 41983035191 — 131 tests passed](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41983035191)
+**Reviewed repository commit for CI evidence:** `c6e0c2cbe47dc3b16826653bf8d3e024963f7f99`  
+**CI evidence:** [GitHub Actions run 41983203349 — 131 tests passed](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41983203349)
 
 ## 1. Release decision
 

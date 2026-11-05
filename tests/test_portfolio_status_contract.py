@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CI_RUN_URL = "https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41983035191"
+CI_RUN_URL = "https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41983203349"
 STATUS_FILES = (
     "README.md",
     "docs/PROJECT_CHECKLIST.md",
