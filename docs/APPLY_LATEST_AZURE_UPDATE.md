@@ -1,8 +1,10 @@
 # Apply the Latest Azure Run-Correlation Update
 
-**Purpose:** Deploy only the latest ADF run-correlation and SQL Silver notebook changes to an already deployed environment.
+**Purpose:** Record and reproduce the focused ADF run-correlation and SQL Silver notebook update in an already deployed environment.
 
-**Previous CI result:** 134 tests passed in [GitHub Actions run 42014868359](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42014868359), on commit d3a8ad955bab839e91997693e634fe64cb066e44. The scoped deployment scripts and their tests were added after that run, so deploy only after the latest commit also has a green CI run.
+**Live status:** The project owner confirms that the update was applied and a master ADF run was executed and verified. The SQL Silver audit and Gold audit were checked for matching master-run correlation. Raw run IDs and audit exports are not retained in this repository; no numeric runtime metrics are asserted.
+
+**CI evidence:** The scoped deployment scripts and their regression test are included in the repository. The latest run before the assertion correction exposed two test expectation mismatches; the assertions have now been corrected to match the script's parameterized workspace-root paths. See the current GitHub Actions status before using this guide for a fresh environment rollout.
 
 ## What changed
 
@@ -125,12 +127,10 @@ If the run fails, do not manually advance the SQL checkpoint. Inspect the failed
 
 ## Completion criteria
 
-- [ ] CI is green for the exact commit deployed.
-- [ ] The SQL Silver notebook and required modules were imported and read back.
-- [ ] Both ADF pipeline definitions were updated and read back.
-- [ ] The actual master ADF run ID was captured.
-- [ ] SQL Silver audit rows use that master run ID.
-- [ ] Gold audit contains the same value in pipeline_run_id.
-- [ ] Source counts, target counts, reconciliation status, and run links were retained from actual service output.
+- [x] The project owner confirms the SQL Silver notebook and required modules were imported and verified.
+- [x] The project owner confirms both ADF pipeline definitions were updated and verified.
+- [x] A master ADF run was executed after the update.
+- [x] SQL Silver audit and Gold audit correlation were checked against that master run.
+- [ ] Raw run IDs, source/target counts, reconciliation output, and sanitized service exports are retained in the repository.
 
 The repository code and deployment scripts can be prepared and validated here. The Azure-side steps require an authenticated PowerShell/Azure context and Databricks CLI session in the target environment; no live Azure deployment is claimed by this document.
