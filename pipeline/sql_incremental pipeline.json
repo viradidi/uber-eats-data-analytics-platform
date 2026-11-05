@@ -616,6 +616,14 @@
                         "batch_file_name": {
                           "value": "@concat('ctl',string(item().control_id),'_',replace(replace(replace(replace(replace(string(item().last_watermark_value),'-',''),':',''),'.',''),' ',''),'+',''),'_',replace(replace(replace(replace(replace(string(activity('Get max watermark_copy1').output.firstRow.max_watermark),'-',''),':',''),'.',''),' ',''),'+',''),'.csv')",
                           "type": "Expression"
+                        },
+                        "parent_pipeline_run_id": {
+                          "value": "@pipeline().parameters.parent_pipeline_run_id",
+                          "type": "Expression"
+                        },
+                        "child_pipeline_run_id": {
+                          "value": "@pipeline().RunId",
+                          "type": "Expression"
                         }
                       }
                     },
@@ -633,7 +641,13 @@
     ],
     "annotations": [],
     "lastPublishTime": "2026-09-02T07:33:55Z",
-    "concurrency": 1
+    "concurrency": 1,
+    "parameters": {
+      "parent_pipeline_run_id": {
+        "type": "String",
+        "defaultValue": ""
+      }
+    }
   },
   "type": "Microsoft.DataFactory/factories/pipelines"
 }
