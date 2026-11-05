@@ -475,5 +475,13 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
         self.assertNotIn("linkedservices/", adf_script)
         self.assertNotIn("datasets/", adf_script)
 
+        rollout_guide = ROOT / "docs/APPLY_LATEST_AZURE_UPDATE.md"
+        self.assertTrue(rollout_guide.is_file())
+        guide = rollout_guide.read_text(encoding="utf-8")
+        self.assertIn("import_sql_silver_assets.ps1", guide)
+        self.assertIn("deploy_run_correlation_update.ps1", guide)
+        self.assertIn("MASTER_ADF_RUN_ID", guide)
+        self.assertIn("does not start the master pipeline", guide)
+
 if __name__ == "__main__":
     unittest.main()
