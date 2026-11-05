@@ -92,7 +92,7 @@ def parse_watermark_bound(value: str | datetime, name: str) -> datetime:
         text = str(value or "").strip()
         if not text:
             raise ValueError(f"{name} is required")
-        fractional = re.search(r"\\.(\\d+)", text)
+        fractional = re.search(r"\.(\d+)", text)
         if fractional and len(fractional.group(1)) > 6 and any(
             digit != "0" for digit in fractional.group(1)[6:]
         ):
@@ -154,7 +154,7 @@ def prepare_sql_silver_batch(
     for column, spark_type in types.items():
         if spark_type != "timestamp":
             continue
-        fractional = F.regexp_extract(F.col(f"`{column}`"), r"\\.(\\d+)", 1)
+        fractional = F.regexp_extract(F.col(f"`{column}`"), r"\.(\d+)", 1)
         has_lost_precision = (
             (F.length(fractional) > 6)
             & F.substring(fractional, 7, 100).rlike("[1-9]")
