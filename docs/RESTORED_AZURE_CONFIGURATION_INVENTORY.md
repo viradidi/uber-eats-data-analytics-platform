@@ -160,7 +160,8 @@ The first call is a dry run. The second performs REST create/update calls and re
 - [ ] Run the CSV staging script and verify all three source files exist in `bronze/csv_source`.
 - [ ] Confirm API endpoint and Key Vault secret reference.
 - [ ] Confirm Databricks workspace, managed identity, catalog and schemas.
-- [ ] Export/inspect the external SQL Databricks Job `121055824417886`; API and CSV are direct repository-owned Databricks Notebook activities.
+- [x] Replace SQL external Job ID `121055824417886` with repository-owned `Silver_SQL_Incremental` Databricks Notebook activity and deploy it through the workspace importer.
+- [ ] Apply `20261105_create_sql_silver_control.sql`, configure/approve every active SQL source contract, then validate the SQL Silver Delta MERGE and same-interval replay.
 - [ ] Run `deployment/databricks/import_workspace_assets.ps1` and verify the notebook and shared `src` package paths.
 - [ ] Confirm current supported runtime and available node SKUs/quotas in the chosen region.
 - [ ] Publish ADF resources and validate all references before the first master run.
