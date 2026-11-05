@@ -31,14 +31,14 @@ The historical execution statement is owner-reported. It is not an independent a
 
 ## Deployment gates before reuse
 
-The current consolidated decision and action order are recorded in [RELEASE_READINESS_REVIEW.md](RELEASE_READINESS_REVIEW.md). Use [EXTERNAL_SQL_SILVER_JOB_REVIEW.md](EXTERNAL_SQL_SILVER_JOB_REVIEW.md) for the external SQL job export/replay review and [RESTORED_AZURE_ACCEPTANCE_PLAN.md](RESTORED_AZURE_ACCEPTANCE_PLAN.md) for the restored-environment execution.
+The current consolidated decision and action order are recorded in [RELEASE_READINESS_REVIEW.md](RELEASE_READINESS_REVIEW.md). Use [SQL_SILVER_JOB_RECONSTRUCTION.md](SQL_SILVER_JOB_RECONSTRUCTION.md) to replace the deleted-workspace SQL Silver job, then use [RESTORED_AZURE_ACCEPTANCE_PLAN.md](RESTORED_AZURE_ACCEPTANCE_PLAN.md) for restored-environment execution.
 
 Before redeploying or enabling a source in a new environment:
 
 1. Validate the source table, business key, cursor type/precision, timezone, initial-load behavior, late visibility, equal cursor values, and delete semantics.
 2. Confirm only approved `is_active = 1` control rows are enabled; validate that `control_id` is non-null and unique across the full control table and that active `(schema_name, table_name, watermark_column)` mappings are unique. Enforce an approved allowlist for dynamic SQL identifiers and restrict control-table write access.
 3. Confirm typed watermark serialization and null-checkpoint handling.
-4. Inspect/export the Databricks SQL Silver job invoked by ADF job ID `121055824417886` (its definition/notebook is not source-controlled here); verify its input-file selection, target write mode and business keys, then replay the same bounded interval twice and reconcile landing and target results.
+4. Replace the deleted-workspace Databricks SQL Silver job ID `121055824417886` with a repository-owned notebook. Bind it to the exact bounded landing file and approved target/key contract for each source; then replay the same interval twice in an isolated environment and reconcile landing and target results.
 5. Import Gold_Analytics to /Shared/UberEats/Gold_Analytics, deploy src.gold so the notebook can import the transformation module, and verify the Databricks linked service and catalog permissions.
 6. Run the master pipeline and verify all three child pipelines complete before Gold starts; reconcile the Gold output counts and gold_run_audit row.
 7. Test copy failure, Silver failure, checkpoint conflict, reconciliation mismatch, and safe rerun in the target environment.
