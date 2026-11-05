@@ -1,9 +1,9 @@
 # Uber Eats — Consolidated Release Readiness Review
 
-**Review date:** 2026-11-04  
+**Review date:** 2026-11-05  
 **Repository:** [viradidi/uber-eats-data-analytics-platform](https://github.com/viradidi/uber-eats-data-analytics-platform)  
-**Reviewed repository commit for CI evidence:** `bde227597263ca5c72ab95235069a1a25d88c40f`  
-**CI evidence:** [GitHub Actions run 41901084241 — 121 tests passed](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41901084241)
+**Reviewed repository commit for CI evidence:** `221d5ae44daf47f139da6372e0f0728b9ce16b24`  
+**CI evidence:** [GitHub Actions run 41983035191 — 131 tests passed](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41983035191)
 
 ## 1. Release decision
 
@@ -29,9 +29,9 @@ That CI result is not a live ADF, SQL Server, ADLS, or Databricks execution. The
 | Notebook export consistency | Six paired Databricks SOURCE `.py` and Jupyter `.ipynb` exports match cell-for-cell; CI enforces parity and importer deploys canonical `.py` files | Repository-tested |
 | SQL source discovery | Read-only source-database catalog inventory reports cursor type/precision and primary/unique-index key candidates; optional table scans are disabled by default | Repository artifact added; execution awaits restored SQL source access |
 | Documentation and recovery | Source contracts, preflight SQL, runbooks, reconciliation queries, evidence retention, release gate | Repository reviewed |
-| CI | Current verified run records 121 tests passing | Passed |
+| CI | Current verified run records 131 tests passing, including SQL Silver replacement/import checks | Passed |
 
-The previously recorded 121-test run predates the SQL Silver replacement. The current CI run must pass before this code-level implementation is treated as repository-validated; no CI result proves live Delta merge or ADF execution.
+The verified 131-test run includes regression coverage for the repository-owned SQL Silver notebook, its metadata gate, source-contract documentation, and workspace import/read-back paths. It remains repository evidence only; no CI result proves a live Delta MERGE, Azure Data Factory execution, or restored cloud permissions.
 
 ## 3. Open gates — priority order
 

@@ -172,7 +172,7 @@ The committed pipeline definition contains:
 - A source-data check that fails before extraction if any record has a null watermark value.
 - Schema-aware, bracket-quoted source queries.
 - A strict lower watermark and captured upper watermark for bounded extraction.
-- A dependency from the copy activity to the Databricks Silver job.
+- A dependency from the copy activity to the repository-owned `Silver_SQL_Incremental` Databricks notebook.
 - A dependency from successful Silver processing to checkpoint update.
 - A transactional compare-and-swap checkpoint update that rolls back when the affected-row count is not exactly one and raises SQL error 51001.
 - Pipeline concurrency set to one.
