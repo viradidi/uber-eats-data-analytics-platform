@@ -18,6 +18,10 @@ Keep three kinds of evidence distinct:
 
 Do not invent run IDs, metrics, screenshots, dashboard states, or test outcomes. Do not imply independent certification or continuous production availability.
 
+## Senior reviewer entry points
+
+For the rationale behind the major platform choices, read the [Architecture Decision Records](ARCHITECTURE_DECISIONS.md). For an explicit separation of implemented controls, owner-confirmed deployment outcomes, and remaining senior-level maturity/evidence gaps, read the [Senior Engineering Readiness Review](SENIOR_ENGINEERING_READINESS.md).
+
 ## What the project demonstrates
 
 The strongest interview discussion areas are the engineering decisions behind the implementation:
