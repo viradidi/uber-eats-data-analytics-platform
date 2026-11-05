@@ -116,7 +116,13 @@ class RepositoryArtifactIntegrityTests(unittest.TestCase):
 
     def test_release_gate_distinguishes_portfolio_completion_from_live_deployment(self):
         gate = (ROOT / "docs" / "PROJECT_RELEASE_GATE.md").read_text(encoding="utf-8").lower()
-        for phrase in ("portfolio status: original ingestion/silver scope completed", "gold extension awaits live validation", "not an independent audit", "decommissioned to control costs", "do not claim a currently deployed service"):
+        for phrase in (
+            "portfolio and repository status: implementation complete; restored azure acceptance pending",
+            "original end-to-end ingestion and silver implementation ran successfully",
+            "not an independent audit",
+            "decommissioned to control costs",
+            "do not claim a currently deployed service",
+        ):
             self.assertIn(phrase, gate)
 
 
