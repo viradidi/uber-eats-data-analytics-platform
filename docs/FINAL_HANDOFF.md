@@ -40,13 +40,14 @@ Start with the [README](../README.md), then use these documents for deeper revie
 8. [Run evidence and retention](RUN_EVIDENCE_RETENTION.md)
 9. [Portfolio evidence pack](PORTFOLIO_EVIDENCE.md)
 10. [Consolidated release-readiness review](RELEASE_READINESS_REVIEW.md)
-11. [External SQL Silver job review](EXTERNAL_SQL_SILVER_JOB_REVIEW.md)
-12. [Restored Azure acceptance plan](RESTORED_AZURE_ACCEPTANCE_PLAN.md)
-13. [Restored Azure configuration inventory](RESTORED_AZURE_CONFIGURATION_INVENTORY.md)
-14. [Databricks workspace import script](../deployment/databricks/import_workspace_assets.ps1)
+11. [SQL Silver job reconstruction plan](SQL_SILVER_JOB_RECONSTRUCTION.md)
+12. [Legacy external SQL Silver job review](EXTERNAL_SQL_SILVER_JOB_REVIEW.md)
+13. [Restored Azure acceptance plan](RESTORED_AZURE_ACCEPTANCE_PLAN.md)
+14. [Restored Azure configuration inventory](RESTORED_AZURE_CONFIGURATION_INVENTORY.md)
+15. [Databricks workspace import script](../deployment/databricks/import_workspace_assets.ps1)
 15. [Restored Azure configuration script](../deployment/azure/configure_restore_environment.ps1)
 16. [ADF REST deployment script](../deployment/azure/deploy_adf_resources.ps1)
-17. [External SQL Silver Job export script](../deployment/databricks/export_sql_silver_job.ps1)
+17. [Legacy SQL Silver job export helper](../deployment/databricks/export_sql_silver_job.ps1) (usable only if an archived copy of the original workspace/job becomes available)
 
 ## Validation and evidence boundaries
 
@@ -67,7 +68,7 @@ The project is a strong implementation and design portfolio, but reviewers shoul
 - Source correctness depends on an explicit cursor contract and suitable overlap, replay, CDC, or reconciliation strategy where required.
 - Pipeline concurrency set to one serializes runs of that pipeline; it does not coordinate unrelated pipelines or external writers.
 - Compare-and-swap protects checkpoint advancement against stale updates, but does not alone make landing and Silver writes idempotent.
-- The SQL ADF pipeline invokes external Databricks job ID `121055824417886`; the job definition/notebook is not present in this repository, so its current SQL target write mode, merge keys, and same-interval replay behavior must be inspected in the workspace before claiming SQL destination idempotency.
+- The SQL ADF pipeline still references external Databricks job ID `121055824417886`, but the original workspace was deleted and the job definition/notebook is not present in this repository. A repository-owned SQL Silver replacement is required before a fresh workspace deployment; source-specific targets, keys, and replay semantics must be approved rather than inferred.
 - Dynamic SQL identifiers must be validated against an allowlist and protected control metadata.
 - Repository tests do not substitute for a current live Azure integration run.
 
