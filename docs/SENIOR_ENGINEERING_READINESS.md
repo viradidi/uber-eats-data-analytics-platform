@@ -31,7 +31,7 @@ The project owner confirmed successful Azure deployment and end-to-end operation
 
 The master ADF execution ID is now passed into the SQL ingestion child pipeline and SQL Silver notebook. The SQL Silver audit uses the parent run ID when available, the child pipeline run ID for direct child execution, and a UUID only for manual execution without ADF context. This lets SQL Silver audit rows be grouped with the Gold audit by master run.
 
-**Azure rollout status:** this correlation change is committed and CI-validated in the repository, but it is not yet confirmed as deployed to the live workspace. Apply the focused [Azure run-correlation rollout](APPLY_LATEST_AZURE_UPDATE.md), then verify the SQL Silver and Gold audit records against one actual master ADF run before claiming the new correlation is active in Azure.
+**Azure rollout status:** the project owner confirms that the focused run-correlation update has been applied and a subsequent master ADF run has been verified. The SQL Silver and Gold audit records were checked against that execution. Exact run identifiers and raw audit exports have not been added to the repository, so this remains owner-confirmed operational evidence rather than an independently inspectable log bundle. The [rollout procedure](APPLY_LATEST_AZURE_UPDATE.md) is retained for reproducibility.
 
 ### 2. Checkpoint safety
 
