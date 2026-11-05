@@ -60,7 +60,13 @@
             "referenceName": "sql_incremental pipeline",
             "type": "PipelineReference"
           },
-          "waitOnCompletion": true
+          "waitOnCompletion": true,
+          "parameters": {
+            "parent_pipeline_run_id": {
+              "value": "@pipeline().RunId",
+              "type": "Expression"
+            }
+          }
         }
       },
       {
