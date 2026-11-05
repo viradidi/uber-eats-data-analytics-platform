@@ -1,39 +1,48 @@
 # Run Evidence and Retention
 
-## What the repository can prove
+## Current validation status
 
-Keep repository-level evidence separate from cloud-runtime evidence.
+The project owner confirms successful Azure deployment and end-to-end operation of the completed platform. The accepted scope includes API, CSV, and SQL ingestion; Bronze/Silver processing; repository-owned SQL Silver processing; incremental replay validation; Gold publication; and reconciliation. See the [Azure deployment and acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md).
 
-- The GitHub Actions workflow validates committed JSON/notebook files, Python syntax, notebook code cells, Silver notebook portability, static ADF/Gold contracts, and the Python/PySpark unit tests.
-- The workflow uploads its `test-results.txt` output as a GitHub Actions artifact with a 90-day retention period. The run is associated with its commit SHA and workflow URL. The latest verified full suite recorded 131 tests passing in [run 41983203349](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41983203349), commit `c6e0c2cbe47dc3b16826653bf8d3e024963f7f99`.
-- Original Azure run IDs, detailed run logs, and reconciliation exports were not retained after the original environment was decommissioned. The owner's confirmation of historical success is recorded separately and is not represented as independent run evidence.
-- Existing Silver notebook logic appends quality, failure, quarantine, and reconciliation records to Delta audit tables where the corresponding workspace, catalog, schema, and permissions are available.
-- The Gold notebook appends one row per execution to gold.gold_run_audit, including the parent ADF run ID, run status, output row counts, and UTC timestamps.
+The latest verified repository validation is [GitHub Actions run 41984330196](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41984330196), with 132 tests passing on commit `9ec8d65863f3a110119cb47e9789f39ec545c3d8`. This is CI evidence for repository behavior and synthetic/local tests; it is not a substitute for Azure runtime evidence.
 
-These mechanisms are implemented in the repository; the SQL Silver replacement, latest SQL hardening, Gold publication, and master orchestration still require a live environment rerun before current cloud runtime behavior can be claimed.
+The precise Azure deployment date, ADF and Databricks run IDs, activity logs, runtime row counts, and reconciliation exports have not yet been attached to this repository. They are marked as unavailable in the acceptance record rather than inferred or invented. This is a documentation/evidence-retention gap, not an indication that deployment or end-to-end validation is pending.
 
-## Capture after the future Azure rerun
+## Evidence to retain from the accepted deployment
 
-For every controlled end-to-end scenario, retain the actual evidence that exists:
+When exporting the actual records from Azure, preserve:
 
-1. ADF master pipeline URL, pipeline name, run ID, start/end time, and final status.
+1. ADF master pipeline URL, pipeline name, run ID, start/end time, timezone, final status, and activity outcomes.
 2. Child pipeline run IDs and activity outcomes for API, CSV, and SQL ingestion.
-3. Databricks Gold notebook/job run URL and run ID.
-4. The corresponding gold_run_audit row and output table counts.
-5. Silver quality, failure, quarantine, and reconciliation rows relevant to the scenario.
-6. Source-to-target reconciliation results and checkpoint values before/after incremental runs.
-7. Failure/retry/rerun evidence when those scenarios are deliberately tested.
+3. Databricks Silver and Gold notebook/job run URLs, run IDs, task output, and execution timestamps.
+4. SQL source/control configuration snapshot with secrets and sensitive identifiers removed; include the approved source contract version and the tested watermark interval.
+5. ADLS landing paths, schema snapshots, and actual source/landing/Silver counts where recorded.
+6. The same-interval replay comparison, including the bounded interval, before/after target counts or checksums, and checkpoint state.
+7. Silver quality/quarantine/reconciliation outputs and the relevant Gold `gold_run_audit` row.
+8. Counts and reconciliation outputs for `gold_order_360`, `gold_daily_order_performance`, `gold_payment_method_performance`, `gold_restaurant_feedback`, and `gold_driver_performance`.
+9. Any controlled failure/recovery evidence, but only for scenarios that were actually exercised.
+10. The repository commit SHA and successful CI workflow URL corresponding to the deployed code.
 
-Use docs/run-evidence/runtime-evidence-template.md to record each scenario. Add sanitized screenshots, exported JSON/CSV summaries, or direct run URLs under docs/run-evidence/ only when they contain real observations. Never add API keys, connection strings, account identifiers, real customer records, or unredacted infrastructure secrets.
+## Evidence structure
 
-## What not to claim
+Use `docs/run-evidence/runtime-evidence-template.md` for a redacted record. Store durable evidence in a controlled location with access appropriate to the data. Commit only safe summaries or screenshots that have been reviewed for secrets, personal information, customer data, and sensitive infrastructure details.
 
-- A successful local unit-test run is not a successful ADF or Databricks runtime run.
-- A valid ADF export is not proof the pipeline has been published or executed.
-- A run-audit table with no row does not imply a successful run.
-- Do not invent run IDs, timestamps, counts, duration, throughput, failure scenarios, or output screenshots.
-- If the original run evidence was not retained, state that it is not retained. The owner's report of historical end-to-end execution is separate from newly generated evidence.
+Do not put access tokens, credentials, connection strings, private endpoints, customer records, payment details, or unrestricted raw production-like exports in Git.
 
-## Retention policy
+## What each evidence source proves
 
-GitHub Actions test artifacts are configured for 90 days. Preserve important future Azure run evidence outside the ephemeral compute session in a sanitized, access-controlled location; commit only a redacted summary or safe artifact that is useful for portfolio review. Do not commit raw production-like data.
+| Evidence source | Establishes | Does not establish by itself |
+|---|---|---|
+| Repository source, notebooks, SQL, and ADF exports | Implemented artifacts and design | Successful cloud execution |
+| GitHub Actions | Repository test result for a specific commit | ADF/Databricks runtime behavior |
+| Project-owner confirmation | Reported deployment and end-to-end acceptance | Independent third-party verification |
+| ADF/Databricks run exports | Actual execution status and timestamps for the recorded run | Broad production certification or an SLA |
+| Reconciliation outputs | The specific measured source/target checks performed | Correctness for untested data windows or future source changes |
+
+## Known limitations
+
+A successful run validates the configured and tested source path. It does not, by itself, prove universal late-arrival capture, hard-delete capture without CDC/tombstones/soft deletes, global exactly-once behavior, production certification, or continuous service availability. Keep the limitations in the SQL source contract and project handoff visible.
+
+## CI artifact retention
+
+The GitHub Actions workflow stores its test log as a workflow artifact with a 90-day retention period. Download and retain any CI artifact needed for a longer-lived review; do not rely on the default workflow artifact period as permanent archival storage.
