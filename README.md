@@ -242,6 +242,7 @@ The missing ADF/Databricks run IDs and sanitized exports are an evidence-retenti
 - [Architecture decision records](docs/ARCHITECTURE_DECISIONS.md)
 - [Senior engineering readiness review](docs/SENIOR_ENGINEERING_READINESS.md)
 - [Azure deployment acceptance report](docs/AZURE_DEPLOYMENT_ACCEPTANCE.md)
+- [Apply latest Azure run-correlation update](docs/APPLY_LATEST_AZURE_UPDATE.md)
 - [Project release gate](docs/PROJECT_RELEASE_GATE.md)
 - [Consolidated release-readiness review](docs/RELEASE_READINESS_REVIEW.md)
 - [SQL Silver notebook, metadata contract, and acceptance plan](docs/SQL_SILVER_JOB_RECONSTRUCTION.md)
