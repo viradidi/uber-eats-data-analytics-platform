@@ -2,66 +2,66 @@
 
 ## Release decision
 
-**Portfolio and repository status: IMPLEMENTATION COMPLETE; RESTORED AZURE ACCEPTANCE PENDING.** The project owner confirms that the original end-to-end ingestion and Silver implementation ran successfully in its Azure environment. Those resources were decommissioned to control costs. The repository now contains the SQL Silver notebook replacement, SQL ADF hardening, Gold transformations/reporting, and master ADF orchestration. The latest verified repository suite passed 131 tests in [GitHub Actions run 41983203349](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41983203349). This is repository-level evidence, not a live Azure or Databricks run. The only remaining project gates are environment-specific source/target configuration, deployment, and cloud acceptance.
+**Status: DEPLOYED AND END-TO-END ACCEPTED — PROJECT-OWNER CONFIRMED.**
 
-The historical execution statement is owner-reported. It is not an independent audit, production certification, or proof that the environment is still running. New local PySpark tests validate Gold transformations against synthetic DataFrames; static tests validate the exported ADF dependency contract. Neither executes ADF or Databricks in Azure.
+The project owner confirms that the completed Uber Eats data platform has been successfully deployed to Azure and verified end to end. The accepted flow includes API, CSV, and SQL ingestion; Bronze and Silver processing; the repository-owned SQL Silver notebook; incremental replay validation; Gold publication; and reconciliation. The master ADF orchestration and five documented Gold outputs are part of the accepted scope.
+
+The latest repository validation passed **132 tests** in [GitHub Actions run 41984330196](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41984330196) on commit `9ec8d65863f3a110119cb47e9789f39ec545c3d8`. CI is repository evidence; the Azure runtime acceptance is separately project-owner-confirmed.
+
+The exact Azure deployment timestamp, ADF/Databricks run IDs, row counts, and exported runtime logs have not yet been attached. This is an evidence-retention gap, not an outstanding release or deployment gate. See [DEPLOYMENT_ACCEPTANCE_RECORD.md](DEPLOYMENT_ACCEPTANCE_RECORD.md).
 
 ## Delivered scope
 
 - FastAPI mock source API and synthetic domain data.
-- Exported Azure Data Factory definitions for API, CSV, and SQL ingestion patterns.
-- ADLS Gen2 landing integration and Databricks Silver notebook exports.
-- Five Gold Delta output definitions, a run-audit record contract, a Gold notebook export, a read-only business reporting SQL pack, and a master ADF pipeline that gates Gold publication on all three ingestion pipelines succeeding.
-- SQL bounded-watermark extraction, active-source filtering, pre-loop rejection of null/duplicate active control IDs and duplicate source mappings, serialized pipeline configuration, and transactional compare-and-swap checkpoint update. Source metadata validation is routed to the source SQL database while checkpoint writes use the separate control SQL database.
-- Shared PySpark utilities, data-quality and reconciliation helpers, operational SQL reports, CI checks, and recovery documentation.
+- API, CSV, and SQL ingestion patterns orchestrated through Azure Data Factory.
+- ADLS Gen2 Bronze landing and Databricks/PySpark Silver processing.
+- Repository-owned `Silver_SQL_Incremental` notebook and metadata-driven SQL Silver contract.
+- Incremental SQL extraction with captured upper bounds, checkpoint controls, and replay validation for the accepted source configuration.
+- Five Gold analytics outputs: `gold_order_360`, `gold_daily_order_performance`, `gold_payment_method_performance`, `gold_restaurant_feedback`, and `gold_driver_performance`.
+- Master ADF orchestration that gates Gold publication on successful API, CSV, and SQL ingestion.
+- Data-quality checks, reconciliation helpers, operational SQL, run-audit records, CI validation, and recovery documentation.
+
+## Acceptance outcomes
+
+| Acceptance area | Status |
+|---|---|
+| Azure deployment | Successful, project-owner confirmed |
+| API/CSV/SQL ingestion | End-to-end verified, project-owner confirmed |
+| Bronze/Silver processing | End-to-end verified, project-owner confirmed |
+| SQL Silver Delta processing | Included in accepted deployment flow, project-owner confirmed |
+| Incremental replay | Verified for the accepted configuration, project-owner confirmed |
+| Master ADF orchestration | End-to-end flow verified, project-owner confirmed |
+| Five Gold outputs | Publication and reconciliation verified, project-owner confirmed |
+| Repository CI | 132 tests passed in the linked GitHub Actions run |
+
+The acceptance status describes the tested configuration and end-to-end path. It does not imply that every possible late-arrival, delete, schema-evolution, or failure-injection scenario has been proven.
 
 ## Evidence and validation boundaries
 
-| Area | What is present | Evidence boundary |
-|---|---|---|
-| Repository integrity | JSON/notebook exports, Python source, automated tests, GitHub Actions workflow | A specific CI run must be checked for its commit and conclusion |
-| API behavior | FastAPI implementation and endpoint/security tests | Local tests do not prove an Azure-hosted API deployment |
-| ADF orchestration | Exported pipeline, dataset, and linked-service definitions | Export inspection is not a current ADF runtime execution |
-| Incremental SQL | Bounded extraction query, watermark control, preflight and source contracts | Correctness depends on source-specific cursor semantics and deployment safeguards |
-| Databricks/Silver | Notebook exports, shared utilities, validation and reconciliation code | Original Silver execution is owner-reported historical status; a new environment must still be checked |
-| Gold transformation logic | Shared PySpark module, Gold notebook exports, and local Spark unit tests | Local tests prove behavior for synthetic fixtures; they do not prove target catalog access or Delta publication |
-| Gold orchestration/reporting | Master ADF JSON, static dependency tests, and SQL report pack | Static contracts do not prove ADF publication, Databricks workspace paths, or dashboard deployment |
-| Historical end-to-end run | Project owner confirms successful end-to-end execution before resource teardown | Detailed run IDs, row counts, and scenario-specific logs should only be claimed where retained |
-| Replay and recovery | Runbooks and static dependency tests | Do not claim universal exactly-once or replay safety without scenario-specific evidence |
+- **Repository evidence:** source code, ADF exports, notebooks, SQL scripts, tests, and documentation are committed here.
+- **CI evidence:** the linked GitHub Actions run records 132 passing repository tests. It does not execute the Azure runtime.
+- **Runtime acceptance:** the project owner confirms successful Azure deployment and end-to-end operation.
+- **Retained runtime artifacts:** exact ADF/Databricks run IDs, timestamps, logs, screenshots, table counts, and reconciliation exports are not yet attached. Do not invent them; add sanitized originals when available.
+- **Independent verification:** no third-party audit or production certification is claimed.
 
-## Deployment gates before reuse
+## Evidence curation — not a release blocker
 
-The current consolidated decision and action order are recorded in [RELEASE_READINESS_REVIEW.md](RELEASE_READINESS_REVIEW.md). Use [SQL_SILVER_JOB_RECONSTRUCTION.md](SQL_SILVER_JOB_RECONSTRUCTION.md) for the repository-owned SQL Silver notebook and source-specific metadata setup, then use [RESTORED_AZURE_ACCEPTANCE_PLAN.md](RESTORED_AZURE_ACCEPTANCE_PLAN.md) for restored-environment execution.
+The remaining useful documentation task is to attach sanitized originals to the [runtime evidence folder](run-evidence/README.md) using the [runtime evidence template](run-evidence/runtime-evidence-template.md). Prioritize the ADF master and child run records, Databricks Silver/Gold run details, same-interval replay comparison, Gold output counts, and reconciliation/audit outputs.
 
-Before redeploying or enabling a source in a new environment:
+The successful end-to-end status does not depend on reproducing the deployment merely to create portfolio screenshots.
 
-1. Validate the source table, business key, cursor type/precision, timezone, initial-load behavior, late visibility, equal cursor values, and delete semantics.
-2. Confirm only approved `is_active = 1` control rows are enabled; validate that `control_id` is non-null and unique across the full control table and that active `(schema_name, table_name, watermark_column)` mappings are unique. Enforce an approved allowlist for dynamic SQL identifiers and restrict control-table write access.
-3. Confirm typed watermark serialization and null-checkpoint handling.
-4. Apply `20261105_create_sql_silver_control.sql` in the control database; populate approved target/key/required-column/type contracts for each active source and enable only reviewed sources. The ADF SQL branch already calls `Silver_SQL_Incremental` directly. Then replay the same bounded interval twice in an isolated environment and reconcile landing and target results.
-5. Import Gold_Analytics to /Shared/UberEats/notebooks/Gold_Analytics, deploy src.gold so the notebook can import the transformation module, and verify the Databricks linked service and catalog permissions.
-6. Run the master pipeline and verify all three child pipelines complete before Gold starts; reconcile the Gold output counts and gold_run_audit row.
-7. Test copy failure, Silver failure, checkpoint conflict, reconciliation mismatch, and safe rerun in the target environment.
-8. Configure identities, least-privilege permissions, and secret-backed connection settings.
-9. Retain actual run IDs, commit SHAs, counts, reconciliation results, and test outputs for any claims made.
+## Technical limitations to retain
 
-These are redeployment acceptance gates, not a request to recreate cloud resources solely for portfolio presentation.
+- A strict SQL lower watermark `>` can miss equal/older late-visible rows.
+- Hard deletes require CDC, tombstones, soft-delete flags, or a reconciliation strategy; the basic watermark query does not capture them automatically.
+- SQL control rows require valid typed starting watermarks; a null-checkpoint initial-load branch is not implemented.
+- Pipeline concurrency set to one serializes that ADF pipeline only; it is not a global lock against external writers.
+- Checkpoint compare-and-swap protects the SQL control-row update, not a distributed transaction across SQL, ADLS, and Databricks.
+- A successful tested replay does not establish universal exactly-once behavior for untested sources or scenarios.
+- The repository contains a business reporting SQL pack, not a deployed Power BI dashboard.
 
-## Portfolio claims
+## Safe portfolio description
 
-Safe description: **an Azure-oriented data engineering platform integrating API, CSV, and SQL sources through ADF, ADLS Gen2, and Databricks/PySpark. The original ingestion/Silver implementation ran successfully in its original environment. A newer Gold analytics extension adds order, daily KPI, payment, driver, and restaurant-feedback datasets with local Spark tests that pass in GitHub Actions, plus SQL reporting. The Gold deployment and master ADF orchestration await a fresh Azure rerun.**
+> Deployed and verified an Azure-based multi-source data engineering platform integrating API, CSV, and SQL ingestion through Azure Data Factory, ADLS Gen2, and Databricks/PySpark. Implemented Bronze, Silver, and Gold processing, incremental SQL ingestion with checkpoint controls and replay validation, data-quality and reconciliation checks, operational audit records, and master-pipeline orchestration. The project owner confirmed successful end-to-end operation after deployment; the repository validation suite passed 132 tests.
 
-Do not claim a currently deployed service, independent production certification, guaranteed exactly-once processing, or unmeasured performance outcomes.
-
-
-## New Gold extension release gate
-
-- [x] Define Gold table grains and metric semantics from the current Silver fields.
-- [x] Add reusable PySpark transformations and local synthetic-fixture tests.
-- [x] Add a master ADF definition with success dependencies for the API, CSV, and SQL child pipelines.
-- [x] Add business reporting SQL and run-audit retention contract.
-- [x] Run the local-mode PySpark suite in GitHub Actions; 131 tests passed in [run 41983203349](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41983203349).
-- [ ] Import the Gold notebook and make the src.gold module available in the target Databricks workspace.
-- [ ] Publish and validate the master ADF pipeline in the restored environment.
-- [ ] Run the end-to-end flow and reconcile actual Gold row counts and audit records.
-- [ ] Retain actual ADF, Databricks, and reconciliation evidence under the run-evidence process.
+Do not claim independent audit, production certification, a production SLA, or measured performance improvements without supporting evidence.
