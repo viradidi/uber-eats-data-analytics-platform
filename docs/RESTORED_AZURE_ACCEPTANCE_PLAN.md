@@ -1,12 +1,14 @@
-# Restored Azure Acceptance Plan
+# Azure Deployment and Acceptance Runbook
 
-## Purpose and status
+## Purpose and current status
 
-This is the single execution plan for validating the restored Uber Eats platform across SQL ingestion, Silver processing, Gold publication, and reconciliation.
+This document is retained as a repeatable deployment and acceptance procedure for recreating the platform in another Azure environment.
 
-**Current decision: NOT YET RUNTIME-ACCEPTED.** Repository validation is green, and the original ingestion/Silver environment was historically executed successfully as confirmed by the project owner. The later SQL ADF hardening, Gold layer, master ADF orchestration, and their current deployment configuration still require a controlled live acceptance run.
+**Current project status: deployment and end-to-end operation are complete, project-owner confirmed.** The successful deployed flow includes API, CSV, and SQL ingestion; Bronze/Silver processing; SQL Silver incremental replay; Gold publication; and reconciliation. The prior status that described Azure runtime acceptance as pending is superseded. See [DEPLOYMENT_ACCEPTANCE_RECORD.md](DEPLOYMENT_ACCEPTANCE_RECORD.md).
 
-Do not recreate Azure resources just to create portfolio screenshots. Use this plan when deliberately restoring a budgeted test environment.
+The steps below are a reusable procedure for a future redeployment or a fresh environment, not a list of outstanding tasks for the accepted deployment. Exact run IDs, timestamps, metrics, and exported logs from the accepted run have not yet been attached to the repository.
+
+Do not recreate Azure resources only to make portfolio screenshots. Use a budgeted environment and keep secrets outside source control.
 
 ## 1. Entry criteria — do not start the full master run until these pass
 
@@ -24,7 +26,7 @@ git diff
 .\\deployment\\azure\\deploy_adf_resources.ps1 -SubscriptionId <SUBSCRIPTION_ID> -ResourceGroupName <RESOURCE_GROUP> -FactoryName <DATA_FACTORY_NAME>
 ```
 
-The ADF deploy script creates/updates the factory, linked services, datasets, and four pipelines through the Data Factory REST API, then reads back representative deployed resources. It does not start a pipeline or create/provision its linked external services. The repository-owned SQL Silver notebook, its per-source contracts, and its live acceptance tests remain separate release gates.
+The ADF deploy script creates/updates the factory, linked services, datasets, and pipelines through the Data Factory REST API, then reads back representative deployed resources. It does not start a pipeline or create/provision its linked external services. The current deployment and end-to-end acceptance are owner-confirmed; use these steps when rebuilding in a different environment.
 
 Start with the [restored Azure configuration inventory](RESTORED_AZURE_CONFIGURATION_INVENTORY.md). Before publishing ADF artifacts, run `deployment/azure/configure_restore_environment.ps1` from PowerShell 7 with the approved values from the restored environment. It updates historic SQL, ADLS, Key Vault, API, Databricks and factory bindings together; review the local `git diff` before publishing. The CSV branch has been moved from the retired Windows File Server/self-hosted Integration Runtime to the `bronze/csv_source` folder in ADLS.
 
@@ -45,7 +47,7 @@ The deleted workspace-scoped Job ID `121055824417886` is historical only. The ac
 - [ ] Approve each source's target table, stable business/event key, required fields, complete Spark type map, update semantics, and delete policy before enabling its contract.
 - [ ] Pass the same-bounded-interval-twice replay test in an isolated target; also force a notebook/audit failure and verify that the SQL checkpoint does not advance.
 
-The replacement is repository-owned code, not a byte-for-byte recovery of the deleted job. Source-specific contracts and restored-environment execution are still required before SQL Silver can be accepted.
+The replacement is repository-owned code, not a byte-for-byte recovery of the deleted job. The owner confirms the configured replacement path was included in the successful end-to-end deployment. Preserve the source-contract and watermark limitations when onboarding another SQL source.
 
 ### SQL source and control contracts
 
@@ -191,7 +193,7 @@ Store evidence under the process in [Run Evidence and Retention](RUN_EVIDENCE_RE
 
 ## 8. Final go/no-go decision
 
-The restored release is accepted only when all of the following are true:
+For a future deployment, use the following go/no-go criteria. The current deployed project is already reported as accepted by its owner:
 
 - [ ] Repository-owned SQL Silver notebook is imported at the ADF-referenced path, and its source/destination contract and replay semantics are proven for each enabled source.
 - [ ] Source-specific SQL contracts and initial checkpoint values are approved.
@@ -205,4 +207,4 @@ The restored release is accepted only when all of the following are true:
 - [ ] Required recovery scenarios behave as expected.
 - [ ] Actual run evidence is retained and tied to the reviewed commit.
 
-Until then, the project can accurately be described as repository-tested, with the original ingestion/Silver implementation historically executed by the project owner, and the newer SQL hardening/Gold/master-orchestration scope awaiting restored-environment acceptance.
+Current project status: deployed and end-to-end operation verified, project-owner confirmed. Exact runtime evidence remains to be attached to [the acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md); do not treat this reusable checklist as an indication that the accepted deployment is still pending.
