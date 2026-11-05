@@ -6,7 +6,7 @@ An Azure-oriented data engineering project demonstrating API, CSV, and SQL inges
 **Focus:** Data Engineering · Cloud Data Platforms · Analytics Engineering  
 **Repository:** https://github.com/viradidi/uber-eats-data-analytics-platform
 
-> **Project status:** The original API/CSV/SQL ingestion and Silver implementation were successfully executed end to end in the original Azure environment, as confirmed by the project owner; those Azure resources were later decommissioned to control costs. The repository now includes the SQL Silver notebook replacement, SQL ADF hardening, Gold analytics, reporting SQL, and master ADF orchestration. GitHub Actions passed 131 tests in the repository validation suite in [run 41983203349](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41983203349) on commit `c6e0c2cbe47dc3b16826653bf8d3e024963f7f99`. This validates repository code and synthetic fixtures, not a live Databricks or ADF deployment. The remaining work is restoring/configuring the Azure environment and completing the documented end-to-end acceptance tests.
+> **Project status:** The project owner confirms that the completed platform has now been successfully deployed to Azure and verified end to end across API, CSV, and SQL ingestion; Bronze/Silver processing; incremental replay; Gold publication; and reconciliation. This includes the repository-owned SQL Silver notebook and master ADF orchestration. The repository's latest verified GitHub Actions run passed 132 tests in [run 41984330196](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41984330196) on commit `9ec8d65863f3a110119cb47e9789f39ec545c3d8`. That CI result validates repository code and synthetic fixtures; the live deployment and runtime acceptance are separately owner-confirmed. Exact Azure run IDs, runtime metrics, and exported logs have not yet been added to the evidence record.
 
 ---
 
@@ -38,7 +38,7 @@ The project also includes engineering controls and supporting documentation for 
 6. **Gold analytics:** A downstream Gold notebook builds order-level, daily performance, payment-method, driver, and restaurant-feedback tables.
 7. **Operational controls:** SQL reports, quality/reconciliation utilities, checkpoint logic, and runbooks support validation and recovery.
 
-The diagram and exported definitions describe the implemented project architecture. They are not a claim that the Azure resources remain deployed today.
+The diagram is a logical architecture view, not a live service map. The project owner separately confirms successful Azure deployment and end-to-end execution; this documentation does not claim continuous availability, an SLA, or independent production certification.
 
 For component-level detail, see [Architecture documentation](architecture/architecture.md).
 
@@ -72,7 +72,7 @@ The SQL incremental-load design uses a lower watermark and a captured upper wate
 
 The SQL pipeline now processes only `pipeline_control` rows marked `is_active = 1`; a pre-loop metadata check rejects null/duplicate control IDs across the control table and duplicate active source mappings with `SQL_DUPLICATE_ACTIVE_CONTROL_METADATA`, and a separate guard fails with `SQL_NO_ACTIVE_CONTROL_ROWS` when none are enabled, rather than allowing the master pipeline to publish Gold after a no-op SQL branch. It validates the configured schema, table, watermark column, identifier syntax, and datetime-family cursor type before querying a source. It also fails closed when a source has null watermark values. Source queries honor the configured schema. The SQL output dataset supplies a deterministic `.csv` filename from the control ID and watermark interval; the sink extension is also set to `.csv` for consistency. ADF uses the explicit dataset filename when configured, so this does not by itself prove replay-safe overwrites ([ADF file naming behavior](https://learn.microsoft.com/en-us/azure/data-factory/format-delimited-text)). The control dataset uses a `datetime2(7)` checkpoint contract. Apply the [non-destructive checkpoint precision migration](sql/migrations/20261104_widen_pipeline_checkpoint_to_datetime2_7.sql) before deploying that updated contract.
 
-These controls reduce specific failure and concurrency risks, but a watermark alone does not guarantee complete change capture. The strict lower boundary still does not capture equal/older late arrivals or hard deletes. A per-source overlap or CDC strategy must be paired with a known business key and replay-safe Silver merge before it is enabled. The ADF SQL branch now invokes repository-owned `Silver_SQL_Incremental` after copying one bounded CSV interval. The notebook requires an enabled `dbo.sql_silver_control` contract, explicit Spark types, required columns, and stable business keys; it reads only the exact batch file, validates cursor bounds/keys, and applies a version-aware Delta MERGE. The same-version conflict and replay rules are covered by local tests for batch validation and static contract checks. The actual source-specific metadata and live same-interval Delta replay test remain required before enabling any SQL control row. See [SQL Silver job reconstruction](docs/SQL_SILVER_JOB_RECONSTRUCTION.md).
+These controls reduce specific failure and concurrency risks, but a watermark alone does not guarantee complete change capture. The strict lower boundary still does not capture equal/older late arrivals or hard deletes. A per-source overlap or CDC strategy must be paired with a known business key and replay-safe Silver merge before it is enabled. The ADF SQL branch now invokes repository-owned `Silver_SQL_Incremental` after copying one bounded CSV interval. The notebook requires an enabled `dbo.sql_silver_control` contract, explicit Spark types, required columns, and stable business keys; it reads only the exact batch file, validates cursor bounds/keys, and applies a version-aware Delta MERGE. The same-version conflict and replay rules are covered by local tests for batch validation and static contract checks. The project owner confirms the configured SQL Silver path and incremental replay were included in the successful deployed end-to-end acceptance. The strict-watermark and delete limitations remain applicable outside the tested source contract. See [SQL Silver job reconstruction](docs/SQL_SILVER_JOB_RECONSTRUCTION.md).
 
 For API endpoints, timestamped landing snapshots accumulate in the endpoint folders. The API Silver notebooks now use a shared PySpark replay helper: exact snapshot replays are collapsed, payment/delivery/rating entities retain the greatest source `updated_at`, and order-status history uses the composite event key `(order_id, status_timestamp)`. Conflicting payloads with the same key and source version fail before publication. This does not remove the separate late/equal-watermark and delete limitations in the SQL incremental source pattern.
 
@@ -200,19 +200,19 @@ See the [GitHub Actions workflow history](https://github.com/viradidi/uber-eats-
 
 ## 8. Validation status and deployment boundary
 
-The project owner confirms that the original ingestion and Silver implementation ran end to end successfully before the cloud environment was decommissioned to avoid ongoing costs. The Gold layer and master ADF orchestration are newer additions and still require redeployment and live validation.
+The project owner confirms that the completed platform has been deployed successfully to Azure and that end-to-end operation has been verified. The confirmed scope includes API, CSV, and SQL ingestion; Bronze and Silver processing; repository-owned SQL Silver processing; incremental replay validation; Gold publication; and reconciliation.
 
-The following distinction is important when reviewing the repository:
+The latest repository test evidence is [GitHub Actions run 41984330196](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41984330196), which passed 132 tests on commit `9ec8d65863f3a110119cb47e9789f39ec545c3d8`. CI checks repository code and synthetic fixtures; it is not the Azure runtime test. The deployment and end-to-end runtime outcome are recorded separately as project-owner-confirmed in the [Azure deployment and acceptance record](docs/DEPLOYMENT_ACCEPTANCE_RECORD.md).
 
-| What remains available | What is not currently implied |
+| Evidence available | Boundary |
 |---|---|
-| Application source code and synthetic fixtures | A continuously running API deployment |
-| Exported Azure Data Factory resource definitions | A currently deployed ADF factory |
-| Databricks Silver and Gold notebook exports, shared utilities, and local Spark tests | A currently available Databricks workspace or live job |
-| Automated API, repository, and local PySpark tests plus ADF static-contract checks | Proof that every cloud service is executing now |
-| Architecture, source contracts, SQL reviews, and runbooks | Independent production certification or an ongoing production SLA |
+| Repository code, exported ADF definitions, Databricks notebooks, SQL, tests, runbooks, and architecture | Establishes the implementation artifacts and documented design |
+| Successful Azure deployment and end-to-end execution | Confirmed by the project owner; exact runtime identifiers and logs are not attached yet |
+| GitHub Actions run with 132 passing tests | Validates repository tests and local/synthetic behavior, not live Azure services |
+| Five documented Gold output contracts and reporting SQL | Establishes the analytics design; use actual runtime exports for quantified row-count claims |
+| Operational recovery and source-contract documentation | Describes controls and limitations; claim only the failure scenarios actually exercised |
 
-Historical end-to-end validation is the project owner's reported completion status. Current cloud availability is a separate matter. Where retained run IDs, logs, screenshots, or reconciliation outputs are available, they can provide additional evidence of the historical execution.
+The missing ADF/Databricks run IDs and sanitized exports are an evidence-retention gap, not an outstanding deployment or end-to-end execution gate. A successful end-to-end run also does not establish a continuously running service, a production SLA, independent certification, or universal exactly-once/change-data-capture guarantees.
 
 ## 9. Security and responsible use
 
