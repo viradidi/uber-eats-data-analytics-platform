@@ -15,7 +15,7 @@ The exact Azure deployment timestamp, ADF/Databricks run IDs, row counts, and ex
 - FastAPI mock source API and synthetic domain data.
 - API, CSV, and SQL ingestion patterns orchestrated through Azure Data Factory.
 - ADLS Gen2 Bronze landing and Databricks/PySpark Silver processing.
-- Repository-owned `Silver_SQL_Incremental` notebook and metadata-driven SQL Silver contract.
+- Repository-owned `Silver_SQL_Incremental` notebook and metadata-driven SQL Silver contract stored in `dbo.sql_silver_control`.
 - Incremental SQL extraction with captured upper bounds, checkpoint controls, and replay validation for the accepted source configuration.
 - Five Gold analytics outputs: `gold_order_360`, `gold_daily_order_performance`, `gold_payment_method_performance`, `gold_restaurant_feedback`, and `gold_driver_performance`.
 - Master ADF orchestration that gates Gold publication on successful API, CSV, and SQL ingestion.
