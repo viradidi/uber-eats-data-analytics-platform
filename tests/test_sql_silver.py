@@ -8,6 +8,7 @@ from pyspark.sql import SparkSession
 from src.common.sql_silver import (
     parse_column_types,
     parse_identifier_list,
+    parse_watermark_bound,
     prepare_sql_silver_batch,
     validate_target_table,
 )
@@ -55,6 +56,20 @@ class SqlSilverContractTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(ValueError, "fully qualified"):
             validate_target_table("silver.orders; DROP TABLE x")
+
+    def test_spark_timestamp_precision_loss_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, "sub-microsecond precision"):
+            parse_watermark_bound(
+                "2026-01-01T10:00:00.1234567",
+                "lower_watermark",
+            )
+        self.assertEqual(
+            datetime(2026, 1, 1, 10, 0, 0, 123456),
+            parse_watermark_bound(
+                "2026-01-01T10:00:00.1234560",
+                "lower_watermark",
+            ),
+        )
 
     def test_batch_is_typed_bounded_and_rejects_duplicate_keys(self):
         raw = self.spark.createDataFrame(
