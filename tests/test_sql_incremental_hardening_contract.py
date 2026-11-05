@@ -14,6 +14,10 @@ REVIEW = (ROOT / "docs/SQL_INCREMENTAL_LOAD_REVIEW.md").read_text(encoding="utf-
 SOURCE_CONTRACT = (ROOT / "docs/INCREMENTAL_SOURCE_CONTRACT.md").read_text(encoding="utf-8")
 PREFLIGHT = (ROOT / "docs/SQL_INCREMENTAL_CONTROL_PREFLIGHT.sql").read_text(encoding="utf-8")
 SOURCE_DIAGNOSTIC = (ROOT / "sql/diagnostics/inspect_source_contract_candidates.sql").read_text(encoding="utf-8")
+SQL_SILVER_MIGRATION = (ROOT / "sql/migrations/20261105_create_sql_silver_control.sql").read_text(encoding="utf-8")
+SQL_SILVER_NOTEBOOK = (ROOT / "notebooks/Silver_SQL_Incremental.py").read_text(encoding="utf-8")
+SQL_SILVER_HELPER = (ROOT / "src/common/sql_silver.py").read_text(encoding="utf-8")
+DATABRICKS_IMPORTER = (ROOT / "deployment/databricks/import_workspace_assets.ps1").read_text(encoding="utf-8")
 
 
 def find_activity(activities, name):
@@ -260,13 +264,87 @@ class SqlIncrementalHardeningContractTests(unittest.TestCase):
             self.assertNotIn(forbidden, upper)
         self.assertIn("source owners must approve keys and cursor semantics", SOURCE_DIAGNOSTIC)
 
-    def test_sql_silver_job_is_external_and_replay_contract_is_not_assumed(self):
+    def test_sql_silver_is_a_repository_owned_notebook_and_checkpoint_waits_for_it(self):
         branch = find_activity(self.activities, "rowscount is there")["typeProperties"]["ifTrueActivities"]
         silver = find_activity(branch, "Job_Silver_copy1")
-        self.assertEqual("121055824417886", silver["typeProperties"]["jobId"])
-        self.assertIn("no source-controlled SQL-specific Silver job definition", REVIEW)
-        self.assertIn("same landing interval is processed more than once", REVIEW)
-        self.assertIn("target write mode", SOURCE_CONTRACT)
+        self.assertEqual("DatabricksNotebook", silver["type"])
+        self.assertEqual(
+            "/Shared/UberEats/notebooks/Silver_SQL_Incremental",
+            silver["typeProperties"]["notebookPath"],
+        )
+        params = silver["typeProperties"]["baseParameters"]
+        for name in (
+            "control_id", "schema_name", "table_name", "target_table",
+            "watermark_column", "lower_watermark", "upper_watermark",
+            "business_key_columns_json", "required_columns_json",
+            "column_types_json", "bronze_root", "batch_file_name",
+        ):
+            self.assertIn(name, params)
+        self.assertIn("ctl',string(item().control_id)", params["batch_file_name"]["value"])
+        self.assertEqual(
+            "Succeeded",
+            find_activity(branch, "update watermark_copy1")["dependsOn"][0]["dependencyConditions"][0],
+        )
+        self.assertEqual("Job_Silver_copy1", find_activity(branch, "update watermark_copy1")["dependsOn"][0]["activity"])
+
+    def test_active_sql_sources_require_enabled_silver_contract_before_copy(self):
+        lookup = find_activity(self.top, "Lookup_SQL_Control")
+        self.assertIn("LEFT JOIN dbo.sql_silver_control", lookup["typeProperties"]["source"]["sqlReaderQuery"])
+        validation = find_activity(self.top, "Validate active SQL Silver metadata")
+        self.assertIn("ISJSON", validation["typeProperties"]["source"]["sqlReaderQuery"])
+        gate = find_activity(self.top, "Require approved SQL Silver metadata")
+        self.assertEqual(
+            ["Require approved SQL Silver metadata"],
+            [item["activity"] for item in find_activity(self.top, "ForEach item")["dependsOn"]],
+        )
+        self.assertEqual(
+            ["Succeeded"],
+            [item["dependencyConditions"][0] for item in gate["dependsOn"]],
+        )
+        self.assertIn("SQL_SILVER_METADATA_NOT_READY", gate["typeProperties"]["ifFalseActivities"][0]["typeProperties"]["errorCode"])
+        dataset_columns = {
+            item["name"] for item in CONTROL_DATASET["properties"]["schema"]
+        }
+        self.assertTrue({
+            "sql_silver_is_enabled", "sql_silver_write_strategy",
+            "business_key_columns_json", "required_columns_json", "column_types_json",
+        }.issubset(dataset_columns))
+
+    def test_sql_silver_metadata_migration_is_fail_closed_and_seeds_no_source_contracts(self):
+        for token in (
+            "CREATE TABLE dbo.sql_silver_control",
+            "FOREIGN KEY (control_id) REFERENCES dbo.pipeline_control(control_id)",
+            "CHECK (write_strategy = 'DELTA_MERGE')",
+            "CHECK (",
+            "ISJSON(business_key_columns_json)",
+            "ISJSON(required_columns_json)",
+            "ISJSON(column_types_json)",
+            "is_enabled = 0",
+            "No source configurations were created or enabled",
+        ):
+            self.assertIn(token, SQL_SILVER_MIGRATION)
+        self.assertEqual([], list(ROOT.glob("sql/sources/*")))
+
+    def test_sql_silver_notebook_reads_one_exact_file_and_merges_with_contract_helper(self):
+        self.assertIn('.load(landing_file_path)', SQL_SILVER_NOTEBOOK)
+        self.assertIn('batch_file_name.endswith(".csv")', SQL_SILVER_NOTEBOOK)
+        self.assertNotIn('option("recursiveFileLookup", "true")', SQL_SILVER_NOTEBOOK)
+        for token in (
+            "parse_identifier_list",
+            "parse_column_types",
+            "prepare_sql_silver_batch",
+            "publish_delta_merge",
+            "write_sql_silver_audit",
+        ):
+            self.assertIn(token, SQL_SILVER_NOTEBOOK)
+        self.assertIn("DeltaTable.forName", SQL_SILVER_HELPER)
+        self.assertIn("whenMatchedUpdate", SQL_SILVER_HELPER)
+        self.assertIn("whenNotMatchedInsert", SQL_SILVER_HELPER)
+        self.assertIn("same watermark version", SQL_SILVER_HELPER)
+        self.assertIn("duplicate business-key groups", SQL_SILVER_HELPER)
+        self.assertIn('Silver_SQL_Incremental.py', DATABRICKS_IMPORTER)
+        self.assertIn('"src/common/sql_silver.py"', DATABRICKS_IMPORTER)
+        self.assertNotIn("Configure the SQL Silver Job separately", DATABRICKS_IMPORTER)
 
     def test_equal_or_older_late_arrivals_and_deletes_are_not_claimed_as_solved(self):
         self.assertIn("Late-arriving rows and equal watermark values", REVIEW)
