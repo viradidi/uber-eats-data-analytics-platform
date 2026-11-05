@@ -53,7 +53,7 @@ upper_watermark = required_widget("upper_watermark")
 business_key_columns_json = required_widget("business_key_columns_json")
 required_columns_json = required_widget("required_columns_json")
 column_types_json = required_widget("column_types_json")
-bronze_root = required_widget("bronze_root").rstrip("/")
+BRONZE_ROOT = required_widget("bronze_root").rstrip("/")
 batch_file_name = required_widget("batch_file_name")
 
 for label, value in (("schema_name", schema_name), ("table_name", table_name)):
@@ -71,7 +71,7 @@ required_columns = parse_identifier_list(
 )
 column_types = parse_column_types(column_types_json)
 
-landing_file_path = f"{bronze_root}/{table_name}/{batch_file_name}"
+landing_file_path = f"{BRONZE_ROOT}/{table_name}/{batch_file_name}"
 run_id = str(uuid.uuid4())
 audit_base = {
     "run_id": run_id,
@@ -102,7 +102,7 @@ try:
         .option("inferSchema", "false")
         .option("mode", "FAILFAST")
         .option("encoding", "UTF-8")
-        .load(landing_file_path)
+        .load(f"{BRONZE_ROOT}/{table_name}/{batch_file_name}")
     )
 
     prepared_batch, validation_metrics = prepare_sql_silver_batch(
