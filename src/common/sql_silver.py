@@ -271,7 +271,18 @@ def publish_delta_merge(
                 f"Target schema for {target} does not exactly match the approved SQL Silver contract"
             )
 
-        target_rows = existing.count()
+        target_key_missing = None
+        for key in keys:
+            missing = F.col(f"`{key}`").isNull()
+            if target_types[key] == "string":
+                missing = missing | (F.trim(F.col(f"`{key}`")) == "")
+            target_key_missing = (
+                missing if target_key_missing is None
+                else target_key_missing | missing
+            )
+        if existing.filter(target_key_missing).limit(1).count():
+            raise ValueError(f"Target {target} contains null/blank business keys")
+
         target_duplicate_groups = (
             existing.groupBy(*[F.col(f"`{key}`") for key in keys])
             .count()
