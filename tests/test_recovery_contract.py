@@ -105,7 +105,7 @@ class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
     def test_runbook_and_operations_document_safe_recovery(self):
         for term in ("do not edit it merely to make a run progress", "partial", "checkpoint", "does not claim automated rollback"):
             self.assertIn(term.lower(), RUNBOOK.lower())
-        self.assertIn("azure resources were later decommissioned", OPERATIONS.lower())
+        self.assertIn("successfully deployed to azure and verified end to end", OPERATIONS.lower())
         for report in ("OPERATIONAL_HEALTH_REPORT.sql", "DATA_QUALITY_TRENDS_AND_INCIDENTS.sql", "RECONCILIATION_AUDIT_QUERIES.sql"):
             self.assertTrue((ROOT / "docs" / report).is_file())
             self.assertIn(report.lower(), OPERATIONS.lower())
