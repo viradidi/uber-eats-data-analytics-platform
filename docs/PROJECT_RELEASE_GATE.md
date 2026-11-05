@@ -42,6 +42,8 @@ The acceptance status describes the tested configuration and end-to-end path. It
 - **Repository evidence:** source code, ADF exports, notebooks, SQL scripts, tests, and documentation are committed here.
 - **CI evidence:** the linked GitHub Actions run records 132 passing repository tests. It does not execute the Azure runtime.
 - **Runtime acceptance:** the project owner confirms successful Azure deployment and end-to-end operation.
+- **Architecture rationale:** see [Architecture Decision Records](ARCHITECTURE_DECISIONS.md).
+- **Senior review:** see [Senior Engineering Readiness Review](SENIOR_ENGINEERING_READINESS.md).
 - **Retained runtime artifacts:** exact ADF/Databricks run IDs, timestamps, logs, screenshots, table counts, and reconciliation exports are not yet attached. Do not invent them; add sanitized originals when available.
 - **Independent verification:** no third-party audit or production certification is claimed.
 
