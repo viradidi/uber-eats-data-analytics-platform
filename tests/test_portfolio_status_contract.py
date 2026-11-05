@@ -1,9 +1,9 @@
-"""Keep portfolio validation claims aligned with the latest repository evidence."""
+"""Keep portfolio validation claims aligned with the current deployment and CI evidence."""
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CI_RUN_URL = "https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41983203349"
+CI_RUN_URL = "https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41984330196"
 STATUS_FILES = (
     "README.md",
     "docs/PROJECT_CHECKLIST.md",
@@ -17,47 +17,35 @@ STATUS_FILES = (
 
 
 class PortfolioStatusContractTests(unittest.TestCase):
-    def test_status_documents_point_to_the_verified_131_test_ci_run(self):
+    def test_status_documents_point_to_the_verified_132_test_ci_run(self):
         for relative_path in STATUS_FILES:
             with self.subTest(path=relative_path):
                 content = (ROOT / relative_path).read_text(encoding="utf-8")
                 self.assertIn(CI_RUN_URL, content)
-                self.assertIn("131 tests", content)
+                self.assertIn("132 tests", content)
 
-    def test_local_spark_ci_is_not_misrepresented_as_live_cloud_validation(self):
+    def test_runtime_acceptance_is_distinguished_from_repository_ci(self):
+        acceptance = (ROOT / "docs/DEPLOYMENT_ACCEPTANCE_RECORD.md").read_text(encoding="utf-8")
+        self.assertIn("deployed and end-to-end operation verified", acceptance.lower())
+        self.assertIn("project owner", acceptance.lower())
+        self.assertIn("not supplied", acceptance.lower())
         for relative_path in STATUS_FILES:
             with self.subTest(path=relative_path):
                 content = (ROOT / relative_path).read_text(encoding="utf-8").lower()
-                self.assertTrue(
-                    "azure" in content or "databricks" in content,
-                    f"{relative_path} should preserve the cloud-validation boundary",
-                )
-        checklist = (ROOT / "docs/PROJECT_CHECKLIST.md").read_text(encoding="utf-8")
-        self.assertIn("[x] Run the local PySpark tests in GitHub Actions", checklist)
-        self.assertIn("[ ] Import Gold_Analytics into the target Databricks workspace", checklist)
-        self.assertIn("[ ] Complete and retain the source-specific incremental contract", checklist)
+                self.assertTrue("azure" in content or "databricks" in content)
+                self.assertNotIn("restored azure acceptance pending", content)
+                self.assertNotIn("awaiting a fresh azure", content)
 
-    def test_open_release_checklist_items_are_environment_acceptance_only(self):
-        for relative_path in ("docs/PROJECT_CHECKLIST.md", "docs/PROJECT_RELEASE_GATE.md"):
-            content = (ROOT / relative_path).read_text(encoding="utf-8")
-            open_items = [
-                line.strip()
-                for line in content.splitlines()
-                if line.lstrip().startswith("- [ ]")
-            ]
-            self.assertTrue(open_items, relative_path)
-            allowed_context = (
-                "restored", "source-specific", "active sql", "databricks",
-                "master adf", "gold", "actual adf", "azure", "checkpoint",
-            )
-            for item in open_items:
-                with self.subTest(path=relative_path, item=item):
-                    self.assertTrue(
-                        any(token in item.lower() for token in allowed_context),
-                        f"Non-environment task remains open: {item}",
-                    )
+    def test_only_evidence_curation_remains_open_in_the_project_checklist(self):
         checklist = (ROOT / "docs/PROJECT_CHECKLIST.md").read_text(encoding="utf-8")
-        self.assertNotIn("Add the repository to the portfolio website", checklist)
+        open_items = [
+            line.strip()
+            for line in checklist.splitlines()
+            if line.lstrip().startswith("- [ ]")
+        ]
+        self.assertEqual(1, len(open_items), open_items)
+        self.assertIn("actual ADF and Databricks run IDs", open_items[0])
+        self.assertIn("evidence curation only", open_items[0].lower())
 
     def test_deleted_external_job_is_replaced_by_repository_owned_sql_silver(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
