@@ -14,10 +14,17 @@ dbutils.widgets.text("required_columns_json", "")
 dbutils.widgets.text("column_types_json", "")
 dbutils.widgets.text("bronze_root", "")
 dbutils.widgets.text("batch_file_name", "")
+dbutils.widgets.text("project_root", "/Workspace/Shared/UberEats", "Shared project code root")
 
 import json
+import re
+import sys
 import uuid
 from datetime import datetime, timezone
+
+PROJECT_ROOT = dbutils.widgets.get("project_root").strip()
+if PROJECT_ROOT and PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 
 from src.common.sql_silver import (
     parse_identifier_list,
@@ -50,7 +57,7 @@ bronze_root = required_widget("bronze_root").rstrip("/")
 batch_file_name = required_widget("batch_file_name")
 
 for label, value in (("schema_name", schema_name), ("table_name", table_name)):
-    if not value.replace("_", "a").isalnum() or not value[0].isalpha() and value[0] != "_":
+    if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", value):
         raise ValueError(f"{label} contains an unsafe identifier")
 
 if "/" in batch_file_name or "\\" in batch_file_name or not batch_file_name.endswith(".csv"):
