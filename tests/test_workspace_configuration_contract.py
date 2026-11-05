@@ -235,6 +235,9 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
             "/Shared/UberEats/notebooks/Gold_Analytics",
             gold_activity["typeProperties"]["notebookPath"],
         )
+        release_gate = (ROOT / "docs/PROJECT_RELEASE_GATE.md").read_text(encoding="utf-8")
+        self.assertIn("/Shared/UberEats/notebooks/Gold_Analytics", release_gate)
+        self.assertNotIn("/Shared/UberEats/Gold_Analytics", release_gate)
 
     def test_silver_and_gold_notebooks_add_shared_workspace_package_root_before_imports(self):
         notebook_paths = (

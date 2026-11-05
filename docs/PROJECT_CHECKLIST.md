@@ -1,6 +1,6 @@
 # Project Completion and Evidence Checklist
 
-Use this checklist to track delivered artifacts and validation. **Current status:** the original ingestion/Silver platform was successfully run end to end, as confirmed by the project owner, and its Azure resources were later decommissioned. The repository's current local-mode PySpark suite has passed in GitHub Actions (121 tests in run [41901084241](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41901084241)). That is local Spark/CI evidence, not a fresh ADF or Databricks cloud run. The later Gold deployment and the newest SQL ADF/SQL migration changes still need live validation in a restored environment.
+Use this checklist to track delivered artifacts and validation. **Current status: repository implementation is complete; restored Azure configuration and runtime acceptance are the only remaining project gates.** The original ingestion/Silver platform was successfully run end to end, as confirmed by the project owner, and its Azure resources were later decommissioned to control costs. The repository's local-mode PySpark suite passed 131 tests in [GitHub Actions run 41983035191](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41983035191), commit `221d5ae44daf47f139da6372e0f0728b9ce16b24`. That is repository CI evidence against synthetic fixtures, not a fresh ADF or Databricks cloud run. The repository now includes the SQL Silver notebook replacement, disabled-by-default source contracts, Gold transformations, and master ADF orchestration. All remaining unchecked implementation/release items require restored source/target configuration, Azure deployment, or live cloud acceptance.
 
 ## Repository and documentation
 
@@ -8,7 +8,7 @@ Use this checklist to track delivered artifacts and validation. **Current status
 - [x] Logical architecture documented
 - [x] Verify all README links
 - [x] Canonical architecture diagram committed as an SVG; an additional screenshot is optional and not a release requirement
-- [ ] Record the source and licensing of any reused material (complete only if third-party material is introduced)
+- [x] Review reused project assets: no third-party media or copied external source code is identified in the delivered artifacts; runtime packages are declared as dependencies rather than vendored.
 
 ## Ingestion
 
@@ -62,7 +62,7 @@ Use this checklist to track delivered artifacts and validation. **Current status
 
 ## Operations
 
-- [x] Capture successful pipeline execution evidence
+- [x] Record owner-confirmed historical successful execution; the original run IDs and detailed logs were not retained and are explicitly documented as such.
 - [x] Add [read-only Databricks SQL audit queries](RECONCILIATION_AUDIT_QUERIES.sql) for latest quality outcomes, reconciliation failures, failure-event correlation, rejected-row summaries, and merge-reconciliation outcomes. The SQL is code-reviewed for table-reference consistency; live execution validated by project owner.
 - [x] Add a [dataset-level operational health report](OPERATIONAL_HEALTH_REPORT.sql) combining latest quality and merge-reconciliation outcomes with failure and quarantine volumes from the last 24 hours. Statuses remain NULL when no recorded result exists; the report is read-only and validated by project owner against the target environment.
 - [x] Add a [recovery and rerun runbook](RECOVERY_AND_RERUN_RUNBOOK.md) covering failure triage, SQL incremental recovery, Silver notebook recovery, checkpoint advancement gates, and rerun acceptance checks. Procedures are documented; live Azure recovery validated by project owner.
@@ -74,10 +74,11 @@ Use this checklist to track delivered artifacts and validation. **Current status
 
 ## Release
 
+A portfolio-website listing is optional external publishing work and is not a project-completion or Azure-release gate.
+
 - [x] Verify the README renders correctly on GitHub
 - [x] Align the secondary architecture overview with the canonical SVG and detailed architecture document
 - [x] Align project status language across README, architecture, portfolio evidence, and final handoff
-- [ ] Add the repository to the portfolio website (optional external publishing task)
 
 
 ## Merge-based Silver reconciliation milestone
@@ -124,7 +125,7 @@ See the [consolidated release-readiness review](RELEASE_READINESS_REVIEW.md) and
 - [x] Replace deleted-workspace SQL Silver job `121055824417886` with repository-owned `Silver_SQL_Incremental`; ADF now passes one exact bounded CSV batch and approved metadata to a version-aware Delta MERGE notebook
 - [x] Add disabled-by-default `dbo.sql_silver_control` migration, pre-copy ADF metadata gate, workspace import, key reconciliation, run audit, and local tests
 - [ ] Configure and approve every active SQL source's target, business key, required fields, Spark type map, cursor semantics, and delete treatment; then run same-interval replay in the restored environment
-- [ ] Collect and retain any available successful-run, failure, retry, and reconciliation artifacts; otherwise record the evidence as not retained rather than reconstructing it
+- [x] Record that historical Azure run IDs, failure/retry logs, and detailed reconciliation outputs were not retained after resource decommissioning; retain actual evidence from the next Azure acceptance cycle.
 - [x] Complete final README link/render review (portfolio-site listing remains optional)
 
 A checked repository artifact means the relevant code or documentation is present. Runtime validation items marked complete reflect the project owner's confirmation that validation was performed; retain available run logs and outputs as supporting review evidence.
@@ -141,7 +142,7 @@ A checked repository artifact means the relevant code or documentation is presen
 - [x] Add local Spark tests and static ADF dependency-contract tests to CI.
 - [x] Add Gold run-audit design and run-evidence retention guidance.
 - [x] Fix generated API test payments to populate both payment_timestamp and updated_at as required by the Payments Silver contract.
-- [x] Run the local PySpark tests in GitHub Actions and review the actual workflow result: [121 tests passed in run 41901084241](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41901084241).
+- [x] Run the local PySpark tests in GitHub Actions and review the actual workflow result: [131 tests passed in run 41983035191](${newRun}).
 - [ ] Import Gold_Analytics into the target Databricks workspace and make src.gold available to the notebook.
 - [ ] Publish and run the master ADF pipeline in the restored environment.
 - [ ] Verify all five Gold tables, output counts, gold_run_audit rows, and reconciliation results.

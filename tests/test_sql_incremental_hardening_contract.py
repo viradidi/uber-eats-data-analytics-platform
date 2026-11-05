@@ -373,6 +373,9 @@ class SqlIncrementalHardeningContractTests(unittest.TestCase):
         self.assertIn("strict lower bound", REVIEW)
         self.assertIn("hard deletes", REVIEW)
         self.assertIn("a watermark is a progress cursor", SOURCE_CONTRACT.lower())
+        self.assertIn("Silver_SQL_Incremental", SOURCE_CONTRACT)
+        self.assertIn("sql_silver_control", SOURCE_CONTRACT)
+        self.assertNotIn("external Databricks job ID", SOURCE_CONTRACT)
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@
 
 ## Release decision
 
-**Portfolio status: ORIGINAL INGESTION/SILVER SCOPE COMPLETED; GOLD EXTENSION AWAITS LIVE VALIDATION.** The project owner confirms that the original end-to-end ingestion and Silver implementation ran successfully in its Azure environment. Resources were subsequently decommissioned to control costs. The Gold notebook, master ADF pipeline, and business reporting SQL are newer additions that require a fresh Azure environment rerun. The local-mode PySpark suite has passed in GitHub Actions: 121 tests in [run 41901084241](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41901084241).
+**Portfolio and repository status: IMPLEMENTATION COMPLETE; RESTORED AZURE ACCEPTANCE PENDING.** The project owner confirms that the original end-to-end ingestion and Silver implementation ran successfully in its Azure environment. Those resources were decommissioned to control costs. The repository now contains the SQL Silver notebook replacement, SQL ADF hardening, Gold transformations/reporting, and master ADF orchestration. The latest verified repository suite passed 131 tests in [GitHub Actions run 41983035191](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41983035191). This is repository-level evidence, not a live Azure or Databricks run. The only remaining project gates are environment-specific source/target configuration, deployment, and cloud acceptance.
 
 The historical execution statement is owner-reported. It is not an independent audit, production certification, or proof that the environment is still running. New local PySpark tests validate Gold transformations against synthetic DataFrames; static tests validate the exported ADF dependency contract. Neither executes ADF or Databricks in Azure.
 
@@ -39,7 +39,7 @@ Before redeploying or enabling a source in a new environment:
 2. Confirm only approved `is_active = 1` control rows are enabled; validate that `control_id` is non-null and unique across the full control table and that active `(schema_name, table_name, watermark_column)` mappings are unique. Enforce an approved allowlist for dynamic SQL identifiers and restrict control-table write access.
 3. Confirm typed watermark serialization and null-checkpoint handling.
 4. Apply `20261105_create_sql_silver_control.sql` in the control database; populate approved target/key/required-column/type contracts for each active source and enable only reviewed sources. The ADF SQL branch already calls `Silver_SQL_Incremental` directly. Then replay the same bounded interval twice in an isolated environment and reconcile landing and target results.
-5. Import Gold_Analytics to /Shared/UberEats/Gold_Analytics, deploy src.gold so the notebook can import the transformation module, and verify the Databricks linked service and catalog permissions.
+5. Import Gold_Analytics to /Shared/UberEats/notebooks/Gold_Analytics, deploy src.gold so the notebook can import the transformation module, and verify the Databricks linked service and catalog permissions.
 6. Run the master pipeline and verify all three child pipelines complete before Gold starts; reconcile the Gold output counts and gold_run_audit row.
 7. Test copy failure, Silver failure, checkpoint conflict, reconciliation mismatch, and safe rerun in the target environment.
 8. Configure identities, least-privilege permissions, and secret-backed connection settings.
@@ -60,7 +60,7 @@ Do not claim a currently deployed service, independent production certification,
 - [x] Add reusable PySpark transformations and local synthetic-fixture tests.
 - [x] Add a master ADF definition with success dependencies for the API, CSV, and SQL child pipelines.
 - [x] Add business reporting SQL and run-audit retention contract.
-- [x] Run the local-mode PySpark suite in GitHub Actions; 121 tests passed in [run 41901084241](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41901084241).
+- [x] Run the local-mode PySpark suite in GitHub Actions; 131 tests passed in [run 41983035191](${newRun}).
 - [ ] Import the Gold notebook and make the src.gold module available in the target Databricks workspace.
 - [ ] Publish and validate the master ADF pipeline in the restored environment.
 - [ ] Run the end-to-end flow and reconcile actual Gold row counts and audit records.
