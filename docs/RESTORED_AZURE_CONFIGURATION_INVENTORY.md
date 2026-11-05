@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document records every environment-bound value found in the committed ADF and Databricks exports. The original resource names are retained below as **reference values only**. They must not be assumed to exist or be reusable in the restored environment.
+This document records environment-bound values found in the committed ADF and Databricks exports. The project owner confirms that the platform has since been successfully deployed and verified end to end. The original resource names below are retained as **historical reference values only**; they are not a live inventory of the accepted deployment and must not be assumed to exist or be reusable. Use the checklist only when preparing a separate redeployment. See [the deployment acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md).
 
 ## 1. Azure Data Lake Storage
 
@@ -166,4 +166,4 @@ The first call is a dry run. The second performs REST create/update calls and re
 - [ ] Confirm current supported runtime and available node SKUs/quotas in the chosen region.
 - [ ] Publish ADF resources and validate all references before the first master run.
 
-Only after these environment-bound settings are resolved should the consolidated [restored Azure acceptance plan](RESTORED_AZURE_ACCEPTANCE_PLAN.md) be executed.
+For a future environment, resolve these environment-bound settings before using the [Azure deployment and acceptance runbook](RESTORED_AZURE_ACCEPTANCE_PLAN.md). The current project's deployment and end-to-end acceptance are owner-confirmed complete.
