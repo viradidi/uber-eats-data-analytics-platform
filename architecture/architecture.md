@@ -6,7 +6,7 @@ This document explains the architecture of the completed Uber Eats data engineer
 
 The platform demonstrates three source-ingestion patterns—REST API, CSV files, and SQL incremental extraction—followed by lake landing, Databricks/Spark Silver processing, a downstream Gold analytics extension, business reporting, validation, and operational recovery controls.
 
-The diagram is a logical view of the project, not a live service map. The project owner confirms that the end-to-end implementation was successfully executed and validated. The Azure resources used during that work were subsequently decommissioned to control costs; they are not represented as currently deployed or available.
+The diagram is a logical architecture view, not a live service map. The project owner confirms that the completed platform has since been successfully deployed to Azure and verified end to end. The diagram documents responsibilities and data flow; it does not establish continuous service availability, an SLA, or independent production certification.
 
 ## 2. End-to-end architecture
 
@@ -44,7 +44,7 @@ The API key is read from the API_KEY environment variable. The application fails
 
 ADF resource exports define separate API, CSV, and SQL incremental ingestion pipelines, alongside supporting dataset, linked-service, and factory configuration. The CSV path is ADLS-to-ADLS and does not require a self-hosted Integration Runtime.
 
-ADF provides orchestration and coordinates the pipeline activities. The exported JSON files are the versioned project definitions; they do not mean that an Azure Data Factory instance is currently running.
+ADF provides orchestration and coordinates the pipeline activities. The exported JSON files are the versioned project definitions. The project owner separately confirms successful deployment and end-to-end execution of the configured ADF flow; the exports themselves are not a live service-status feed.
 
 ### Metadata and configuration
 
@@ -143,7 +143,7 @@ These controls have boundaries. In particular, a watermark does not automaticall
 
 ## 7. Repository validation and historical execution
 
-The project owner confirms that the original ingestion and Silver platform was completed and successfully executed end to end before Azure resources were decommissioned to control costs. The repository now also includes a replacement SQL Silver notebook, SQL ADF hardening, Gold analytics, and master ADF orchestration; these newer changes require a fresh Azure deployment and runtime acceptance. The local-mode PySpark suite passed 131 tests in [GitHub Actions run 41983203349](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41983203349) on commit `c6e0c2cbe47dc3b16826653bf8d3e024963f7f99`. This tests repository behavior against synthetic data, not live Databricks or ADF deployment.
+The project owner confirms successful Azure deployment and end-to-end execution of the completed API/CSV/SQL, Bronze/Silver, SQL incremental replay, Gold, and master ADF flow. The latest local/repository validation passed 132 tests in [GitHub Actions run 41984330196](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41984330196) on commit `9ec8d65863f3a110119cb47e9789f39ec545c3d8`. This tests repository behavior against synthetic data, not live Databricks or ADF deployment. Runtime success is owner-confirmed; exact Azure run IDs and exports are listed as not yet attached in [the deployment acceptance record](../docs/DEPLOYMENT_ACCEPTANCE_RECORD.md).
 
 The repository retains implementation artifacts and repeatable checks, including API tests, local PySpark tests for Gold transformations, static ADF dependency-contract tests, and a GitHub Actions workflow that validates JSON/notebook structure, Python syntax, notebook portability, dependency installation, and the test suite. These checks do not execute live ADF or Databricks resources.
 
@@ -166,4 +166,4 @@ Do not commit live credentials or environment-specific secrets.
 
 ## 9. Architecture status
 
-This is the logical architecture of a completed project whose cloud environment was later decommissioned. The SVG and exported resource definitions document the implemented design; they do not imply current cloud availability, a live production service, an SLA, or independent production certification.
+This is the logical architecture of a completed and deployed project. The SVG and exported resource definitions document the implemented design; they do not provide live cloud availability monitoring, establish a production SLA, or imply independent production certification.
