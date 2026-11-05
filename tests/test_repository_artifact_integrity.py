@@ -114,16 +114,19 @@ class RepositoryArtifactIntegrityTests(unittest.TestCase):
         self.assertTrue((ROOT / "docs" / "PROJECT_RELEASE_GATE.md").is_file())
         self.assertIn("PROJECT_RELEASE_GATE.md", readme)
 
-    def test_release_gate_distinguishes_portfolio_completion_from_live_deployment(self):
+    def test_release_gate_records_owner_confirmed_deployment_acceptance(self):
         gate = (ROOT / "docs" / "PROJECT_RELEASE_GATE.md").read_text(encoding="utf-8").lower()
         for phrase in (
-            "portfolio and repository status: implementation complete; restored azure acceptance pending",
-            "original end-to-end ingestion and silver implementation ran successfully",
-            "not an independent audit",
-            "decommissioned to control costs",
-            "do not claim a currently deployed service",
+            "deployed and end-to-end accepted",
+            "project-owner confirmed",
+            "132 tests",
+            "not a release blocker",
+            "no third-party audit",
         ):
             self.assertIn(phrase, gate)
+        record = (ROOT / "docs" / "DEPLOYMENT_ACCEPTANCE_RECORD.md").read_text(encoding="utf-8").lower()
+        self.assertIn("successful deployment", record)
+        self.assertIn("runtime evidence register", record)
 
 
 if __name__ == "__main__":
