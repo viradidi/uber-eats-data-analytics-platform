@@ -5,7 +5,7 @@
 
 This runbook defines how to investigate failed ingestion and transformation runs, assess partial writes, decide whether a rerun is safe, and verify the recovered data.
 
-The project owner confirms that the platform was completed and successfully executed end to end. The Azure resources/environments were subsequently decommissioned to control costs, so there is no live deployment available for an operator to inspect today. The procedures below document the project's intended operational controls; apply them only after provisioning and validating an environment that matches the committed configuration. Historical successful execution should not be confused with current resource availability.
+The project owner confirms that the platform has been successfully deployed to Azure and verified end to end. The procedures below document how to investigate and recover a failed run in that deployed platform or a matching future environment. A successful end-to-end run does not mean every failure-injection scenario has been tested; retain actual incident/run evidence for each recovery exercise. This runbook is procedural guidance, not a live telemetry view.
 
 ## 1. First response: preserve evidence
 
