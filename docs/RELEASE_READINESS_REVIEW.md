@@ -23,7 +23,7 @@ That CI result is not a live ADF, SQL Server, ADLS, or Databricks execution. The
 | API incremental replay | Shared PySpark helper and Silver notebook exports; exact replays collapse, versioned entities retain latest source version, conflicting versions fail closed | Local Spark tests passed |
 | CSV ingestion/Silver | Exported ADF definitions, notebook exports, validation and reconciliation logic | Static/repository reviewed; original execution owner-confirmed |
 | SQL ADF extraction | Active control filtering, duplicate/null metadata guards, source-database catalog preflight, null cursor guard, bounded window, deterministic landing identity, concurrency=1, transactional checkpoint compare-and-swap; source and control SQL endpoints are explicitly separated | Static contract tests passed, including split-database routing; new deployment not runtime-tested |
-| SQL Silver destination behavior | ADF calls external job ID `121055824417886`; its actual settings and notebook/source are absent from this repository | **Open blocker** |
+| SQL Silver destination behavior | Repository-owned notebook reads the exact batch, validates per-source schema/key metadata, performs a version-aware Delta MERGE, reconciles keys, and appends a run audit; source contracts and live replay remain pending | **Implemented; source onboarding/runtime acceptance open** |
 | Gold transformation logic | Shared `src/gold` code, five output contracts, local PySpark fixtures/tests, Gold notebook export, business reporting SQL | Local Spark tests passed; workspace publication not proven |
 | Master orchestration | Master ADF export waits for API, CSV, and SQL child pipelines before Gold publication | Static dependency checks passed; ADF execution pending |
 | Notebook export consistency | Six paired Databricks SOURCE `.py` and Jupyter `.ipynb` exports match cell-for-cell; CI enforces parity and importer deploys canonical `.py` files | Repository-tested |
@@ -31,7 +31,7 @@ That CI result is not a live ADF, SQL Server, ADLS, or Databricks execution. The
 | Documentation and recovery | Source contracts, preflight SQL, runbooks, reconciliation queries, evidence retention, release gate | Repository reviewed |
 | CI | Current verified run records 121 tests passing | Passed |
 
-The 121-test run verifies the test suite and repository contracts on the recorded commit. It does not establish that external Databricks job ID `121055824417886` is replay-safe.
+The previously recorded 121-test run predates the SQL Silver replacement. The current CI run must pass before this code-level implementation is treated as repository-validated; no CI result proves live Delta merge or ADF execution.
 
 ## 3. Open gates — priority order
 
@@ -43,20 +43,22 @@ The current exports retain historic SQL, ADLS, Key Vault, API, Databricks worksp
 
 The Silver notebook Bronze-root defaults have been corrected to match the ADLS linked service, and the personal workspace path in the CSV dispatcher has been replaced by a configurable relative notebook root. A regression test now checks these contracts. Repeatable PowerShell scripts now stage the API/CSV metadata JSON and the three CSV source fixtures into ADLS, verifying remote file hashes. A Databricks workspace import script now imports the canonical notebooks and shared Python modules to the ADF-linked paths.
 
-The ADF linked-service cluster defaults and local PySpark tests are aligned on Databricks Runtime 16.4 LTS / Spark 3.5.2. The external SQL Silver Job may independently pin an older runtime in its own definition, so its export must be reviewed before deployment. The new PowerShell 7 restore-configuration script updates SQL, ADLS, Databricks, Key Vault, API and factory values together without writing secret values.
+The ADF linked-service cluster defaults and local PySpark tests are aligned on Databricks Runtime 16.4 LTS / Spark 3.5.2. The SQL Silver notebook is now source-controlled and imported with the other notebooks; its runtime compatibility, catalog permissions, and Delta writes still need validation in the restored workspace. The PowerShell 7 restore-configuration script updates SQL, ADLS, Databricks, Key Vault, API and factory values together without writing secret values.
 
-### P0 — Complete the external SQL Silver job review
+### P0 — Configure and accept repository-owned SQL Silver
 
-The committed SQL ADF pipeline passes `table_name` to job `121055824417886`, invokes it after the ADLS copy, and advances the checkpoint after that activity succeeds. The repository does not contain the SQL job configuration or notebook code. The API and CSV external Job IDs have been removed from the ADF pipelines: those branches now invoke the repository-owned dispatcher notebooks directly with the Bronze root passed from a factory global parameter.
+The deleted-workspace Job ID `121055824417886` has been removed from the active ADF pipeline. `Job_Silver_copy1` now invokes `/Shared/UberEats/notebooks/Silver_SQL_Incremental` as a direct `DatabricksNotebook` activity. The workspace importer deploys this notebook and `src/common/sql_silver.py`.
 
-Required before approving SQL replay behavior:
-- Export the job settings/task graph.
-- Export every referenced notebook/script and child job/dependency.
-- Verify table-to-input path selection and table-to-target mapping.
-- Determine the write mode, stable business keys, deduplication/version rules, failure atomicity, retries, and concurrency behavior.
-- Execute the same exact captured lower/upper interval twice in an approved test target and reconcile the business target.
+The new `dbo.sql_silver_control` migration stores each source's business key, required fields, and complete Spark type map. It defaults configurations to disabled. ADF fails before the copy loop when any active SQL source lacks an enabled and populated config.
 
-Follow [External SQL Silver Job Review](EXTERNAL_SQL_SILVER_JOB_REVIEW.md). Until complete, do not claim SQL destination idempotency or enable overlap on the basis of the deterministic landing filename.
+Required before enabling SQL sources:
+- Apply `20261105_create_sql_silver_control.sql` to the control database.
+- Complete and approve each source's target table, stable business key, cursor semantics, required fields, and complete `column_types_json`.
+- Verify the source contract against source SQL catalog metadata; candidate unique indexes are not automatic business-key approval.
+- Import the Databricks notebook/shared helper and verify ADLS/catalog permissions.
+- Run the same exact captured lower/upper interval twice in an isolated target; reconcile target keys/values and confirm a forced Silver failure does not advance the checkpoint.
+
+See [SQL Silver job replacement and source contract](SQL_SILVER_JOB_RECONSTRUCTION.md). The new notebook has not yet been executed in a restored Databricks workspace.
 
 ### P1 — Complete source-specific SQL contracts
 
@@ -95,4 +97,4 @@ Do not claim the current project is deployed, independently audited, production-
 
 ## 6. Review completion criteria
 
-Repository-side review is complete when the committed artifacts and evidence remain consistent and the external job export has either been reviewed or explicitly retained as an open dependency. Cloud release is complete only after every restored-environment go/no-go item in the acceptance plan has passed with actual evidence.
+Repository-side review is complete when the committed artifacts and evidence remain consistent, the SQL Silver notebook and metadata gate are covered by passing CI, and source-specific configuration tasks are clearly recorded. Cloud release is complete only after every restored-environment go/no-go item in the acceptance plan has passed with actual evidence.
