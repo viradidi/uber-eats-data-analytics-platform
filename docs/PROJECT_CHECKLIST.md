@@ -1,6 +1,6 @@
 # Project Completion and Evidence Checklist
 
-Use this checklist to track delivered artifacts and validation. **Current status: repository implementation is complete; restored Azure configuration and runtime acceptance are the only remaining project gates.** The original ingestion/Silver platform was successfully run end to end, as confirmed by the project owner, and its Azure resources were later decommissioned to control costs. The repository's local-mode PySpark suite passed 131 tests in [GitHub Actions run 41983035191](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41983035191), commit `221d5ae44daf47f139da6372e0f0728b9ce16b24`. That is repository CI evidence against synthetic fixtures, not a fresh ADF or Databricks cloud run. The repository now includes the SQL Silver notebook replacement, disabled-by-default source contracts, Gold transformations, and master ADF orchestration. All remaining unchecked implementation/release items require restored source/target configuration, Azure deployment, or live cloud acceptance.
+Use this checklist to track delivered artifacts and validation. **Current status: repository implementation is complete; restored Azure configuration and runtime acceptance are the only remaining project gates.** The original ingestion/Silver platform was successfully run end to end, as confirmed by the project owner, and its Azure resources were later decommissioned to control costs. The repository's local-mode PySpark suite passed 131 tests in [GitHub Actions run 41983203349](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41983203349), commit `c6e0c2cbe47dc3b16826653bf8d3e024963f7f99`. That is repository CI evidence against synthetic fixtures, not a fresh ADF or Databricks cloud run. The repository now includes the SQL Silver notebook replacement, disabled-by-default source contracts, Gold transformations, and master ADF orchestration. All remaining unchecked implementation/release items require restored source/target configuration, Azure deployment, or live cloud acceptance.
 
 ## Repository and documentation
 
@@ -142,7 +142,7 @@ A checked repository artifact means the relevant code or documentation is presen
 - [x] Add local Spark tests and static ADF dependency-contract tests to CI.
 - [x] Add Gold run-audit design and run-evidence retention guidance.
 - [x] Fix generated API test payments to populate both payment_timestamp and updated_at as required by the Payments Silver contract.
-- [x] Run the local PySpark tests in GitHub Actions and review the actual workflow result: [131 tests passed in run 41983035191](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41983035191).
+- [x] Run the local PySpark tests in GitHub Actions and review the actual workflow result: [131 tests passed in run 41983203349](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41983203349).
 - [ ] Import Gold_Analytics into the target Databricks workspace and make src.gold available to the notebook.
 - [ ] Publish and run the master ADF pipeline in the restored environment.
 - [ ] Verify all five Gold tables, output counts, gold_run_audit rows, and reconciliation results.
