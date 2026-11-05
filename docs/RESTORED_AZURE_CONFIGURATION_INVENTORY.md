@@ -26,11 +26,11 @@ Before deployment:
 
 - Confirm whether this SQL database is still the intended source/control database. Do not assume the historic endpoint is available.
 - Restore or provision the source tables and required control tables.
-- Apply [the idempotent ADF control-table bootstrap](../sql/migrations/20261104_create_ingestion_control_tables.sql) to create/verify both ADF control tables and seed the four API endpoint controls. Then add only approved SQL source-control rows to `dbo.pipeline_control`, using verified source table/keys/cursors and valid typed starting watermarks.
+- Apply [the idempotent ADF control-table bootstrap](../sql/migrations/20261104_create_ingestion_control_tables.sql) to create/verify both ADF control tables and seed the four API endpoint controls. Then add only approved SQL source-control rows to `dbo.pipeline_control`, using verified source tables/cursors and valid typed starting watermarks. Apply [the SQL Silver metadata migration](../sql/migrations/20261105_create_sql_silver_control.sql) and configure each approved source's target, business keys, required columns, and complete Spark type map in `dbo.sql_silver_control`.
 - Grant the restored Data Factory managed identity the required least-privilege SQL permissions.
 - Apply and verify the `datetime2(7)` checkpoint migration before deploying the updated checkpoint dataset.
 
-Run the [control-table bootstrap migration](../sql/migrations/20261104_create_ingestion_control_tables.sql) first, then apply the checkpoint precision migration if the existing column is not already `datetime2(7)`. The repository contains a read-only [control preflight](SQL_INCREMENTAL_CONTROL_PREFLIGHT.sql), checkpoint migration, and [incremental-run acceptance queries](SQL_INCREMENTAL_RUN_ACCEPTANCE_QUERIES.md). The actual active source rows and per-table source contracts are environment data and still need approval.
+Run the [control-table bootstrap migration](../sql/migrations/20261104_create_ingestion_control_tables.sql) first, then apply the checkpoint precision migration if the existing column is not already `datetime2(7)`, followed by [the SQL Silver metadata migration](../sql/migrations/20261105_create_sql_silver_control.sql). The repository contains a read-only [control preflight](SQL_INCREMENTAL_CONTROL_PREFLIGHT.sql), checkpoint migration, and [incremental-run acceptance queries](SQL_INCREMENTAL_RUN_ACCEPTANCE_QUERIES.md). The actual active source rows and per-table source contracts are environment data and still need approval.
 
 ## 3. Databricks workspace, Jobs, and runtime
 
@@ -41,17 +41,17 @@ The three Databricks linked services currently reference the historic workspace:
 
 Replace these values when using a different workspace and verify managed-identity access.
 
-The ADF factory export now carries a `bronze_root` global parameter consumed by the direct API and CSV notebook activities. Set this once to the restored ADLS container path. The linked-service cluster runtime is now aligned on **Databricks Runtime 16.4 LTS / Photon / Scala 2.12**. The local PySpark test requirement is aligned to Spark 3.5.2. Microsoft lists 16.4 LTS support through May 9, 2028; the previous 13.3 LTS support end date was August 22, 2026. See [Azure Databricks runtime versions and compatibility](https://learn.microsoft.com/en-us/azure/databricks/release-notes/runtime/). This alignment applies to the ADF linked-service cluster definitions; it does not update compute configured inside the remaining externally managed SQL Silver Job. Export and inspect that job definition too.
+The ADF factory export now carries a `bronze_root` global parameter consumed by the direct API and CSV notebook activities. Set this once to the restored ADLS container path. The linked-service cluster runtime is now aligned on **Databricks Runtime 16.4 LTS / Photon / Scala 2.12**. The local PySpark test requirement is aligned to Spark 3.5.2. Microsoft lists 16.4 LTS support through May 9, 2028; the previous 13.3 LTS support end date was August 22, 2026. See [Azure Databricks runtime versions and compatibility](https://learn.microsoft.com/en-us/azure/databricks/release-notes/runtime/). This alignment applies to the ADF linked-service cluster definitions. The SQL Silver notebook is now a repository-owned Databricks Notebook activity and is deployed by the workspace importer; verify its runtime, cluster policy, catalog, and storage access in the restored workspace.
 
 The API and CSV branches no longer depend on external Databricks Jobs. Their ADF activities invoke the repository-owned dispatchers directly through `DatabricksNotebook` activities, and the dispatchers invoke the correct Silver notebook from the relative `../notebooks` path. Both receive `bronze_root` from the Data Factory global parameter.
 
-The only remaining external ADF Job reference is SQL. Use deployment/databricks/export_sql_silver_job.ps1 to collect its job settings and workspace-backed notebook/script sources into a local review folder before sharing a sanitized package:
+The original SQL Job ID `121055824417886` is no longer referenced by ADF. The SQL branch now invokes the repository-owned notebook directly:
 
-| ADF activity | Job ID | Required action |
-|---|---:|---|
-| SQL `Job_Silver_copy1` | `121055824417886` | Export and complete the dedicated [SQL Silver job review](EXTERNAL_SQL_SILVER_JOB_REVIEW.md); its notebook/source is not included in this repository |
+| ADF activity | Workspace notebook | Required action |
+|---|---|---|
+| SQL `Job_Silver_copy1` | `/Shared/UberEats/notebooks/Silver_SQL_Incremental` | Apply the SQL Silver metadata migration, configure/approve each active source contract, then validate Delta writes and same-interval replay in the restored workspace |
 
-If that SQL Job is recreated, update the ADF SQL pipeline job ID and re-run the repository tests before publishing.
+The old export helper is retained only in case an independent backup of the deleted workspace/job is recovered.
 
 The Gold notebook is invoked at `/Shared/UberEats/notebooks/Gold_Analytics`. The [Databricks workspace import script](../deployment/databricks/import_workspace_assets.ps1) imports the notebook to that exact path and places the `src.gold` package under `/Shared/UberEats/src`. Confirm the default catalog `ubereats_databricks1` and `silver`/`gold` schemas exist or override the notebook widgets with the approved catalog/schema names.
 
