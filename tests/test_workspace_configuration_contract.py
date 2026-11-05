@@ -446,8 +446,9 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
         for token in (
             "notebooks/Silver_SQL_Incremental.py",
             "src/common/sql_silver.py",
-            "/Shared/UberEats/notebooks/Silver_SQL_Incremental",
-            "/Shared/UberEats/src/common/sql_silver.py",
+            '$WorkspaceRoot = "/Shared/UberEats"',
+            '"$WorkspaceRoot/notebooks/Silver_SQL_Incremental"',
+            '"$WorkspaceRoot/src/common/sql_silver.py"',
             "workspace",
             "get-status",
             "This updates only the SQL Silver notebook/module paths",
