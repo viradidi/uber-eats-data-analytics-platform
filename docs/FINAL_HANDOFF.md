@@ -2,13 +2,13 @@
 
 ## Project status
 
-**Status: original ingestion and Silver platform completed and historically executed end to end; Gold/reporting enhancements added afterward and awaiting a fresh Azure rerun. Cloud resources were decommissioned to control costs.**
+**Status: deployed to Azure and end-to-end operation verified — project-owner confirmed.**
 
-This repository is a reviewable, Azure-oriented data engineering portfolio project. Its committed artifacts cover a FastAPI mock source, synthetic sample data, API/CSV/SQL ingestion patterns, exported Azure Data Factory resources, Databricks Silver notebook exports, reusable Gold transformations and reporting SQL, shared Spark utilities, data-quality checks, reconciliation utilities, CI validation, and recovery documentation.
+The project owner confirms that the completed API/CSV/SQL platform, repository-owned SQL Silver path, Gold analytics layer, and master ADF orchestration have now been deployed and exercised end to end. The accepted flow includes Bronze/Silver processing, incremental replay validation, Gold publication, and reconciliation. The original Azure environment was previously decommissioned to control costs; the platform has since been successfully deployed and validated again.
 
-The project owner confirms that the original API/CSV/SQL ingestion and Silver implementation ran successfully in its original Azure environment. Those cloud resources were later intentionally decommissioned to avoid ongoing costs. The repository now also contains the SQL Silver notebook replacement and ADF hardening, Gold transformations/reporting, and master ADF orchestration; these newer changes still require acceptance in a restored Azure environment. GitHub Actions passed 131 tests in [run 41983203349](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41983203349) on commit `c6e0c2cbe47dc3b16826653bf8d3e024963f7f99`. That validates repository code and synthetic in-memory transformations, not workspace deployment, live Delta writes, or end-to-end orchestration. No detailed historical Azure run IDs or logs were retained; the historical execution statement remains owner-reported rather than independently evidenced.
+The latest repository validation is [GitHub Actions run 41984330196 — 132 tests passed](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41984330196) on commit `9ec8d65863f3a110119cb47e9789f39ec545c3d8`. CI validates repository code and synthetic fixtures, while the successful Azure deployment and end-to-end runtime outcome are separately project-owner-confirmed.
 
-This is owner-reported execution history, not independent third-party certification. Repository artifacts can be inspected directly; retained historical runtime evidence should be linked where available.
+The exact Azure deployment date, ADF/Databricks run IDs, row counts, and sanitized runtime exports have not yet been attached to this repository. See the [Azure deployment and acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md). This is an evidence-retention gap, not a pending deployment gate.
 
 ## What is delivered
 
@@ -51,14 +51,14 @@ Start with the [README](../README.md), then use these documents for deeper revie
 
 ## Validation and evidence boundaries
 
-The project owner confirms successful end-to-end execution in the original environment. The repository also contains automated validation definitions and tests. These are different forms of evidence:
+Keep the evidence types distinct:
 
-- **Historical cloud execution:** confirmed by the project owner; Azure resources are now decommissioned.
-- **Repository validation:** inspect the workflow and tests, including local-mode PySpark execution and static ADF contract checks. These validate code and exported definitions, not Azure runtime services.
-- **New Gold scope:** local Spark tests can validate transformations against synthetic in-memory inputs; only a later ADF/Databricks rerun can validate deployment, paths, identities, schemas, and actual Delta writes.
-- **Independent verification:** do not imply an external audit, current live deployment, production SLA, or certification unless separately supported by evidence.
+- **Repository validation:** the latest GitHub Actions run passed 132 tests. This validates the committed code, static resource contracts, and local/synthetic test scenarios.
+- **Azure runtime acceptance:** the project owner confirms successful deployment and end-to-end execution across API, CSV, and SQL ingestion, Bronze/Silver processing, incremental replay, Gold publication, and reconciliation.
+- **Retained runtime artifacts:** exact ADF/Databricks run IDs, detailed logs, timestamps, row counts, screenshots, and reconciliation exports have not yet been added to this repository. Do not invent them; attach sanitized originals when available.
+- **Independent verification:** do not imply an external audit, production certification, continuous availability, or a production SLA unless separately supported.
 
-No original Azure run IDs, detailed logs, or reconciliation exports were retained after resource decommissioning. Preserve any historical artifact only if it is independently recovered; otherwise say “not retained.” For the next Azure run, preserve actual pipeline/job run records, reconciliation outputs, test results, and commit references. Do not invent run IDs, metrics, row counts, screenshots, or outcomes.
+See [Azure deployment and acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md) and [Run Evidence and Retention](RUN_EVIDENCE_RETENTION.md) for the current evidence inventory and retention process.
 
 ## Engineering limitations to explain
 
@@ -68,7 +68,7 @@ The project is a strong implementation and design portfolio, but reviewers shoul
 - Source correctness depends on an explicit cursor contract and suitable overlap, replay, CDC, or reconciliation strategy where required.
 - Pipeline concurrency set to one serializes runs of that pipeline; it does not coordinate unrelated pipelines or external writers.
 - Compare-and-swap protects checkpoint advancement against stale updates, but does not alone make landing and Silver writes idempotent.
-- The deleted external Databricks job reference has been replaced with a repository-owned `Silver_SQL_Incremental` notebook activity. Per-source target/key/type contracts are stored in the disabled-by-default `dbo.sql_silver_control` table and must be completed/approved before SQL sources are enabled. The new notebook and Delta MERGE have not yet been executed in a restored Databricks workspace.
+- The deleted external Databricks job reference has been replaced with a repository-owned `Silver_SQL_Incremental` notebook activity. The project owner confirms the configured SQL Silver path was included in the deployed end-to-end run. The strict watermark, late-arrival, hard-delete, and null-checkpoint limitations documented in the source contract remain relevant.
 - Dynamic SQL identifiers must be validated against an allowlist and protected control metadata.
 - Repository tests do not substitute for a current live Azure integration run.
 
@@ -76,11 +76,16 @@ Use the linked source contracts and runbooks when discussing mitigations or futu
 
 ## Safe portfolio description
 
-> Built an Azure-oriented multi-source data engineering platform integrating API, CSV, and SQL sources through Azure Data Factory, ADLS Gen2, and Databricks/PySpark. The original ingestion/Silver implementation ran successfully in its original Azure environment. Added a Gold analytics extension with order, daily performance, payment, driver, and restaurant-feedback datasets, local Spark tests, and a master ADF orchestration definition; these newer additions are awaiting a fresh Azure runtime validation. Cloud resources were decommissioned to manage costs.
+> Deployed and verified an Azure-based multi-source data engineering platform integrating API, CSV, and SQL ingestion through Azure Data Factory, ADLS Gen2, and Databricks/PySpark. Implemented Bronze, Silver, and Gold processing, incremental SQL ingestion with checkpoint controls and replay validation, data-quality and reconciliation checks, operational audit records, and master-pipeline orchestration. The project owner confirms successful end-to-end operation after deployment; the repository validation suite also passed 132 tests.
 
-Describe successful execution as project-owner-confirmed history. Reserve claims such as production-certified, independently audited, or guaranteed end-to-end idempotent for cases where specific acceptance criteria and supporting evidence establish them.
+Use measured row counts, performance improvements, run durations, or cost figures only when supported by retained runtime outputs. Do not claim independent audit, production certification, or a production SLA.
 
-## No-cost posture and future operation
+## Evidence preservation and future operation
+
+The deployed end-to-end flow is complete according to the project owner. Preserve the corresponding ADF/Databricks run history, sanitized logs, reconciliation outputs, and deployment metadata when available. The repository includes an [Azure deployment and acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md) with the accepted scope and the runtime fields still to be populated.
+
+For future redeployment, use a budgeted environment, least-privilege identities, secret management, explicit source contracts, and the documented PowerShell 7 deployment/import procedures. Do not treat a future redeployment procedure as an outstanding task for the already accepted deployment.
+
 
 The source code, exported resource definitions, sample fixtures, tests, and documentation remain reviewable in GitHub. There is no requirement to recreate Azure resources just to keep the portfolio online or to produce screenshots.
 
