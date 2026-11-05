@@ -83,7 +83,7 @@ where (W) is the previously committed checkpoint. The upper bound remains fixed 
 6. Validate and reconcile the processed scope.
 7. Advance the checkpoint only after the configured downstream success dependency is satisfied.
 
-The exported ADF definition places the checkpoint update after successful completion of the Silver Databricks job. It also configures pipeline concurrency to one and uses a compare-and-swap style update against the previously read watermark, raising SQL error 51001 if the affected-row count is not exactly one.
+The exported ADF definition places the checkpoint update after successful completion of the repository-owned SQL Silver Databricks notebook. It also configures pipeline concurrency to one and uses a compare-and-swap style update against the previously read watermark, raising SQL error 51001 if the affected-row count is not exactly one.
 
 These safeguards do not provide a global lock across other pipelines or external writers, and they do not independently make landing or Silver writes idempotent. A failed compare-and-swap should trigger inspection of the current control row, competing writers, and destination state—not an unconditional retry using a newly observed value.
 
