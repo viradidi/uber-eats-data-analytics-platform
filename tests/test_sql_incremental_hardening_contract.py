@@ -326,7 +326,7 @@ class SqlIncrementalHardeningContractTests(unittest.TestCase):
         self.assertEqual([], list(ROOT.glob("sql/sources/*")))
 
     def test_sql_silver_notebook_reads_one_exact_file_and_merges_with_contract_helper(self):
-        self.assertIn('.load(landing_file_path)', SQL_SILVER_NOTEBOOK)
+        self.assertIn('.load(f"{BRONZE_ROOT}/{table_name}/{batch_file_name}")', SQL_SILVER_NOTEBOOK)
         self.assertIn('batch_file_name.endswith(".csv")', SQL_SILVER_NOTEBOOK)
         self.assertNotIn('option("recursiveFileLookup", "true")', SQL_SILVER_NOTEBOOK)
         for token in (
