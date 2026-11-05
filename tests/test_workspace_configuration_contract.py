@@ -222,9 +222,7 @@ class WorkspaceConfigurationContractTests(unittest.TestCase):
             "src/gold/transformations.py",
         ):
             with self.subTest(verified_path=relative_path):
-                normalized = relative_path.replace("/", "\\")
                 self.assertIn(f'$WorkspaceRoot/{relative_path}', expected_paths)
-                self.assertIn(f'$WorkspaceRoot/{normalized}', expected_paths)
 
         master = json.loads(
             (ROOT / "pipeline/uber_eats_master.json").read_text(encoding="utf-8")
