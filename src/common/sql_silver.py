@@ -157,27 +157,25 @@ def prepare_sql_silver_batch(
         invalid_cast_conditions.append(
             raw_value.isNotNull()
             & (F.trim(raw_value) != "")
-            & F.col(f"`{column}`").isNull()
+            & raw_value.cast(spark_type).isNull()
         )
     if invalid_cast_conditions:
         invalid_cast = invalid_cast_conditions[0]
         for condition in invalid_cast_conditions[1:]:
             invalid_cast = invalid_cast | condition
-        invalid_cast_count = casted.filter(invalid_cast).count()
+        invalid_cast_count = raw_df.filter(invalid_cast).count()
         if invalid_cast_count:
             raise ValueError(
                 f"SQL batch has {invalid_cast_count} non-empty values that fail "
                 "the approved column type contract"
             )
 
-    missing_required_conditions = [
-        F.col(f"`{column}`").isNull()
-        | (
-            (types[column] == "string")
-            & (F.trim(F.col(f"`{column}`")) == "")
-        )
-        for column in sorted(required_set)
-    ]
+    missing_required_conditions = []
+    for column in sorted(required_set):
+        missing = F.col(f"`{column}`").isNull()
+        if types[column] == "string":
+            missing = missing | (F.trim(F.col(f"`{column}`")) == "")
+        missing_required_conditions.append(missing)
     missing_required = missing_required_conditions[0]
     for condition in missing_required_conditions[1:]:
         missing_required = missing_required | condition
