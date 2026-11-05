@@ -79,6 +79,26 @@
         "type": "datetime",
         "precision": 23,
         "scale": 3
+      },
+      {
+        "name": "sql_silver_is_enabled",
+        "type": "bit"
+      },
+      {
+        "name": "sql_silver_write_strategy",
+        "type": "varchar"
+      },
+      {
+        "name": "business_key_columns_json",
+        "type": "nvarchar"
+      },
+      {
+        "name": "required_columns_json",
+        "type": "nvarchar"
+      },
+      {
+        "name": "column_types_json",
+        "type": "nvarchar"
       }
     ],
     "typeProperties": {
