@@ -5,7 +5,7 @@
 
 This guide describes the operational model for ingestion, transformation, data-quality checks, reconciliation, monitoring, and recovery across the Uber Eats data platform.
 
-The project owner confirms that the platform was completed and successfully executed end to end. Its Azure environments were later decommissioned to control costs; there is no current live deployment to inspect. This guide documents the project's implemented repository controls and recommended operating practices. It does not claim that the cloud resources are currently running or that every documented operational control was independently audited.
+The project owner confirms that the platform has been successfully deployed to Azure and verified end to end. This guide documents the implemented repository controls and recommended operating practices for that platform. It is not a live telemetry feed and does not establish current service health, continuous availability, an SLA, or independent audit of every operational control.
 
 ## 2. Operational principles
 
@@ -139,7 +139,7 @@ Keep notification integration separate from the core ingestion success path. A n
 
 The repository's GitHub Actions workflow performs repository-level checks, including JSON/notebook validation, Python and notebook code-cell syntax checks, dependency installation, unit tests, and API security configuration checks. These tests help detect regressions in committed assets; they do not execute Azure Data Factory expressions, contact Azure services, validate live credentials, or prove that a future deployment matches the repository.
 
-The project owner confirms that the platform previously ran end to end. Azure resources were later decommissioned to control costs. A redeployment should therefore include environment-specific configuration, secret provisioning, identity/permission checks, controlled source-to-target validation, and a supervised runtime recovery test before production use.
+The project owner confirms successful deployment and end-to-end execution. For any separate redeployment, complete environment-specific configuration, secret provisioning, identity/permission checks, controlled source-to-target validation, and a supervised runtime recovery test before production use.
 
 ## Related operational contracts
 
