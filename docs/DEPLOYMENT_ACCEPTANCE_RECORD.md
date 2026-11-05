@@ -2,7 +2,7 @@
 
 ## Current status
 
-<badge>Deployed and end-to-end operation verified — project-owner confirmed</badge>
+**Status: deployed and end-to-end operation verified — project-owner confirmed.**
 
 The project owner confirmed on **5 November 2026** that the Uber Eats data platform has been successfully deployed to Azure and that end-to-end operation has been verified. This supersedes the earlier repository status that described the Gold layer, repository-owned SQL Silver notebook, and master ADF orchestration as awaiting a restored-environment run.
 
