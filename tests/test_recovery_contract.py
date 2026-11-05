@@ -5,6 +5,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PIPELINE = json.loads((ROOT / "pipeline" / "sql_incremental pipeline.json").read_text(encoding="utf-8"))
+MASTER = json.loads((ROOT / "pipeline" / "uber_eats_master.json").read_text(encoding="utf-8"))
+SQL_SILVER_NOTEBOOK = (ROOT / "notebooks" / "Silver_SQL_Incremental.py").read_text(encoding="utf-8")
 RUNBOOK = (ROOT / "docs/RECOVERY_AND_RERUN_RUNBOOK.md").read_text(encoding="utf-8")
 REVIEW = (ROOT / "docs/SQL_INCREMENTAL_LOAD_REVIEW.md").read_text(encoding="utf-8")
 CONCURRENCY = (ROOT / "docs/CHECKPOINT_CONCURRENCY_CONTRACT.md").read_text(encoding="utf-8")
@@ -84,6 +86,22 @@ class IncrementalPipelineRecoveryContractTests(unittest.TestCase):
         self.assertIn("counts source rows whose watermark is greater", REVIEW.lower())
         self.assertIn("does not, by itself, guarantee", REVIEW.lower())
 
+    def test_master_run_id_is_propagated_to_sql_silver_audit(self):
+        master_sql = find_activity(MASTER["properties"]["activities"], "Run_SQL_Ingestion")
+        master_parameters = master_sql["typeProperties"]["parameters"]
+        self.assertEqual("@pipeline().RunId", master_parameters["parent_pipeline_run_id"]["value"])
+        self.assertEqual("String", PIPELINE["properties"]["parameters"]["parent_pipeline_run_id"]["type"])
+        sql_notebook = find_activity(self.loop, "Job_Silver_copy1")
+        base_parameters = sql_notebook["typeProperties"]["baseParameters"]
+        self.assertEqual("@pipeline().parameters.parent_pipeline_run_id", base_parameters["parent_pipeline_run_id"]["value"])
+        self.assertEqual("@pipeline().RunId", base_parameters["child_pipeline_run_id"]["value"])
+        self.assertIn("run_id = parent_pipeline_run_id or child_pipeline_run_id or str(uuid.uuid4())", SQL_SILVER_NOTEBOOK)
+
+    def test_recovery_runbook_references_repository_owned_sql_silver_notebook(self):
+        self.assertIn("/Shared/UberEats/notebooks/Silver_SQL_Incremental", RUNBOOK)
+        self.assertIn("src/common/sql_silver.py", RUNBOOK)
+        self.assertNotIn("121055824417886", RUNBOOK)
+        self.assertIn("master ADF run ID", RUNBOOK)
     def test_runbook_and_operations_document_safe_recovery(self):
         for term in ("do not edit it merely to make a run progress", "partial", "checkpoint", "does not claim automated rollback"):
             self.assertIn(term.lower(), RUNBOOK.lower())
