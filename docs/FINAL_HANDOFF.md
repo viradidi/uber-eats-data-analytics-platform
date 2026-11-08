@@ -6,7 +6,7 @@
 
 The project owner confirms that the completed API/CSV/SQL platform, repository-owned SQL Silver path, Gold analytics layer, and master ADF orchestration have now been deployed and exercised end to end. The accepted flow includes Bronze/Silver processing, incremental replay validation, Gold publication, and reconciliation. The original Azure environment was previously decommissioned to control costs; the platform has since been successfully deployed and validated again.
 
-The latest repository validation is [GitHub Actions run 41984330196 — 135 tests passed](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) on commit `034a19d5d62a94bb75e510f03e214f59590bf54a`. CI validates repository code and synthetic fixtures, while the successful Azure deployment and end-to-end runtime outcome are separately project-owner-confirmed.
+The latest repository validation is [GitHub Actions run #779 — 135 tests passed](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) on commit `034a19d5d62a94bb75e510f03e214f59590bf54a`. CI validates repository code and synthetic fixtures, while the successful Azure deployment and end-to-end runtime outcome are separately project-owner-confirmed.
 
 The exact Azure deployment date, ADF/Databricks run IDs, row counts, and sanitized runtime exports have not yet been attached to this repository. See the [Azure deployment and acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md). This is an evidence-retention gap, not a pending deployment gate.
 

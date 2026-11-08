@@ -4,7 +4,7 @@
 
 The project owner confirms successful Azure deployment and end-to-end operation of the completed platform. The accepted scope includes API, CSV, and SQL ingestion; Bronze/Silver processing; repository-owned SQL Silver processing; incremental replay validation; Gold publication; and reconciliation. See the [Azure deployment and acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md).
 
-The latest verified repository validation is [GitHub Actions run 41984330196](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338), with 135 tests passing on commit `034a19d5d62a94bb75e510f03e214f59590bf54a`. This is CI evidence for repository behavior and synthetic/local tests; it is not a substitute for Azure runtime evidence.
+The latest verified repository validation is [GitHub Actions run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338), with 135 tests passing on commit `034a19d5d62a94bb75e510f03e214f59590bf54a`. This is CI evidence for repository behavior and synthetic/local tests; it is not a substitute for Azure runtime evidence.
 
 The precise Azure deployment date, ADF and Databricks run IDs, activity logs, runtime row counts, and reconciliation exports have not yet been attached to this repository. They are marked as unavailable in the acceptance record rather than inferred or invented. This is a documentation/evidence-retention gap, not an indication that deployment or end-to-end validation is pending.
 

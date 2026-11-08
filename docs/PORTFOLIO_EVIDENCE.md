@@ -6,7 +6,7 @@ This guide helps a hiring manager or technical reviewer inspect the engineering 
 
 **Current runtime status:** the project owner confirms that the completed platform has been successfully deployed to Azure and verified end to end. The confirmed flow includes API, CSV, and SQL ingestion; Bronze/Silver processing; the repository-owned SQL Silver path; incremental replay validation; Gold publication; and reconciliation. The five documented Gold outputs are listed in the [Azure deployment and acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md).
 
-The latest repository CI evidence is [GitHub Actions run 41984330196](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338), with 135 tests passing on commit `034a19d5d62a94bb75e510f03e214f59590bf54a`. CI and live runtime acceptance are different evidence types: CI validates repository code/tests, while the Azure deployment and runtime outcome are project-owner-confirmed.
+The latest repository CI evidence is [GitHub Actions run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338), with 135 tests passing on commit `034a19d5d62a94bb75e510f03e214f59590bf54a`. CI and live runtime acceptance are different evidence types: CI validates repository code/tests, while the Azure deployment and runtime outcome are project-owner-confirmed.
 
 Exact ADF/Databricks run IDs, timestamps, runtime row counts, and exported logs have not yet been attached to the repository. The [acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md) marks them as not supplied rather than inventing values. This is an evidence-retention gap, not a pending deployment gate.
 
@@ -95,7 +95,7 @@ The end-to-end deployment and operation are owner-confirmed as successful. The p
 | Medium | Incremental replay scenario | Tested lower/upper interval, source changes, before/after target comparison, checkpoint state | Replay validation owner-confirmed; comparison export not attached |
 | Medium | Gold outputs and audit | Five Gold table counts and the corresponding `gold_run_audit` record | Gold publication owner-confirmed; exact counts/row not attached |
 | Medium | Recovery/rerun scenario | Failure condition, recovery action, rerun result, duplicate/checkpoint observations | Record only scenarios actually exercised |
-| High | GitHub Actions run | Direct URL, commit SHA, workflow name, conclusion | [135 tests passed in run 41984330196](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) |
+| High | GitHub Actions run | Direct URL, commit SHA, workflow name, conclusion | [135 tests passed in run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) |
 
 The absence of raw Azure exports does not reverse the successful deployment status. It limits the independent inspectability and quantitative detail of the portfolio evidence.
 

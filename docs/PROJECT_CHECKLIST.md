@@ -1,6 +1,6 @@
 # Project Completion and Evidence Checklist
 
-Use this checklist to track delivered artifacts and validation. **Current status: repository implementation, Azure deployment, and end-to-end runtime acceptance are complete according to the project owner.** The owner confirms that the deployed API, CSV, and SQL ingestion paths, Bronze/Silver processing, incremental replay, Gold publication, and reconciliation were exercised successfully. The latest repository CI passed 135 tests in [GitHub Actions run 41984330196](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) on commit `034a19d5d62a94bb75e510f03e214f59590bf54a`. Exact Azure run IDs, screenshots, logs, and measured row counts have not yet been added to the repository; see [the deployment acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md). That remaining evidence curation does not mean deployment or execution is pending.
+Use this checklist to track delivered artifacts and validation. **Current status: repository implementation, Azure deployment, and end-to-end runtime acceptance are complete according to the project owner.** The owner confirms that the deployed API, CSV, and SQL ingestion paths, Bronze/Silver processing, incremental replay, Gold publication, and reconciliation were exercised successfully. The latest repository CI passed 135 tests in [GitHub Actions run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) on commit `034a19d5d62a94bb75e510f03e214f59590bf54a`. Exact Azure run IDs, screenshots, logs, and measured row counts have not yet been added to the repository; see [the deployment acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md). That remaining evidence curation does not mean deployment or execution is pending.
 
 ## Repository and documentation
 
@@ -142,7 +142,7 @@ A checked repository artifact means the relevant code or documentation is presen
 - [x] Add local Spark tests and static ADF dependency-contract tests to CI.
 - [x] Add Gold run-audit design and run-evidence retention guidance.
 - [x] Fix generated API test payments to populate both payment_timestamp and updated_at as required by the Payments Silver contract.
-- [x] Run the local PySpark tests in GitHub Actions and review the actual workflow result: [135 tests passed in run 41984330196](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338).
+- [x] Run the local PySpark tests in GitHub Actions and review the actual workflow result: [135 tests passed in run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338).
 - [x] Import Gold_Analytics into the target Databricks workspace and make src.gold available to the notebook (deployed end-to-end acceptance owner-confirmed).
 - [x] Publish and run the master ADF pipeline in the deployed environment (owner-confirmed).
 - [x] Verify all five Gold tables, output counts, gold_run_audit rows, and reconciliation results (owner-confirmed; exact counts and exports not yet attached).
