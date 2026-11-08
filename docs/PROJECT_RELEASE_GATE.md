@@ -6,7 +6,7 @@
 
 The project owner confirms that the completed Uber Eats data platform has been successfully deployed to Azure and verified end to end. The accepted flow includes API, CSV, and SQL ingestion; Bronze and Silver processing; the repository-owned SQL Silver notebook; incremental replay validation; Gold publication; and reconciliation. The master ADF orchestration and five documented Gold outputs are part of the accepted scope.
 
-The latest repository validation passed **132 tests** in [GitHub Actions run 41984330196](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41984330196) on commit `9ec8d65863f3a110119cb47e9789f39ec545c3d8`. CI is repository evidence; the Azure runtime acceptance is separately project-owner-confirmed.
+The latest repository validation passed **135 tests** in [GitHub Actions run 41984330196](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) on commit `034a19d5d62a94bb75e510f03e214f59590bf54a`. CI is repository evidence; the Azure runtime acceptance is separately project-owner-confirmed.
 
 The exact Azure deployment timestamp, ADF/Databricks run IDs, row counts, and exported runtime logs have not yet been attached. This is an evidence-retention gap, not an outstanding release or deployment gate. See [DEPLOYMENT_ACCEPTANCE_RECORD.md](DEPLOYMENT_ACCEPTANCE_RECORD.md).
 
@@ -33,7 +33,7 @@ The exact Azure deployment timestamp, ADF/Databricks run IDs, row counts, and ex
 | Incremental replay | Verified for the accepted configuration, project-owner confirmed |
 | Master ADF orchestration | End-to-end flow verified, project-owner confirmed |
 | Five Gold outputs | Publication and reconciliation verified, project-owner confirmed |
-| Repository CI | 132 tests passed in the linked GitHub Actions run |
+| Repository CI | 135 tests passed in the linked GitHub Actions run |
 
 The acceptance status describes the tested configuration and end-to-end path. It does not imply that every possible late-arrival, delete, schema-evolution, or failure-injection scenario has been proven.
 
@@ -65,6 +65,6 @@ The successful end-to-end status does not depend on reproducing the deployment m
 
 ## Safe portfolio description
 
-> Deployed and verified an Azure-based multi-source data engineering platform integrating API, CSV, and SQL ingestion through Azure Data Factory, ADLS Gen2, and Databricks/PySpark. Implemented Bronze, Silver, and Gold processing, incremental SQL ingestion with checkpoint controls and replay validation, data-quality and reconciliation checks, operational audit records, and master-pipeline orchestration. The project owner confirmed successful end-to-end operation after deployment; the repository validation suite passed 132 tests.
+> Deployed and verified an Azure-based multi-source data engineering platform integrating API, CSV, and SQL ingestion through Azure Data Factory, ADLS Gen2, and Databricks/PySpark. Implemented Bronze, Silver, and Gold processing, incremental SQL ingestion with checkpoint controls and replay validation, data-quality and reconciliation checks, operational audit records, and master-pipeline orchestration. The project owner confirmed successful end-to-end operation after deployment; the repository validation suite passed 135 tests.
 
 Do not claim independent audit, production certification, a production SLA, or measured performance improvements without supporting evidence.
