@@ -6,7 +6,7 @@
 
 The project owner confirms that the completed API/CSV/SQL platform, repository-owned SQL Silver path, Gold analytics layer, and master ADF orchestration have now been deployed and exercised end to end. The accepted flow includes Bronze/Silver processing, incremental replay validation, Gold publication, and reconciliation. The original Azure environment was previously decommissioned to control costs; the platform has since been successfully deployed and validated again.
 
-The latest repository validation is [GitHub Actions run 41984330196 — 132 tests passed](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41984330196) on commit `9ec8d65863f3a110119cb47e9789f39ec545c3d8`. CI validates repository code and synthetic fixtures, while the successful Azure deployment and end-to-end runtime outcome are separately project-owner-confirmed.
+The latest repository validation is [GitHub Actions run 41984330196 — 135 tests passed](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) on commit `034a19d5d62a94bb75e510f03e214f59590bf54a`. CI validates repository code and synthetic fixtures, while the successful Azure deployment and end-to-end runtime outcome are separately project-owner-confirmed.
 
 The exact Azure deployment date, ADF/Databricks run IDs, row counts, and sanitized runtime exports have not yet been attached to this repository. See the [Azure deployment and acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md). This is an evidence-retention gap, not a pending deployment gate.
 
@@ -53,7 +53,7 @@ Start with the [README](../README.md), then use these documents for deeper revie
 
 Keep the evidence types distinct:
 
-- **Repository validation:** the latest GitHub Actions run passed 132 tests. This validates the committed code, static resource contracts, and local/synthetic test scenarios.
+- **Repository validation:** the latest GitHub Actions run passed 135 tests. This validates the committed code, static resource contracts, and local/synthetic test scenarios.
 - **Azure runtime acceptance:** the project owner confirms successful deployment and end-to-end execution across API, CSV, and SQL ingestion, Bronze/Silver processing, incremental replay, Gold publication, and reconciliation.
 - **Retained runtime artifacts:** exact ADF/Databricks run IDs, detailed logs, timestamps, row counts, screenshots, and reconciliation exports have not yet been added to this repository. Do not invent them; attach sanitized originals when available.
 - **Independent verification:** do not imply an external audit, production certification, continuous availability, or a production SLA unless separately supported.
@@ -76,7 +76,7 @@ Use the linked source contracts and runbooks when discussing mitigations or futu
 
 ## Safe portfolio description
 
-> Deployed and verified an Azure-based multi-source data engineering platform integrating API, CSV, and SQL ingestion through Azure Data Factory, ADLS Gen2, and Databricks/PySpark. Implemented Bronze, Silver, and Gold processing, incremental SQL ingestion with checkpoint controls and replay validation, data-quality and reconciliation checks, operational audit records, and master-pipeline orchestration. The project owner confirms successful end-to-end operation after deployment; the repository validation suite also passed 132 tests.
+> Deployed and verified an Azure-based multi-source data engineering platform integrating API, CSV, and SQL ingestion through Azure Data Factory, ADLS Gen2, and Databricks/PySpark. Implemented Bronze, Silver, and Gold processing, incremental SQL ingestion with checkpoint controls and replay validation, data-quality and reconciliation checks, operational audit records, and master-pipeline orchestration. The project owner confirms successful end-to-end operation after deployment; the repository validation suite also passed 135 tests.
 
 Use measured row counts, performance improvements, run durations, or cost figures only when supported by retained runtime outputs. Do not claim independent audit, production certification, or a production SLA.
 
