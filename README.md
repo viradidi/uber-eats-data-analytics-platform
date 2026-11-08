@@ -210,7 +210,7 @@ The latest repository test evidence is [GitHub Actions run #779](https://github.
 |---|---|
 | Repository code, exported ADF definitions, Databricks notebooks, SQL, tests, runbooks, and architecture | Establishes the implementation artifacts and documented design |
 | Successful Azure deployment and end-to-end execution | Confirmed by the project owner; exact runtime identifiers and logs are not attached yet |
-| GitHub Actions run with 132 passing tests | Validates repository tests and local/synthetic behavior, not live Azure services |
+| GitHub Actions run #779 with 135 passing tests | Validates repository tests and local/synthetic behavior, not live Azure services |
 | Five documented Gold output contracts and reporting SQL | Establishes the analytics design; use actual runtime exports for quantified row-count claims |
 | Operational recovery and source-contract documentation | Describes controls and limitations; claim only the failure scenarios actually exercised |
 
