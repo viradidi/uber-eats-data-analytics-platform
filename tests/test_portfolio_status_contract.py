@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CI_RUN_URL = "https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41984330196"
+CI_RUN_URL = "https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338"
 STATUS_FILES = (
     "README.md",
     "docs/PROJECT_CHECKLIST.md",
@@ -17,12 +17,12 @@ STATUS_FILES = (
 
 
 class PortfolioStatusContractTests(unittest.TestCase):
-    def test_status_documents_point_to_the_verified_132_test_ci_run(self):
+    def test_status_documents_point_to_the_latest_verified_135_test_ci_run(self):
         for relative_path in STATUS_FILES:
             with self.subTest(path=relative_path):
                 content = (ROOT / relative_path).read_text(encoding="utf-8")
                 self.assertIn(CI_RUN_URL, content)
-                self.assertIn("132 tests", content)
+                self.assertIn("135 tests", content)
 
     def test_runtime_acceptance_is_distinguished_from_repository_ci(self):
         acceptance = (ROOT / "docs/DEPLOYMENT_ACCEPTANCE_RECORD.md").read_text(encoding="utf-8")

@@ -1,9 +1,9 @@
 # Uber Eats — Consolidated Release Readiness Review
 
-**Review date:** 2026-11-05  
+**Review date:** 2026-11-08  
 **Repository:** [viradidi/uber-eats-data-analytics-platform](https://github.com/viradidi/uber-eats-data-analytics-platform)  
-**CI evidence:** [GitHub Actions run 41984330196 — 132 tests passed](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/41984330196)  
-**CI commit:** `9ec8d65863f3a110119cb47e9789f39ec545c3d8`
+**CI evidence:** [GitHub Actions run 41984330196 — 135 tests passed](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338)  
+**CI commit:** `034a19d5d62a94bb75e510f03e214f59590bf54a`
 
 ## 1. Release decision
 
@@ -13,7 +13,7 @@ The project owner confirms that the completed Uber Eats platform has been succes
 
 This supersedes the earlier review that treated the newer SQL hardening, Gold layer, and master orchestration as pending a restored Azure run. The exact Azure deployment timestamp, resource identifiers, ADF/Databricks run IDs, row counts, and raw runtime exports have not yet been attached to the repository. Those missing records are an evidence-retention gap, not an outstanding deployment gate. See [DEPLOYMENT_ACCEPTANCE_RECORD.md](DEPLOYMENT_ACCEPTANCE_RECORD.md).
 
-The 132-test GitHub Actions result is repository validation against committed artifacts and local/synthetic tests. It is not the Azure runtime evidence; the live deployment and end-to-end outcome are separately project-owner-confirmed.
+The 135-test GitHub Actions result is repository validation against committed artifacts and local/synthetic tests. It is not the Azure runtime evidence; the live deployment and end-to-end outcome are separately project-owner-confirmed.
 
 ## 2. What is delivered and accepted
 
@@ -27,7 +27,7 @@ The 132-test GitHub Actions result is repository validation against committed ar
 | Gold analytics | Five output models: order 360, daily order performance, payment-method performance, restaurant feedback, and driver performance | Publication and reconciliation owner-confirmed |
 | Master orchestration | API, CSV, and SQL child pipelines gate Gold publication | End-to-end flow owner-confirmed |
 | Repository consistency | Canonical Databricks source exports and workspace importer checks | Repository-tested |
-| CI | JSON/notebook validation, Python tests, local PySpark tests, static ADF contracts | 132 tests passed in linked Actions run |
+| CI | JSON/notebook validation, Python tests, local PySpark tests, static ADF contracts | 135 tests passed in linked Actions run |
 
 ## 3. Acceptance evidence and documentation gap
 
@@ -58,7 +58,7 @@ These are source- and scope-specific engineering boundaries, not evidence that t
 
 ## 5. Safe portfolio statement
 
-> Deployed and verified an Azure-based multi-source data engineering platform integrating API, CSV, and SQL ingestion through Azure Data Factory, ADLS Gen2, and Databricks/PySpark. Implemented Bronze, Silver, and Gold processing, incremental SQL ingestion with checkpoint controls and replay validation, data-quality and reconciliation checks, operational audit records, and master-pipeline orchestration. The project owner confirmed successful end-to-end operation after deployment; the repository validation suite passed 132 tests.
+> Deployed and verified an Azure-based multi-source data engineering platform integrating API, CSV, and SQL ingestion through Azure Data Factory, ADLS Gen2, and Databricks/PySpark. Implemented Bronze, Silver, and Gold processing, incremental SQL ingestion with checkpoint controls and replay validation, data-quality and reconciliation checks, operational audit records, and master-pipeline orchestration. The project owner confirmed successful end-to-end operation after deployment; the repository validation suite passed 135 tests.
 
 Do not claim independent audit, production certification, a production SLA, or measured performance improvements without retained supporting evidence.
 
