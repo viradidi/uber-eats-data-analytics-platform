@@ -27,7 +27,7 @@ The confirmation covers the deployed platform operating across the API, CSV, and
 | Incremental replay | Verified as part of acceptance, owner-confirmed | Captured interval and before/after comparison not attached |
 | Gold publication | Five documented Gold outputs included in the verified flow, owner-confirmed | Per-table counts and notebook run IDs not attached |
 | Reconciliation and run audit | Verified as part of end-to-end operation, owner-confirmed | Query exports and audit-row identifiers not attached |
-| Repository CI | 135 tests passed in [GitHub Actions run 41984330196](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) on commit `034a19d5d62a94bb75e510f03e214f59590bf54a` | CI validates repository code/tests; it is not the Azure runtime evidence |
+| Repository CI | 135 tests passed in [GitHub Actions run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) on commit `034a19d5d62a94bb75e510f03e214f59590bf54a` | CI validates repository code/tests; it is not the Azure runtime evidence |
 
 ## Runtime evidence register
 
@@ -52,7 +52,7 @@ The missing identifiers are an **evidence-retention gap**, not a claim that depl
 
 ## Repository validation
 
-The repository's latest verified test run is [GitHub Actions run 41984330196](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338), which passed **135 tests** on commit `034a19d5d62a94bb75e510f03e214f59590bf54a`. This supports the code-level validation claim. Keep it separate from the Azure runtime confirmation.
+The repository's latest verified test run is [GitHub Actions run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338), which passed **135 tests** on commit `034a19d5d62a94bb75e510f03e214f59590bf54a`. This supports the code-level validation claim. Keep it separate from the Azure runtime confirmation.
 
 ## Safe portfolio description
 
