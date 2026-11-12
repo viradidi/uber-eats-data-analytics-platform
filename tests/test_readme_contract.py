@@ -26,13 +26,13 @@ class ReadmeContractTests(unittest.TestCase):
 
     def test_readme_describes_current_architecture_and_validation_boundary(self):
         content = README.read_text(encoding="utf-8")
-        self.assertIn("## 4. Engineering work demonstrated", content)
-        self.assertIn("## 8. Validation status and deployment boundary", content)
-        self.assertIn("do not, by themselves, execute Azure Data Factory pipelines", content)
+        self.assertIn("## Engineering work demonstrated", content)
+        self.assertIn("## End-to-end execution and CI validation", content)
+        self.assertIn("does not provision or execute Azure Data Factory and Databricks services", content)
         self.assertIn("local-mode PySpark tests", content)
-        self.assertIn("They do not execute Azure Data Factory", content)
+        self.assertIn("Azure Data Factory pipelines", content)
         self.assertIn("docs/FINAL_HANDOFF.md", content)
-        self.assertIn("docs/PORTFOLIO_EVIDENCE.md", content)
+        self.assertIn("docs/PROJECT_RELEASE_GATE.md", content)
 
 
 if __name__ == "__main__":
