@@ -1,48 +1,32 @@
-# Run Evidence and Retention
+# Execution and validation notes
 
-## Current validation status
+## End-to-end execution status
 
-The project owner confirms successful Azure deployment and end-to-end operation of the completed platform. The accepted scope includes API, CSV, and SQL ingestion; Bronze/Silver processing; repository-owned SQL Silver processing; incremental replay validation; Gold publication; and reconciliation. See the [Azure deployment and acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md).
+The Uber Eats Data Engineering Platform was successfully deployed and executed end to end in Azure. The completed scope includes API, CSV and SQL ingestion; Bronze/Silver processing; repository-owned SQL Silver processing; incremental replay validation; Gold publication; and reconciliation. See the [Azure deployment and acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md).
 
-The latest verified repository validation is [GitHub Actions run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338), with 135 tests passing on commit `034a19d5d62a94bb75e510f03e214f59590bf54a`. This is CI evidence for repository behavior and synthetic/local tests; it is not a substitute for Azure runtime evidence.
+The latest repository validation is [GitHub Actions run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338), with 135 tests passing on commit `034a19d5d62a94bb75e510f03e214f59590bf54a`. CI validates repository behavior and synthetic/local tests; it does not substitute for the completed Azure execution.
 
-The precise Azure deployment date, ADF and Databricks run IDs, activity logs, runtime row counts, and reconciliation exports have not yet been attached to this repository. They are marked as unavailable in the acceptance record rather than inferred or invented. This is a documentation/evidence-retention gap, not an indication that deployment or end-to-end validation is pending.
+## What the repository preserves
 
-## Evidence to retain from the accepted deployment
+- FastAPI source application and synthetic source data.
+- Azure Data Factory pipeline, dataset, linked-service and factory exports.
+- Databricks notebook exports and shared Spark transformation utilities.
+- Gold analytics SQL and reconciliation logic.
+- Automated tests and GitHub Actions validation.
+- Architecture decisions, source contracts, operations and recovery documentation.
 
-When exporting the actual records from Azure, preserve:
+## Reading the validation layers
 
-1. ADF master pipeline URL, pipeline name, run ID, start/end time, timezone, final status, and activity outcomes.
-2. Child pipeline run IDs and activity outcomes for API, CSV, and SQL ingestion.
-3. Databricks Silver and Gold notebook/job run URLs, run IDs, task output, and execution timestamps.
-4. SQL source/control configuration snapshot with secrets and sensitive identifiers removed; include the approved source contract version and the tested watermark interval.
-5. ADLS landing paths, schema snapshots, and actual source/landing/Silver counts where recorded.
-6. The same-interval replay comparison, including the bounded interval, before/after target counts or checksums, and checkpoint state.
-7. Silver quality/quarantine/reconciliation outputs and the relevant Gold `gold_run_audit` row.
-8. Counts and reconciliation outputs for `gold_order_360`, `gold_daily_order_performance`, `gold_payment_method_performance`, `gold_restaurant_feedback`, and `gold_driver_performance`.
-9. Any controlled failure/recovery evidence, but only for scenarios that were actually exercised.
-10. The repository commit SHA and successful CI workflow URL corresponding to the deployed code.
+| Validation layer | Scope |
+|---|---|
+| Local API tests | API authentication, request/response contracts and source behavior |
+| Local PySpark tests | Transformation logic against synthetic in-memory DataFrames |
+| Static ADF tests | Exported JSON structure, resource references and pipeline dependency contracts |
+| GitHub Actions | Repeatable repository validation for a specific commit |
+| Completed Azure execution | Deployed API/CSV/SQL ingestion, Bronze/Silver processing, incremental replay, Gold publication and reconciliation |
 
-## Evidence structure
+## Operational boundaries
 
-Use `docs/run-evidence/runtime-evidence-template.md` for a redacted record. Store durable evidence in a controlled location with access appropriate to the data. Commit only safe summaries or screenshots that have been reviewed for secrets, personal information, customer data, and sensitive infrastructure details.
+The Azure resources used for the completed run were later decommissioned to control cost. The repository provides deployment and recovery guidance for a future environment, but it does not claim continuous hosting, a production SLA, independent certification or universal exactly-once/CDC guarantees.
 
-Do not put access tokens, credentials, connection strings, private endpoints, customer records, payment details, or unrestricted raw production-like exports in Git.
-
-## What each evidence source proves
-
-| Evidence source | Establishes | Does not establish by itself |
-|---|---|---|
-| Repository source, notebooks, SQL, and ADF exports | Implemented artifacts and design | Successful cloud execution |
-| GitHub Actions | Repository test result for a specific commit | ADF/Databricks runtime behavior |
-| Project-owner confirmation | Reported deployment and end-to-end acceptance | Independent third-party verification |
-| ADF/Databricks run exports | Actual execution status and timestamps for the recorded run | Broad production certification or an SLA |
-| Reconciliation outputs | The specific measured source/target checks performed | Correctness for untested data windows or future source changes |
-
-## Known limitations
-
-A successful run validates the configured and tested source path. It does not, by itself, prove universal late-arrival capture, hard-delete capture without CDC/tombstones/soft deletes, global exactly-once behavior, production certification, or continuous service availability. Keep the limitations in the SQL source contract and project handoff visible.
-
-## CI artifact retention
-
-The GitHub Actions workflow stores its test log as a workflow artifact with a 90-day retention period. Download and retain any CI artifact needed for a longer-lived review; do not rely on the default workflow artifact period as permanent archival storage.
+Keep secrets, credentials, connection strings, personal data and sensitive infrastructure values out of source control.
