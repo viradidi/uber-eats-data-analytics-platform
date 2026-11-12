@@ -1,14 +1,28 @@
 # Uber Eats Data Engineering Platform
 
-An Azure-oriented data engineering project demonstrating API, CSV, and SQL ingestion, Silver transformations, a downstream Gold analytics layer, incremental-load controls, data quality, and operational recovery using synthetic restaurant-delivery domain data.
+An end-to-end Azure data platform for restaurant-delivery analytics. It combines REST API, CSV and SQL ingestion with Data Factory orchestration, ADLS Gen2 landing, Databricks/PySpark transformations, curated Silver data, downstream Gold analytics and operational recovery controls.
+
+**Stack:** Python, FastAPI, Azure Data Factory, ADLS Gen2, Azure Databricks, Apache Spark / PySpark, SQL, GitHub Actions.
 
 **Project owner:** Isaiah Nyakundi  
 **Focus:** Data Engineering · Cloud Data Platforms · Analytics Engineering  
 **Repository:** https://github.com/viradidi/uber-eats-data-analytics-platform
 
-> **Project status — completed:** The platform was deployed to Azure and successfully executed end to end across API, CSV and SQL ingestion; Bronze/Silver processing; incremental replay; Gold publication; and reconciliation. This includes the repository-owned SQL Silver notebook and master ADF orchestration. GitHub Actions run [#779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) passed 135 repository tests on commit `034a19d5d62a94bb75e510f03e214f59590bf54a` (5 November 2026). CI validates repository code and synthetic fixtures; the deployed Azure workflow was also successfully run end to end.
+> **Execution status — completed:** Successfully deployed and executed end to end in Azure. The completed workflow covered API, CSV and SQL ingestion, Bronze/Silver processing, incremental replay, Gold publication and reconciliation, including repository-owned SQL Silver processing and master ADF orchestration. GitHub Actions run [#779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) also passed 135 repository tests on commit `034a19d5d62a94bb75e510f03e214f59590bf54a` (5 November 2026).
 
 ---
+
+## Platform at a glance
+
+| Area | Implementation |
+|---|---|
+| Business domain | Restaurant-delivery operations and analytics |
+| Source patterns | REST API, CSV files and relational SQL |
+| Orchestration | Azure Data Factory pipelines and metadata/configuration |
+| Storage | Azure Data Lake Storage Gen2 |
+| Processing | Azure Databricks, Spark and PySpark |
+| Data products | Curated Silver datasets and downstream Gold analytics/reporting |
+| Reliability controls | Source contracts, bounded watermarks, replay-safe transformations, reconciliation and recovery procedures |
 
 ## 1. Project overview
 
@@ -27,6 +41,8 @@ The project also includes engineering controls and supporting documentation for 
 ## 2. Architecture
 
 ![Uber Eats end-to-end Azure data platform architecture](architecture/uber-eats-end-to-end-architecture.svg)
+
+*The preserved diagram focuses on the multi-source ingestion and curated Silver processing path. The downstream Gold analytics and reporting layer is described in the sections below.*
 
 ### High-level data flow
 
@@ -200,21 +216,13 @@ The local Spark tests execute PySpark transformations against in-memory syntheti
 
 See the [GitHub Actions workflow history](https://github.com/viradidi/uber-eats-data-analytics-platform/actions).
 
-## 8. Validation status and deployment boundary
+## 8. End-to-end execution and CI validation
 
-The completed platform was deployed successfully to Azure and executed end to end. The run covered API, CSV and SQL ingestion; Bronze and Silver processing; repository-owned SQL Silver processing; incremental replay validation; Gold publication; and reconciliation.
+The platform was deployed to Azure and successfully executed end to end. The completed workflow covered API, CSV and SQL ingestion; Bronze and Silver processing; repository-owned SQL Silver processing; incremental replay validation; Gold publication; and reconciliation.
 
-The latest repository test run is [GitHub Actions run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338), which passed 135 tests on commit `034a19d5d62a94bb75e510f03e214f59590bf54a`. CI checks repository code and synthetic fixtures; the successful Azure end-to-end execution is described in the [deployment and acceptance record](docs/DEPLOYMENT_ACCEPTANCE_RECORD.md).
+The latest repository test run is [GitHub Actions run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338), which passed 135 tests on commit `034a19d5d62a94bb75e510f03e214f59590bf54a`. CI validates repository code, exported configuration, synthetic fixtures and local Spark transformations; it does not provision or execute Azure Data Factory and Databricks services. The completed Azure execution and repository CI are separate validation layers. See the [deployment and acceptance record](docs/DEPLOYMENT_ACCEPTANCE_RECORD.md).
 
-| Evidence available | Boundary |
-|---|---|
-| Repository code, exported ADF definitions, Databricks notebooks, SQL, tests, runbooks, and architecture | Establishes the implementation artifacts and documented design |
-| Successful Azure deployment and end-to-end execution | The completed workflow covered API, CSV and SQL ingestion, Silver processing, incremental replay, Gold publication and reconciliation |
-| GitHub Actions run #779 with 135 passing tests | Validates repository tests and local/synthetic behavior, not live Azure services |
-| Five documented Gold output contracts and reporting SQL | Establishes the analytics design; use actual runtime exports for quantified row-count claims |
-| Operational recovery and source-contract documentation | Describes controls and limitations; claim only the failure scenarios actually exercised |
-
-The missing ADF/Databricks run IDs and sanitized exports are an evidence-retention gap, not an outstanding deployment or end-to-end execution gate. A successful end-to-end run also does not establish a continuously running service, a production SLA, independent certification, or universal exactly-once/change-data-capture guarantees.
+The cloud resources used for the completed run were later decommissioned to control cost. This repository preserves the implementation, deployment assets, test suite, reporting SQL and operational documentation. A completed end-to-end run does not imply a continuously hosted service, a production SLA, independent certification, or universal exactly-once/CDC guarantees.
 
 ## 9. Security and responsible use
 
@@ -229,7 +237,6 @@ The missing ADF/Databricks run IDs and sanitized exports are an evidence-retenti
 
 - [Architecture and component responsibilities](architecture/architecture.md)
 - [Gold layer and business reporting](docs/GOLD_LAYER_AND_REPORTING.md)
-- [Run evidence and retention](docs/RUN_EVIDENCE_RETENTION.md)
 - [Gold SQL reporting pack](reports/GOLD_ANALYTICS_REPORTING.sql)
 - [SQL incremental-load review](docs/SQL_INCREMENTAL_LOAD_REVIEW.md)
 - [Incremental source contract](docs/INCREMENTAL_SOURCE_CONTRACT.md)
@@ -240,7 +247,6 @@ The missing ADF/Databricks run IDs and sanitized exports are an evidence-retenti
 - [Data quality trends and incidents](docs/DATA_QUALITY_TRENDS_AND_INCIDENTS.sql)
 - [Final project handoff](docs/FINAL_HANDOFF.md)
 - [Databricks notebook export consistency](docs/NOTEBOOK_EXPORT_CONSISTENCY.md)
-- [Portfolio evidence pack](docs/PORTFOLIO_EVIDENCE.md)
 - [Architecture decision records](docs/ARCHITECTURE_DECISIONS.md)
 - [Senior engineering readiness review](docs/SENIOR_ENGINEERING_READINESS.md)
 - [Azure deployment acceptance report](docs/AZURE_DEPLOYMENT_ACCEPTANCE.md)
