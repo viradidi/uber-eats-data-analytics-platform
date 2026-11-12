@@ -121,7 +121,7 @@ class RepositoryArtifactIntegrityTests(unittest.TestCase):
             "successfully deployed and executed end to end",
             "135 tests",
             "continuously hosted service",
-            "no third-party audit",
+            "independent certification",
         ):
             self.assertIn(phrase, gate)
         record = (ROOT / "docs" / "DEPLOYMENT_ACCEPTANCE_RECORD.md").read_text(encoding="utf-8").lower()
