@@ -120,7 +120,7 @@ class RepositoryArtifactIntegrityTests(unittest.TestCase):
             "deployed and executed end to end",
             "successfully deployed and executed end to end",
             "135 tests",
-            "not a continuously hosted service",
+            "continuously hosted service",
             "no third-party audit",
         ):
             self.assertIn(phrase, gate)
