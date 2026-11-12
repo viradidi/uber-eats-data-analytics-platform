@@ -4,10 +4,6 @@ An end-to-end Azure data platform for restaurant-delivery analytics. It combines
 
 **Stack:** Python, FastAPI, Azure Data Factory, ADLS Gen2, Azure Databricks, Apache Spark / PySpark, SQL, GitHub Actions.
 
-**Project owner:** Isaiah Nyakundi  
-**Focus:** Data Engineering · Cloud Data Platforms · Analytics Engineering  
-**Repository:** https://github.com/viradidi/uber-eats-data-analytics-platform
-
 > **Execution status — completed:** Successfully deployed and executed end to end in Azure. The completed workflow covered API, CSV and SQL ingestion, Bronze/Silver processing, incremental replay, Gold publication and reconciliation, including repository-owned SQL Silver processing and master ADF orchestration. GitHub Actions run [#779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) also passed 135 repository tests on commit `034a19d5d62a94bb75e510f03e214f59590bf54a` (5 November 2026).
 
 ---
@@ -24,7 +20,7 @@ An end-to-end Azure data platform for restaurant-delivery analytics. It combines
 | Data products | Curated Silver datasets and downstream Gold analytics/reporting |
 | Reliability controls | Source contracts, bounded watermarks, replay-safe transformations, reconciliation and recovery procedures |
 
-## 1. Project overview
+## Project overview
 
 Restaurant-delivery platforms generate data across operational systems: payments, deliveries, order statuses, ratings, drivers, promotions, and delivery zones. These datasets arrive through different interfaces and require consistent ingestion, storage, transformation, and operational controls.
 
@@ -38,7 +34,7 @@ Azure Data Factory coordinates the ingestion workflows. API and CSV Silver proce
 
 The project also includes engineering controls and supporting documentation for incremental-load correctness, checkpoint handling, data quality, reconciliation, security considerations, and recovery.
 
-## 2. Architecture
+## Architecture
 
 ![Uber Eats end-to-end Azure data platform architecture](architecture/uber-eats-end-to-end-architecture.svg)
 
@@ -58,7 +54,7 @@ The diagram is a logical architecture view, not a live service map. The platform
 
 For component-level detail, see [Architecture documentation](architecture/architecture.md).
 
-## 3. Technology stack
+## Technology stack
 
 | Technology | Role in the project |
 |---|---|
@@ -72,7 +68,7 @@ For component-level detail, see [Architecture documentation](architecture/archit
 | JSON / CSV | Resource configuration, metadata, and source fixtures |
 | GitHub Actions | Automated repository validation |
 
-## 4. Engineering work demonstrated
+## Engineering work demonstrated
 
 ### Design decisions and trade-offs
 
@@ -123,7 +119,7 @@ The project documents failure triage, rerun decisions, checkpoint safety, reconc
 
 See the [recovery and rerun runbook](docs/RECOVERY_AND_RERUN_RUNBOOK.md) and [operations and reliability guide](docs/OPERATIONS_AND_RELIABILITY.md).
 
-## 5. Repository guide
+## Repository guide
 
 | Path | Contents |
 |---|---|
@@ -142,7 +138,7 @@ See the [recovery and rerun runbook](docs/RECOVERY_AND_RERUN_RUNBOOK.md) and [op
 | `.github/workflows/` | GitHub Actions validation workflow |
 | `tests/` | Automated repository and application tests |
 
-## 6. Run the local API
+## Run the local API
 
 The local FastAPI application provides a mock source for exploring the API ingestion pattern. Running this component locally does not deploy the Azure Data Factory, ADLS, or Databricks resources.
 
@@ -215,7 +211,7 @@ The interactive API documentation is available at `http://127.0.0.1:10000/docs`.
 
 Authenticated endpoints require the `X-API-Key` header. The application includes `/payments`, `/deliveries`, `/ratings`, `/order-status`, `/watermarks`, and `/payments/generate-test-data`. The test-data endpoint modifies the local payments JSON fixture and is intended for controlled demonstrations, not concurrent production writes.
 
-## 7. Run automated tests
+## Run automated tests
 
 From the repository root:
 
@@ -229,7 +225,7 @@ The local Spark tests execute PySpark transformations against in-memory syntheti
 
 See the [GitHub Actions workflow history](https://github.com/viradidi/uber-eats-data-analytics-platform/actions).
 
-## 8. End-to-end execution and CI validation
+## End-to-end execution and CI validation
 
 The platform was deployed to Azure and successfully executed end to end. The completed workflow covered API, CSV and SQL ingestion; Bronze and Silver processing; repository-owned SQL Silver processing; incremental replay validation; Gold publication; and reconciliation.
 
@@ -237,7 +233,7 @@ The latest repository test run is [GitHub Actions run #779](https://github.com/v
 
 The cloud resources used for the completed run were later decommissioned to control cost. This repository preserves the implementation, deployment assets, test suite, reporting SQL and operational documentation. A completed end-to-end run does not imply a continuously hosted service, a production SLA, independent certification, or universal exactly-once/CDC guarantees.
 
-## 9. Security and responsible use
+## Security and responsible use
 
 - Keep API keys, passwords, tokens, and connection strings out of source control.
 - Use managed identities and an approved secret store such as Azure Key Vault for cloud workloads where supported.
@@ -246,7 +242,7 @@ The cloud resources used for the completed run were later decommissioned to cont
 - Use synthetic or approved sample data; do not publish real customer or payment information.
 - Review the SQL incremental-load source contract before enabling a new source table.
 
-## 10. Further technical documentation
+## Further technical documentation
 
 - [Architecture and component responsibilities](architecture/architecture.md)
 - [Gold layer and business reporting](docs/GOLD_LAYER_AND_REPORTING.md)
