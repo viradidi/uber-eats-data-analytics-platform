@@ -13,7 +13,7 @@ The latest repository validation is [GitHub Actions run #779 — 135 tests passe
 - Multi-source ingestion through API, CSV and SQL paths under Azure Data Factory orchestration.
 - FastAPI mock source with API-key protection and source endpoints.
 - Bounded SQL incremental extraction, success-dependent checkpoint advancement, serialized pipeline runs and checkpoint compare-and-swap protection.
-- Repository-owned `Silver_SQL_Incremental` notebook and metadata-driven SQL Silver contract stored in `dbo.sql_silver_control`.
+- Repository-owned `Silver_SQL_Incremental` notebook and metadata-driven SQL Silver contract stored in `dbo.sql_silver_control`; the deleted external Databricks job reference was replaced with this repository-owned notebook activity.
 - Replay-safe API Silver preparation for timestamped cumulative endpoint snapshots.
 - Configurable Bronze roots, shared Spark utilities and five Gold analytics outputs.
 - Data-quality checks, reconciliation helpers, failure-event logging, operational SQL reports, run-audit records and recovery guidance.
