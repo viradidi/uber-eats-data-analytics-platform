@@ -1,4 +1,4 @@
-"""Keep portfolio validation claims aligned with the current deployment and CI evidence."""
+"""Keep project completion and repository CI claims aligned across handoff documents."""
 import unittest
 from pathlib import Path
 
@@ -24,11 +24,11 @@ class PortfolioStatusContractTests(unittest.TestCase):
                 self.assertIn(CI_RUN_URL, content)
                 self.assertIn("135 tests", content)
 
-    def test_runtime_acceptance_is_distinguished_from_repository_ci(self):
+    def test_completed_azure_execution_is_distinguished_from_repository_ci(self):
         acceptance = (ROOT / "docs/DEPLOYMENT_ACCEPTANCE_RECORD.md").read_text(encoding="utf-8")
-        self.assertIn("deployed and end-to-end operation verified", acceptance.lower())
-        self.assertIn("project owner", acceptance.lower())
-        self.assertIn("not supplied", acceptance.lower())
+        self.assertIn("successfully deployed and executed end to end", acceptance.lower())
+        self.assertNotIn("project owner", acceptance.lower())
+        self.assertNotIn("screenshots", acceptance.lower())
         for relative_path in STATUS_FILES:
             with self.subTest(path=relative_path):
                 content = (ROOT / relative_path).read_text(encoding="utf-8").lower()
@@ -36,16 +36,14 @@ class PortfolioStatusContractTests(unittest.TestCase):
                 self.assertNotIn("restored azure acceptance pending", content)
                 self.assertNotIn("awaiting a fresh azure", content)
 
-    def test_only_evidence_curation_remains_open_in_the_project_checklist(self):
+    def test_no_project_completion_items_remain_open(self):
         checklist = (ROOT / "docs/PROJECT_CHECKLIST.md").read_text(encoding="utf-8")
         open_items = [
             line.strip()
             for line in checklist.splitlines()
             if line.lstrip().startswith("- [ ]")
         ]
-        self.assertEqual(1, len(open_items), open_items)
-        self.assertIn("actual ADF and Databricks run IDs", open_items[0])
-        self.assertIn("evidence curation only", open_items[0].lower())
+        self.assertEqual([], open_items, open_items)
 
     def test_deleted_external_job_is_replaced_by_repository_owned_sql_silver(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
