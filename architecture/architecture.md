@@ -6,7 +6,7 @@ This document explains the architecture of the completed Uber Eats data engineer
 
 The platform demonstrates three source-ingestion patterns—REST API, CSV files, and SQL incremental extraction—followed by lake landing, Databricks/Spark Silver processing, a downstream Gold analytics extension, business reporting, validation, and operational recovery controls.
 
-The diagram is a logical architecture view, not a live service map. The project owner confirms that the completed platform has since been successfully deployed to Azure and verified end to end. The diagram documents responsibilities and data flow; it does not establish continuous service availability, an SLA, or independent production certification.
+The diagram is a logical architecture view, not a live service map. The completed platform was successfully deployed to Azure and executed end to end. The diagram documents responsibilities and data flow; it does not establish continuous service availability, an SLA, or independent production certification.
 
 ## 2. End-to-end architecture
 
@@ -44,7 +44,7 @@ The API key is read from the API_KEY environment variable. The application fails
 
 ADF resource exports define separate API, CSV, and SQL incremental ingestion pipelines, alongside supporting dataset, linked-service, and factory configuration. The CSV path is ADLS-to-ADLS and does not require a self-hosted Integration Runtime.
 
-ADF provides orchestration and coordinates the pipeline activities. The exported JSON files are the versioned project definitions. The project owner separately confirms successful deployment and end-to-end execution of the configured ADF flow; the exports themselves are not a live service-status feed.
+ADF provides orchestration and coordinates the pipeline activities. The exported JSON files are the versioned project definitions. The configured ADF flow was successfully deployed and executed end to end; the exports themselves are not a live service-status feed.
 
 ### Metadata and configuration
 
@@ -143,11 +143,11 @@ These controls have boundaries. In particular, a watermark does not automaticall
 
 ## 7. Repository validation and historical execution
 
-The project owner confirms successful Azure deployment and end-to-end execution of the completed API/CSV/SQL, Bronze/Silver, SQL incremental replay, Gold, and master ADF flow. The latest local/repository validation passed 135 tests in [GitHub Actions run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) on commit `034a19d5d62a94bb75e510f03e214f59590bf54a`. This tests repository behavior against synthetic data, not live Databricks or ADF deployment. Runtime success is owner-confirmed; exact Azure run IDs and exports are listed as not yet attached in [the deployment acceptance record](../docs/DEPLOYMENT_ACCEPTANCE_RECORD.md).
+The completed API/CSV/SQL, Bronze/Silver, SQL incremental replay, Gold, and master ADF workflow was successfully deployed and executed end to end in Azure. The latest repository validation passed 135 tests in [GitHub Actions run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) on commit `034a19d5d62a94bb75e510f03e214f59590bf54a`. CI tests repository behavior against synthetic data; it does not provision or execute live Databricks or ADF services. See [the deployment acceptance record](../docs/DEPLOYMENT_ACCEPTANCE_RECORD.md) for the completed execution scope.
 
 The repository retains implementation artifacts and repeatable checks, including API tests, local PySpark tests for Gold transformations, static ADF dependency-contract tests, and a GitHub Actions workflow that validates JSON/notebook structure, Python syntax, notebook portability, dependency installation, and the test suite. These checks do not execute live ADF or Databricks resources.
 
-These repository checks are useful for reviewing the codebase, but they are not a substitute for a currently running Azure deployment. Current cloud resources are not available through this repository. Historical execution status is based on the project owner's confirmation; any retained run logs, screenshots, or output evidence can provide additional corroboration.
+These repository checks are useful for reviewing the codebase, but they are separate from the completed Azure deployment and end-to-end execution. The cloud resources used for the completed run were later decommissioned to control cost. The repository preserves the architecture, deployment definitions, tests and operational guidance for review and redeployment.
 
 ## 8. Re-deployment considerations
 
