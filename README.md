@@ -74,6 +74,19 @@ For component-level detail, see [Architecture documentation](architecture/archit
 
 ## 4. Engineering work demonstrated
 
+### Design decisions and trade-offs
+
+| Decision | Why it is used | Trade-off / boundary |
+|---|---|---|
+| Separate API, CSV and SQL ingestion paths | Each source type has different delivery, schema and incremental semantics | More source-specific contracts and configuration must be maintained |
+| ADF as orchestration layer | Keeps dependencies, retries, parameters and checkpoint sequencing outside transformation code | Exported linked services, notebook paths and factory settings must be rebound for another Azure environment |
+| ADLS landing before Spark transformation | Preserves source-oriented landed data and gives downstream processing a durable hand-off | Storage layout, retention and replay policy need to be managed |
+| Bounded SQL watermarks with controlled checkpoint advancement | Limits each extraction to a known interval and avoids advancing the cursor before downstream success | Timestamp watermarks do not capture hard deletes or arbitrarily late/backdated changes; source contracts and reconciliation remain necessary |
+| Shared PySpark transformation modules and notebook dispatchers | Keeps transformation behavior testable and reduces notebook-only duplication | Local Spark tests validate code paths and contracts, not a live ADF/Databricks deployment |
+| Separate Gold analytics layer | Keeps operational Silver transformations distinct from business-facing aggregations and reporting | Gold metric definitions and grain must be documented and reconciled with source measures |
+
+The longer-form rationale is recorded in [Architecture Decision Records](docs/ARCHITECTURE_DECISIONS.md).
+
 ### Multi-source ingestion
 
 The repository contains separate ingestion patterns for API resources, CSV files staged in ADLS Gen2, and SQL-based incremental extraction. The FastAPI application provides paginated endpoints, timestamp-based filtering, API-key authentication, watermark information, and a controlled payment test-data endpoint.
