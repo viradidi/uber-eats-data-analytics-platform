@@ -85,13 +85,22 @@ The longer-form rationale is recorded in [Architecture Decision Records](docs/AR
 
 ### Multi-source ingestion
 
-The repository contains separate ingestion patterns for API resources, CSV files staged in ADLS Gen2, and SQL-based incremental extraction. The FastAPI application provides paginated endpoints, timestamp-based filtering, API-key authentication, watermark information, and a controlled payment test-data endpoint.
+The repository contains separate ingestion patterns for API resources, CSV files staged in ADLS Gen2, and SQL-based incremental extraction. The FastAPI source provides authenticated, keyset-paginated endpoints. API records are ordered by a deterministic (updated_at, source_id) cursor, and the ADF REST Copy activity follows the JSON pagination.next_url link until the endpoint is exhausted. The watermark endpoint exposes the same composite cursor used by the ADF control table.
 
 ### Metadata-driven orchestration
 
 Azure Data Factory exports define pipelines, datasets, linked services, and factory-level configuration. API and CSV processing invoke repository-owned Databricks notebook dispatchers directly. SQL Silver invokes the repository-owned `Silver_SQL_Incremental` notebook directly; the deleted-workspace job ID is no longer part of the ADF deployment path.
 
 ### Incremental extraction and checkpoint control
+
+#### API keyset pagination and composite checkpoints
+
+The API endpoints use deterministic composite cursors: (updated_at, payment_id), (updated_at, delivery_id), (updated_at, rating_id), and (status_timestamp, order_id). Numeric IDs are compared numerically and non-numeric IDs lexicographically. This lets each request resume after the exact last returned record, including where multiple records share a timestamp.
+
+The API returns pagination.next_url when another page exists. The ADF REST Copy activity follows $.pagination.next_url through its AbsoluteUrl pagination rule, with a 1,000-request ceiling. The watermark response keeps its existing timestamp-only fields and adds a cursor object containing the timestamp and stable ID for each endpoint.
+
+The API control table stores last_watermark_value and last_watermark_id. Apply sql/migrations/20261122_add_api_composite_cursor.sql before publishing the revised ADF dataset and pipeline. Existing timestamp-only rows have a NULL ID after migration, so the next API run intentionally performs one full snapshot replay before saving a composite cursor. Existing Silver replay logic deduplicates repeated records before publication. See docs/API_INCREMENTAL_CURSOR.md for rollout and source assumptions.
+
 
 The SQL incremental-load design uses a lower watermark and a captured upper watermark to define a bounded extraction interval. The exported pipeline orders checkpoint advancement after the required downstream Silver job succeeds. It also includes pipeline concurrency configuration and a transactional compare-and-swap checkpoint update that rolls back on a stale or non-unique control-row match.
 
@@ -106,6 +115,7 @@ For API endpoints, timestamped landing snapshots accumulate in the endpoint fold
 See:
 - [SQL incremental-load review](docs/SQL_INCREMENTAL_LOAD_REVIEW.md)
 - [Incremental source contract](docs/INCREMENTAL_SOURCE_CONTRACT.md)
+- [API incremental cursor and pagination](docs/API_INCREMENTAL_CURSOR.md)
 - [SQL source catalog discovery](sql/diagnostics/inspect_source_contract_candidates.sql)
 - [Checkpoint concurrency contract](docs/CHECKPOINT_CONCURRENCY_CONTRACT.md)
 
@@ -267,6 +277,7 @@ The cloud resources used for the completed run were later decommissioned to cont
 - [Restored Azure acceptance plan](docs/RESTORED_AZURE_ACCEPTANCE_PLAN.md)
 - [Restored Azure configuration inventory](docs/RESTORED_AZURE_CONFIGURATION_INVENTORY.md)
 - [ADF control-table bootstrap migration](sql/migrations/20261104_create_ingestion_control_tables.sql)
+- [API composite-cursor migration](sql/migrations/20261122_add_api_composite_cursor.sql)
 - [ADLS metadata and CSV staging scripts](deployment/azure/)
 - [Databricks workspace import script](deployment/databricks/import_workspace_assets.ps1)
 - [External SQL Silver Job export script](deployment/databricks/export_sql_silver_job.ps1)
