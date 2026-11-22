@@ -97,7 +97,9 @@
                   "requestInterval": "00.00:00:00.010",
                   "requestMethod": "GET",
                   "paginationRules": {
-                    "supportRFC5988": "true"
+                    "AbsoluteUrl": "$.pagination.next_url",
+                    "MaxRequestNumber": "1000",
+                    "supportRFC5988": "false"
                   }
                 },
                 "sink": {
@@ -120,6 +122,14 @@
                   "parameters": {
                     "p_rel_url": {
                       "value": "@item().endpoint_name",
+                      "type": "Expression"
+                    },
+                    "p_watermark": {
+                      "value": "@if(or(empty(item().last_watermark_value), empty(item().last_watermark_id)), '', string(item().last_watermark_value))",
+                      "type": "Expression"
+                    },
+                    "p_watermark_id": {
+                      "value": "@if(or(empty(item().last_watermark_value), empty(item().last_watermark_id)), '', string(item().last_watermark_id))",
                       "type": "Expression"
                     }
                   }
@@ -203,7 +213,7 @@
                   {
                     "type": "Query",
                     "text": {
-                      "value": "@concat(\n    'UPDATE dbo.api_pipeline_control ',\n    'SET last_watermark_value = ''',\n    activity('Web_Get_Api_Watermarks').output[item().endpoint_name],\n    ''', updated_at = GETDATE(), ',\n    'last_run_end = GETDATE(), ',\n    'last_run_status = ''SUCCESS'' ',\n    'WHERE control_id = ',\n    item().control_id\n)",
+                      "value": "@concat(\n    'UPDATE dbo.api_pipeline_control ',\n    'SET last_watermark_value = COALESCE(TRY_CONVERT(datetime2(7), ''',\n    replace(coalesce(string(activity('Web_Get_Api_Watermarks').output.cursor[item().endpoint_name].updated_at), ''), '''', ''''''),\n    '''), last_watermark_value), ',\n    'last_watermark_id = COALESCE(NULLIF(N''',\n    replace(coalesce(string(activity('Web_Get_Api_Watermarks').output.cursor[item().endpoint_name].id), ''), '''', ''''''),\n    '''), last_watermark_id), ',\n    'updated_at = GETDATE(), last_run_end = GETDATE(), ',\n    'last_run_status = ''SUCCESS'' WHERE control_id = ',\n    item().control_id\n)",
                       "type": "Expression"
                     }
                   }
