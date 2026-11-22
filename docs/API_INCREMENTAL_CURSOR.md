@@ -22,15 +22,15 @@ Timestamps are normalized to UTC. Numeric IDs are ordered numerically and non-nu
 
 Example:
 
-    GET /payments?page_size=100&updated_after=2026-11-01T12%3A00%3A00Z&updated_after_id=1002
+    GET /payments?page_size=100&updated_after=2026-11-01T12%3A00%3A00Z&updated_after_id=1002&updated_until=2026-11-01T13%3A00%3A00Z&updated_until_id=1050
 
 When another page exists, pagination.next_url contains an absolute URL carrying the timestamp and ID of the last returned record. The next request resumes strictly after that tuple. The final page returns next_url: null. Timestamp-only updated_after remains supported for older clients.
 
 ## ADF integration
 
-Ds_rest_src receives the previous timestamp and ID from dbo.api_pipeline_control. If either value is missing, both parameters are omitted and the API returns a full snapshot. The REST Copy activity follows $.pagination.next_url using the AbsoluteUrl rule with a maximum of 1,000 requests.
+Before the REST Copy starts, ADF obtains a composite upper watermark from the API. Ds_rest_src receives the previous timestamp and ID from dbo.api_pipeline_control and the captured upper timestamp and ID from that pre-copy watermark call. If either lower checkpoint value is missing, both lower parameters are omitted and the API returns a bounded full snapshot. The REST Copy activity follows $.pagination.next_url using the AbsoluteUrl rule with a maximum of 1,000 requests.
 
-The pipeline updates the composite checkpoint only after the endpoint's Silver dispatcher succeeds and the subsequent watermark request completes. The watermark response retains its timestamp-only fields and adds a cursor object.
+Only after the endpoint's Silver dispatcher succeeds does ADF store the captured pre-copy upper cursor as the new checkpoint. This avoids advancing the checkpoint to records inserted while a multi-page copy is already running. The watermark response retains its timestamp-only fields and adds a cursor object.
 
 ## Deployment order
 
@@ -50,3 +50,6 @@ Do not publish the ADF pagination contract before deploying the new API.
 - A row becoming visible later with a timestamp older than the committed cursor still requires a documented overlap/lookback policy or CDC/change-sequence source contract.
 - Replaying a full snapshot during migration is safe only because current Silver notebooks deduplicate repeated entity/event snapshots under their documented key/version rules.
 - CI validates local API behavior and exported ADF structure. Applying the SQL migration and publishing the API/ADF assets remain separate deployment operations.
+
+
+The upper bound is inclusive and must be supplied as both updated_until and updated_until_id. The API rejects a partial upper-bound pair. Next-page URLs preserve the captured upper bound while advancing the lower composite cursor to the last returned record.
