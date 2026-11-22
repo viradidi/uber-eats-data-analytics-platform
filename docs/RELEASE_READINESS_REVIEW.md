@@ -5,6 +5,8 @@
 **CI evidence:** [GitHub Actions run #830 — all workflow steps passed](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45045827561)  
 **CI commit:** `231c949fae467eaec902b359be9d7baf1f693aac`
 
+Historical repository CI baseline: [GitHub Actions run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) passed 135 tests on 5 November 2026. The newer validation for the current enhancement release is run #830, linked above.
+
 ## 1. Release decision
 
 **Status: DEPLOYED AND END-TO-END ACCEPTED — PROJECT-OWNER CONFIRMED.**
