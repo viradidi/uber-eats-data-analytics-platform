@@ -81,7 +81,14 @@
             {
               "name": "Api_migration",
               "type": "Copy",
-              "dependsOn": [],
+              "dependsOn": [
+                {
+                  "activity": "Web_Get_Api_Watermarks",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ],
               "policy": {
                 "timeout": "0.12:00:00",
                 "retry": 0,
@@ -130,6 +137,14 @@
                     },
                     "p_watermark_id": {
                       "value": "@if(or(empty(item().last_watermark_value), empty(item().last_watermark_id)), '', string(item().last_watermark_id))",
+                      "type": "Expression"
+                    },
+                    "p_upper_watermark": {
+                      "value": "@coalesce(string(activity('Web_Get_Api_Watermarks').output.cursor[item().endpoint_name].updated_at), '')",
+                      "type": "Expression"
+                    },
+                    "p_upper_watermark_id": {
+                      "value": "@coalesce(string(activity('Web_Get_Api_Watermarks').output.cursor[item().endpoint_name].id), '')",
                       "type": "Expression"
                     }
                   }
@@ -190,7 +205,7 @@
               "type": "Script",
               "dependsOn": [
                 {
-                  "activity": "Web_Get_Api_Watermarks",
+                  "activity": "Job_api",
                   "dependencyConditions": [
                     "Succeeded"
                   ]
@@ -213,7 +228,7 @@
                   {
                     "type": "Query",
                     "text": {
-                      "value": "@concat(\n    'UPDATE dbo.api_pipeline_control ',\n    'SET last_watermark_value = COALESCE(TRY_CONVERT(datetime2(7), ''',\n    replace(coalesce(string(activity('Web_Get_Api_Watermarks').output.cursor[item().endpoint_name].updated_at), ''), '''', ''''''),\n    '''), last_watermark_value), ',\n    'last_watermark_id = COALESCE(NULLIF(N''',\n    replace(coalesce(string(activity('Web_Get_Api_Watermarks').output.cursor[item().endpoint_name].id), ''), '''', ''''''),\n    '''), last_watermark_id), ',\n    'updated_at = GETDATE(), last_run_end = GETDATE(), ',\n    'last_run_status = ''SUCCESS'' WHERE control_id = ',\n    item().control_id\n)",
+                      "value": "@concat(\n    'UPDATE dbo.api_pipeline_control ',\n    'SET last_watermark_value = COALESCE(CAST(TRY_CONVERT(datetimeoffset(7), ''',\n    replace(coalesce(string(activity('Web_Get_Api_Watermarks').output.cursor[item().endpoint_name].updated_at), ''), '''', ''''''),\n    ''') AS datetime2(7)), last_watermark_value), ',\n    'last_watermark_id = COALESCE(NULLIF(N''',\n    replace(coalesce(string(activity('Web_Get_Api_Watermarks').output.cursor[item().endpoint_name].id), ''), '''', ''''''),\n    '''), last_watermark_id), ',\n    'updated_at = GETDATE(), last_run_end = GETDATE(), ',\n    'last_run_status = ''SUCCESS'' WHERE control_id = ',\n    item().control_id\n)",
                       "type": "Expression"
                     }
                   }
@@ -224,14 +239,7 @@
             {
               "name": "get_keyvalut_api _key",
               "type": "WebActivity",
-              "dependsOn": [
-                {
-                  "activity": "Job_api",
-                  "dependencyConditions": [
-                    "Succeeded"
-                  ]
-                }
-              ],
+              "dependsOn": [],
               "policy": {
                 "timeout": "0.12:00:00",
                 "retry": 0,
