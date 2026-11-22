@@ -293,6 +293,7 @@ The original Azure resources were decommissioned to control cost and the environ
 - [Incremental source contract](docs/INCREMENTAL_SOURCE_CONTRACT.md)
 - [Checkpoint concurrency contract](docs/CHECKPOINT_CONCURRENCY_CONTRACT.md)
 - [Recovery and rerun runbook](docs/RECOVERY_AND_RERUN_RUNBOOK.md)
+- [22 November 2026 restored Azure owner-attestation evidence](docs/run-evidence/2026-11-22-restored-azure-owner-attestation.md)
 - [Operations and reliability guide](docs/OPERATIONS_AND_RELIABILITY.md)
 - [Reconciliation audit queries](docs/RECONCILIATION_AUDIT_QUERIES.sql)
 - [Data quality trends and incidents](docs/DATA_QUALITY_TRENDS_AND_INCIDENTS.sql)
