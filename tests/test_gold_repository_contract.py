@@ -75,6 +75,28 @@ class GoldRepositoryContractTests(unittest.TestCase):
         self.assertIn("SUCCEEDED_WITH_WARNINGS", source)
 
 
+    def test_gold_retention_is_dry_run_first_and_deployed_with_its_modules(self):
+        retention_module = (ROOT / "src" / "gold" / "retention.py").read_text(encoding="utf-8")
+        self.assertIn("UNKNOWN_EVENT_STATUS", retention_module)
+        self.assertIn("NON_TERMINAL_PUBLICATION", retention_module)
+        self.assertIn("NO_PUBLICATION_HISTORY", retention_module)
+
+        maintenance = (ROOT / "notebooks" / "Gold_Publication_Maintenance.py").read_text(encoding="utf-8")
+        self.assertIn('dbutils.widgets.text("dry_run", "true"', maintenance)
+        self.assertIn("DELETE_OLD_GOLD_PUBLICATIONS", maintenance)
+        self.assertIn("MIN_RETENTION_DAYS", maintenance)
+        self.assertIn("build_guarded_delete_sql", maintenance)
+        self.assertIn("VACUUM", maintenance)
+        self.assertTrue((ROOT / "tests" / "test_gold_retention.py").is_file())
+        self.assertTrue((ROOT / "docs" / "GOLD_PUBLICATION_RETENTION.md").is_file())
+
+        importer = (ROOT / "deployment" / "databricks" / "import_workspace_assets.ps1").read_text(encoding="utf-8")
+        self.assertIn("notebooks/Gold_Publication_Maintenance.py", importer)
+        for module in ("quality.py", "publication.py", "retention.py"):
+            self.assertIn(f"src/gold/{module}", importer)
+        self.assertIn("$WorkspaceRoot/notebooks/Gold_Publication_Maintenance", importer)
+
+
     def test_gold_outputs_and_synthetic_scope_are_documented(self):
         guide = (ROOT / "docs" / "GOLD_LAYER_AND_REPORTING.md").read_text(encoding="utf-8")
         self.assertIn("gold_order_360", guide)
