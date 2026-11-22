@@ -31,7 +31,7 @@ The resources from the earlier Azure deployment were decommissioned to control o
 
 ## Repository validation
 
-The latest repository validation is [GitHub Actions run #830](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45045827561), which completed successfully on `main` commit `231c949fae467eaec902b359be9d7baf1f693aac`. All workflow steps passed, including the complete repository test suite.
+The latest repository validation is [GitHub Actions run #841](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45052243225), which completed successfully on `main` commit `9842a32c533cbbcf0dfdd401e803a895feef4cd2`. All workflow steps passed, including the 200-test repository suite (`OK`).
 
 CI validates repository code, exported resource contracts and local/synthetic test scenarios. It does not provision or execute live Azure services; the Azure runtime acceptance described below is separately project-operator-confirmed.
 

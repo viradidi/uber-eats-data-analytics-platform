@@ -6,9 +6,9 @@
 
 The completed Uber Eats platform covers API, CSV and SQL ingestion; Bronze and Silver processing; the repository-owned SQL Silver notebook; incremental replay validation; Gold publication; and reconciliation. The master ADF orchestration and five Gold analytics outputs are part of the completed implementation.
 
-The latest repository validation passed in [GitHub Actions run #830](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45045827561) on `main` commit `231c949fae467eaec902b359be9d7baf1f693aac`. All workflow steps completed successfully, including the complete repository test suite. CI validates repository code, exported configuration and local/synthetic tests; it is separate from the Azure runtime acceptance.
+The latest repository validation passed in [GitHub Actions run #841](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45052243225) on `main` commit `9842a32c533cbbcf0dfdd401e803a895feef4cd2`. All workflow steps completed successfully, including the complete repository test suite. CI validates repository code, exported configuration and local/synthetic tests; it is separate from the Azure runtime acceptance.
 
-Historical repository CI baseline: [GitHub Actions run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) passed 135 tests on 5 November 2026. The newer validation for the current enhancement release is run #830, linked above.
+Historical repository CI baseline: [GitHub Actions run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) passed 135 tests on 5 November 2026. The newer validation for the current enhancement release is run #841, linked above.
 
 ## Delivered scope
 
@@ -39,14 +39,14 @@ Historical repository CI baseline: [GitHub Actions run #779](https://github.com/
 | Gold quality monitoring | Latest run metrics persisted in `gold_quality_metrics` (project-owner confirmed) |
 | Atomic publication | Publication history and run audit recorded; active pointer advanced to the new version (project-owner confirmed) |
 | Gold retention | `dry_run=true` completed and identified candidates; no rows were deleted (project-owner confirmed) |
-| Repository CI | All steps, including the complete repository test suite, passed in GitHub Actions run #830 |
+| Repository CI | All steps, including the complete repository test suite, passed in GitHub Actions run #841 |
 
 The completed run validates the configured source contract and execution path. It does not imply that every possible late-arrival, delete, schema-evolution or failure-injection scenario has been tested.
 
 ## Validation and technical boundaries
 
 - **Repository implementation:** source code, ADF exports, notebooks, SQL scripts, tests, architecture and runbooks are versioned here.
-- **Repository CI:** GitHub Actions run #830 passed all workflow steps, including the complete repository test suite. CI does not provision or execute live Azure Data Factory and Databricks services.
+- **Repository CI:** GitHub Actions run #841 passed all workflow steps, including all 200 repository tests, including all 200 repository tests. CI does not provision or execute live Azure Data Factory and Databricks services.
 - **Azure execution:** the configured multi-source workflow was successfully deployed and run end to end.
 - **Architecture rationale:** see [Architecture Decision Records](ARCHITECTURE_DECISIONS.md).
 - **Senior review:** see [Senior Engineering Readiness Review](SENIOR_ENGINEERING_READINESS.md).
@@ -64,6 +64,6 @@ The completed run validates the configured source contract and execution path. I
 
 ## Safe portfolio description
 
-> Deployed and owner-verified an Azure-based multi-source data engineering platform integrating API, CSV and SQL ingestion through Azure Data Factory, ADLS Gen2 and Databricks/PySpark. Implemented Bronze, Silver and Gold processing; bounded incremental ingestion; quality metrics and reconciliation; run-versioned Gold publication through stable views and an atomic active pointer; publication history and audit records; API health and request observability; and dry-run-first retention controls. The latest GitHub Actions validation run #830 passed on the reviewed `main` commit.
+> Deployed and owner-verified an Azure-based multi-source data engineering platform integrating API, CSV and SQL ingestion through Azure Data Factory, ADLS Gen2 and Databricks/PySpark. Implemented Bronze, Silver and Gold processing; bounded incremental ingestion; quality metrics and reconciliation; run-versioned Gold publication through stable views and an atomic active pointer; publication history and audit records; API health and request observability; and dry-run-first retention controls. The latest GitHub Actions validation run #841 passed on the reviewed `main` commit.
 
 Do not claim a third-party audit, production certification, a production SLA or measured performance improvements without supporting measurements.

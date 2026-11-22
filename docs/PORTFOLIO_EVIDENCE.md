@@ -4,7 +4,7 @@
 
 The Uber Eats Data Engineering Platform was successfully deployed and executed end to end in Azure. For the restored latest enhancement deployment, the project operator confirmed error-free component execution, populated five stable Gold views, persisted quality metrics/publication history/run audit, an updated active-publication pointer, and a successful non-destructive retention dry run. See the [Azure deployment and acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md).
 
-The latest repository CI is [GitHub Actions run #830](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45045827561), with all workflow steps passing on `main` commit `231c949fae467eaec902b359be9d7baf1f693aac`. CI validates repository code and local/synthetic tests; the Azure deployment and end-to-end execution were completed separately. Historical baseline: [run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) passed 135 tests on 5 November 2026.
+The latest repository CI is [GitHub Actions run #841](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45052243225), with all workflow steps and all 200 repository tests passing on `main` commit `9842a32c533cbbcf0dfdd401e803a895feef4cd2`. CI validates repository code and local/synthetic tests; the Azure deployment and end-to-end execution were completed separately. Historical baseline: [run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) passed 135 tests on 5 November 2026.
 
 ## What a reviewer can inspect
 

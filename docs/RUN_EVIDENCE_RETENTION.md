@@ -4,9 +4,9 @@
 
 The project owner confirms that the restored Azure deployment of the latest enhancement set ran without runtime errors. The Gold pipeline completed, all five stable Gold views contain data, Gold quality metrics and publication history were persisted, the run audit was recorded, and the active-publication pointer advanced. The Gold retention notebook also completed a successful `dry_run=true` review without deleting data. See the [Azure deployment and acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md).
 
-The latest repository validation is [GitHub Actions run #830](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45045827561), successful on `main` commit `231c949fae467eaec902b359be9d7baf1f693aac`. CI validates repository behavior and synthetic/local tests; it does not substitute for live Azure execution.
+The latest repository validation is [GitHub Actions run #841](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45052243225), successful on `main` commit `9842a32c533cbbcf0dfdd401e803a895feef4cd2`. CI validates repository behavior and synthetic/local tests; it does not substitute for live Azure execution.
 
-Historical repository CI baseline: [GitHub Actions run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) passed 135 tests on 5 November 2026. The newer validation for the current enhancement release is run #830, linked above.
+Historical repository CI baseline: [GitHub Actions run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) passed 135 tests on 5 November 2026. The newer validation for the current enhancement release is run #841, linked above.
 
 ## What the repository preserves
 

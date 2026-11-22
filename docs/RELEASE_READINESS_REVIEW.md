@@ -2,10 +2,10 @@
 
 **Review date:** 2026-11-22  
 **Repository:** [viradidi/uber-eats-data-analytics-platform](https://github.com/viradidi/uber-eats-data-analytics-platform)  
-**CI evidence:** [GitHub Actions run #830 — all workflow steps passed](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45045827561)  
-**CI commit:** `231c949fae467eaec902b359be9d7baf1f693aac`
+**CI evidence:** [GitHub Actions run #841 — all workflow steps passed](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45052243225)  
+**CI commit:** `9842a32c533cbbcf0dfdd401e803a895feef4cd2`
 
-Historical repository CI baseline: [GitHub Actions run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) passed 135 tests on 5 November 2026. The newer validation for the current enhancement release is run #830, linked above.
+Historical repository CI baseline: [GitHub Actions run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) passed 135 tests on 5 November 2026. The newer validation for the current enhancement release is run #841, linked above.
 
 ## 1. Release decision
 
@@ -15,7 +15,7 @@ The project owner confirms that the restored Azure deployment of the latest enha
 
 The exact Azure deployment timestamp, resource identifiers, ADF/Databricks run IDs, row counts, and raw runtime exports have not yet been attached to the repository. Those missing records are an evidence-retention gap, not an outstanding runtime gate. See [DEPLOYMENT_ACCEPTANCE_RECORD.md](DEPLOYMENT_ACCEPTANCE_RECORD.md).
 
-GitHub Actions run #830 passed the complete repository validation workflow on the current `main` commit. CI validates committed code, exported artifacts and local/synthetic tests; it is separate from the project-owner-confirmed Azure runtime results.
+GitHub Actions run #841 passed the complete repository validation workflow, including all 200 tests on the current `main` commit. CI validates committed code, exported artifacts and local/synthetic tests; it is separate from the project-owner-confirmed Azure runtime results.
 
 ## 2. What is delivered and accepted
 
@@ -33,7 +33,7 @@ GitHub Actions run #830 passed the complete repository validation workflow on th
 | API incremental control | Tie-safe composite cursor and bounded pagination/checkpoint handoff | Included in current implementation; restored deployment reported error-free by owner |
 | Master orchestration | API, CSV, and SQL child pipelines gate Gold publication | End-to-end flow owner-confirmed |
 | Repository consistency | Canonical Databricks source exports and workspace importer checks | Repository-tested |
-| CI | JSON/notebook validation, Python tests, local PySpark tests, static ADF contracts | All workflow steps, including the complete repository test suite, passed in run #830 |
+| CI | JSON/notebook validation, Python tests, local PySpark tests, static ADF contracts | All workflow steps, including the complete repository test suite, passed in run #841 |
 
 ## 3. Acceptance evidence and documentation gap
 
@@ -65,7 +65,7 @@ These are source- and scope-specific engineering boundaries, not evidence that t
 
 ## 5. Safe portfolio statement
 
-> Deployed and owner-verified an Azure-based multi-source data engineering platform integrating API, CSV, and SQL ingestion through Azure Data Factory, ADLS Gen2, and Databricks/PySpark. Implemented Bronze, Silver, and Gold processing; incremental checkpoint controls; data-quality metrics and reconciliation; atomic versioned Gold publication through stable views; publication history and run auditing; API health/observability controls; and dry-run-first retention. The current repository validation passed in GitHub Actions run #830.
+> Deployed and owner-verified an Azure-based multi-source data engineering platform integrating API, CSV, and SQL ingestion through Azure Data Factory, ADLS Gen2, and Databricks/PySpark. Implemented Bronze, Silver, and Gold processing; incremental checkpoint controls; data-quality metrics and reconciliation; atomic versioned Gold publication through stable views; publication history and run auditing; API health/observability controls; and dry-run-first retention. The current repository validation passed in GitHub Actions run #841.
 
 Do not claim independent audit, production certification, a production SLA, or measured performance improvements without retained supporting evidence.
 
