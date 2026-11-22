@@ -6,6 +6,8 @@ The project owner confirms that the restored Azure deployment of the latest enha
 
 The latest repository validation is [GitHub Actions run #830](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45045827561), successful on `main` commit `231c949fae467eaec902b359be9d7baf1f693aac`. CI validates repository behavior and synthetic/local tests; it does not substitute for live Azure execution.
 
+Historical repository CI baseline: [GitHub Actions run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) passed 135 tests on 5 November 2026. The newer validation for the current enhancement release is run #830, linked above.
+
 ## What the repository preserves
 
 - FastAPI source application and synthetic source data.
