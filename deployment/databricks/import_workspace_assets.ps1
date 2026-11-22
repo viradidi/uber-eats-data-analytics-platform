@@ -104,6 +104,7 @@ $notebooks = @(
     @{ Source = "notebooks/Silver_SQL_Incremental.py"; Name = "Silver_SQL_Incremental"; Format = "SOURCE" },
     @{ Source = "notebooks/Silver_Zones.ipynb"; Name = "Silver_Zones"; Format = "JUPYTER" },
     @{ Source = "notebooks/Gold_Analytics.py"; Name = "Gold_Analytics"; Format = "SOURCE" },
+    @{ Source = "notebooks/Gold_Publication_Maintenance.py"; Name = "Gold_Publication_Maintenance"; Format = "SOURCE" },
     @{ Source = "routing/api-dispacher-notebook.py"; Name = "api-dispacher-notebook"; Format = "SOURCE" },
     @{ Source = "routing/dispacher_csv_notebook.py"; Name = "dispacher_csv_notebook"; Format = "SOURCE" }
 )
@@ -130,7 +131,10 @@ $pythonFiles = @(
     "src/common/spark_utils.py",
     "src/common/sql_silver.py",
     "src/gold/__init__.py",
-    "src/gold/transformations.py"
+    "src/gold/transformations.py",
+    "src/gold/quality.py",
+    "src/gold/publication.py",
+    "src/gold/retention.py"
 )
 foreach ($relativePath in $pythonFiles) {
     $target = "$WorkspaceRoot/$($relativePath -replace '\\', '/')"
@@ -148,6 +152,7 @@ $expectedPaths = @(
     "$WorkspaceRoot/notebooks/Silver_SQL_Incremental",
     "$WorkspaceRoot/notebooks/Silver_Zones",
     "$WorkspaceRoot/notebooks/Gold_Analytics",
+    "$WorkspaceRoot/notebooks/Gold_Publication_Maintenance",
     "$WorkspaceRoot/routing/api-dispacher-notebook",
     "$WorkspaceRoot/routing/dispacher_csv_notebook",
     "$WorkspaceRoot/src/__init__.py",
@@ -157,7 +162,10 @@ $expectedPaths = @(
     "$WorkspaceRoot/src/common/spark_utils.py",
     "$WorkspaceRoot/src/common/sql_silver.py",
     "$WorkspaceRoot/src/gold/__init__.py",
-    "$WorkspaceRoot/src/gold/transformations.py"
+    "$WorkspaceRoot/src/gold/transformations.py",
+    "$WorkspaceRoot/src/gold/quality.py",
+    "$WorkspaceRoot/src/gold/publication.py",
+    "$WorkspaceRoot/src/gold/retention.py"
 )
 foreach ($workspacePath in $expectedPaths) {
     Invoke-DatabricksCli -Arguments @("workspace", "get-status", $workspacePath, "--output", "json") -Description "verifying workspace path '$workspacePath'"
