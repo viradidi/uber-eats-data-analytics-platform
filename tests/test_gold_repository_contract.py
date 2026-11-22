@@ -40,6 +40,11 @@ class GoldRepositoryContractTests(unittest.TestCase):
         self.assertIn("evaluate_quality_anomalies", source)
         self.assertIn("gold_quality_metrics", source)
         self.assertTrue((ROOT / "docs" / "GOLD_QUALITY_ANOMALY_MONITORING.md").is_file())
+        quality_report = ROOT / "reports" / "GOLD_QUALITY_MONITORING.sql"
+        self.assertTrue(quality_report.is_file())
+        report_sql = quality_report.read_text(encoding="utf-8")
+        self.assertIn("status = 'ANOMALY'", report_sql)
+        self.assertIn("ROW_NUMBER() OVER", report_sql)
 
     def test_gold_outputs_and_synthetic_scope_are_documented(self):
         guide = (ROOT / "docs" / "GOLD_LAYER_AND_REPORTING.md").read_text(encoding="utf-8")
