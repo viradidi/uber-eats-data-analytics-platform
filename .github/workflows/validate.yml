@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    branches: [main, feature/gold-quality-anomaly-monitoring]
   workflow_dispatch:
 
 permissions:
