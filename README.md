@@ -4,7 +4,7 @@ An end-to-end Azure data platform for restaurant-delivery analytics. It combines
 
 **Stack:** Python, FastAPI, Azure Data Factory, ADLS Gen2, Azure Databricks, Apache Spark / PySpark, SQL, GitHub Actions.
 
-> **Execution status — completed:** Successfully deployed and executed end to end in Azure. The project owner reconfirmed the restored deployment on 22 November 2026: components ran without reported errors, all five Gold consumer views contained data, Gold quality metrics/publication history/run audit/active pointer checks passed, and the Gold retention maintenance dry run completed without deleting data. The completed workflow covered API, CSV and SQL ingestion, Bronze/Silver processing, incremental replay, Gold publication and reconciliation, including repository-owned SQL Silver processing and master ADF orchestration. GitHub Actions run [#779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) also passed 135 repository tests on commit `034a19d5d62a94bb75e510f03e214f59590bf54a` (5 November 2026).
+> **Execution status — accepted:** The project owner confirms that the restored Azure deployment for the latest enhancement set ran without runtime errors. The Gold pipeline completed, all five stable Gold views contain data, Gold quality metrics and publication history were persisted, the run audit was recorded, and the active-publication pointer advanced to the new version. The Gold retention notebook also completed a successful `dry_run=true` review and identified cleanup candidates without deleting data. GitHub Actions run [#830](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45045827561) passed the full repository validation suite on `main` commit `231c949fae467eaec902b359be9d7baf1f693aac` (22 November 2026). Azure runtime outcomes are project-owner-confirmed; exact ADF/Databricks run IDs, timestamps, row counts and exported logs have not yet been attached. See the [Deployment Acceptance Record](docs/DEPLOYMENT_ACCEPTANCE_RECORD.md).
 
 ---
 
@@ -262,11 +262,13 @@ See the [GitHub Actions workflow history](https://github.com/viradidi/uber-eats-
 
 ## End-to-end execution and CI validation
 
-The platform was deployed to Azure and successfully executed end to end. On 22 November 2026, the project owner reconfirmed that the restored components ran without reported errors, the five Gold views contained data, all four Gold publication-integrity checks passed, and the Gold retention maintenance dry run completed without deleting data. This is owner-confirmed runtime validation; exact run IDs, timestamps, row counts, and exported logs/screenshots have not yet been attached. The completed workflow covered API, CSV and SQL ingestion; Bronze and Silver processing; repository-owned SQL Silver processing; incremental replay validation; Gold publication; and reconciliation.
+The platform was deployed to Azure and successfully executed end to end. The completed workflow covered API, CSV and SQL ingestion; Bronze and Silver processing; repository-owned SQL Silver processing; incremental replay validation; Gold publication; and reconciliation.
 
-The latest main-branch validation is [GitHub Actions run #830](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45045827561), which passed the complete repository validation workflow on commit `231c949fae467eaec902b359be9d7baf1f693aac`. This includes the full repository test suite and structural checks. The earlier [run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) passed 135 tests on commit `034a19d5d62a94bb75e510f03e214f59590bf54a`. CI validates repository code, exported configuration, synthetic fixtures and local Spark transformations; it does not provision or execute Azure Data Factory and Databricks services. The completed Azure execution and repository CI are separate validation layers. See the [deployment and acceptance record](docs/DEPLOYMENT_ACCEPTANCE_RECORD.md).
+Historical baseline: [GitHub Actions run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) passed 135 tests on 5 November 2026. The latest enhancement validation is run #830, linked below.
 
-The cloud resources used for the completed run were later decommissioned to control cost. This repository preserves the implementation, deployment assets, test suite, reporting SQL and operational documentation. A completed end-to-end run does not imply a continuously hosted service, a production SLA, independent certification, or universal exactly-once/CDC guarantees.
+The latest repository validation is [GitHub Actions run #830](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45045827561), which passed all workflow steps, including the complete repository test suite, on `main` commit `231c949fae467eaec902b359be9d7baf1f693aac`. CI validates repository code, exported configuration, synthetic fixtures and local Spark transformations; it does not provision or execute Azure Data Factory and Databricks services. The Azure runtime result and repository CI are separate validation layers. See the [deployment and acceptance record](docs/DEPLOYMENT_ACCEPTANCE_RECORD.md).
+
+The original Azure resources were decommissioned to control cost and the environment was subsequently restored for the latest enhancement acceptance. This repository preserves the implementation, deployment assets, test suite, reporting SQL and operational documentation. The restored acceptance run does not imply continuous hosting, a production SLA, independent certification, or universal exactly-once/CDC guarantees.
 
 ## Security and responsible use
 
@@ -291,6 +293,7 @@ The cloud resources used for the completed run were later decommissioned to cont
 - [Incremental source contract](docs/INCREMENTAL_SOURCE_CONTRACT.md)
 - [Checkpoint concurrency contract](docs/CHECKPOINT_CONCURRENCY_CONTRACT.md)
 - [Recovery and rerun runbook](docs/RECOVERY_AND_RERUN_RUNBOOK.md)
+- [22 November 2026 restored Azure owner-attestation evidence](docs/run-evidence/2026-11-22-restored-azure-owner-attestation.md)
 - [Operations and reliability guide](docs/OPERATIONS_AND_RELIABILITY.md)
 - [Reconciliation audit queries](docs/RECONCILIATION_AUDIT_QUERIES.sql)
 - [Data quality trends and incidents](docs/DATA_QUALITY_TRENDS_AND_INCIDENTS.sql)

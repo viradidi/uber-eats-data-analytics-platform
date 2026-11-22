@@ -6,7 +6,7 @@ This document explains the architecture of the completed Uber Eats data engineer
 
 The platform demonstrates three source-ingestion patterns—REST API, CSV files, and SQL incremental extraction—followed by lake landing, Databricks/Spark Silver processing, a downstream Gold analytics extension, business reporting, validation, and operational recovery controls.
 
-The diagram is a logical architecture view, not a live service map. The completed platform was successfully deployed to Azure and executed end to end. The diagram documents responsibilities and data flow; it does not establish continuous service availability, an SLA, or independent production certification.
+The diagram is a logical architecture view, not a live service map. The platform was deployed and executed end to end in Azure. For the restored latest enhancement deployment (22 November 2026), the operator confirmed that components ran without reported errors, all five stable Gold views contained data, Gold quality/publication/audit records were written, the active pointer advanced, and the retention dry run completed without deleting data. The diagram documents responsibilities and data flow; it does not establish continuous service availability, an SLA, or independent production certification.
 
 ## 2. End-to-end architecture
 
@@ -143,7 +143,7 @@ These controls have boundaries. In particular, a watermark does not automaticall
 
 ## 7. Repository validation and historical execution
 
-The completed API/CSV/SQL, Bronze/Silver, SQL incremental replay, Gold, and master ADF workflow was successfully deployed and executed end to end in Azure. The latest repository validation passed 135 tests in [GitHub Actions run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) on commit `034a19d5d62a94bb75e510f03e214f59590bf54a`. CI tests repository behavior against synthetic data; it does not provision or execute live Databricks or ADF services. See [the deployment acceptance record](../docs/DEPLOYMENT_ACCEPTANCE_RECORD.md) for the completed execution scope.
+The API/CSV/SQL, Bronze/Silver, SQL incremental replay, Gold, and master ADF workflow was successfully deployed and executed end to end in Azure. The latest repository validation passed all workflow steps in [GitHub Actions run #830](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45045827561) on `main` commit `231c949fae467eaec902b359be9d7baf1f693aac`. CI tests repository behavior against synthetic data; it does not provision or execute live Databricks or ADF services. Historical baseline: [run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) passed 135 tests. See [the deployment acceptance record](../docs/DEPLOYMENT_ACCEPTANCE_RECORD.md) for the completed execution scope.
 
 The repository retains implementation artifacts and repeatable checks, including API tests, local PySpark tests for Gold transformations, static ADF dependency-contract tests, and a GitHub Actions workflow that validates JSON/notebook structure, Python syntax, notebook portability, dependency installation, and the test suite. These checks do not execute live ADF or Databricks resources.
 
