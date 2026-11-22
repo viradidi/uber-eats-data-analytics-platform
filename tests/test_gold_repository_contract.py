@@ -34,6 +34,12 @@ class GoldRepositoryContractTests(unittest.TestCase):
         notebook = json.loads((ROOT / "notebooks" / "Gold_Analytics.ipynb").read_text(encoding="utf-8"))
         self.assertEqual("Gold_Analytics", notebook["metadata"]["application/vnd.databricks.v1+notebook"]["notebookMetadata"]["notebookName"])
         self.assertTrue((ROOT / "reports" / "GOLD_ANALYTICS_REPORTING.sql").is_file())
+        self.assertTrue((ROOT / "src" / "gold" / "quality.py").is_file())
+        source = (ROOT / "notebooks" / "Gold_Analytics.py").read_text(encoding="utf-8")
+        self.assertIn("build_gold_quality_observations", source)
+        self.assertIn("evaluate_quality_anomalies", source)
+        self.assertIn("gold_quality_metrics", source)
+        self.assertTrue((ROOT / "docs" / "GOLD_QUALITY_ANOMALY_MONITORING.md").is_file())
 
     def test_gold_outputs_and_synthetic_scope_are_documented(self):
         guide = (ROOT / "docs" / "GOLD_LAYER_AND_REPORTING.md").read_text(encoding="utf-8")
