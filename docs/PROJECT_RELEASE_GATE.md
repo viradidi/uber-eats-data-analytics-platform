@@ -6,7 +6,9 @@
 
 The completed Uber Eats platform covers API, CSV and SQL ingestion; Bronze and Silver processing; the repository-owned SQL Silver notebook; incremental replay validation; Gold publication; and reconciliation. The master ADF orchestration and five Gold analytics outputs are part of the completed implementation.
 
-The latest repository validation passed in [GitHub Actions run #830](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45045827561) on `main` commit `231c949fae467eaec902b359be9d7baf1f693aac`. All workflow steps completed successfully, including the complete repository test suite. CI validates repository code, exported configuration and local/synthetic tests; it is separate from the owner-confirmed Azure runtime acceptance.
+The latest repository validation passed in [GitHub Actions run #830](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45045827561) on `main` commit `231c949fae467eaec902b359be9d7baf1f693aac`. All workflow steps completed successfully, including the complete repository test suite. CI validates repository code, exported configuration and local/synthetic tests; it is separate from the Azure runtime acceptance.
+
+Historical repository CI baseline: [GitHub Actions run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) passed 135 tests on 5 November 2026. The newer validation for the current enhancement release is run #830, linked above.
 
 ## Delivered scope
 
@@ -48,7 +50,7 @@ The completed run validates the configured source contract and execution path. I
 - **Azure execution:** the configured multi-source workflow was successfully deployed and run end to end.
 - **Architecture rationale:** see [Architecture Decision Records](ARCHITECTURE_DECISIONS.md).
 - **Senior review:** see [Senior Engineering Readiness Review](SENIOR_ENGINEERING_READINESS.md).
-- **Service boundary:** the Azure environment was restored for the latest owner-confirmed acceptance. The repository is not a claim of continuous hosting, a production SLA, third-party audit or independent certification. Exact runtime run IDs and exported logs are not yet attached.
+- **Service boundary:** the Azure environment was restored for the latest acceptance. The repository is not a claim of a continuously hosted service, a production SLA, third-party audit or independent certification. Exact runtime run IDs and exported logs are not yet attached.
 
 ## Technical limitations to retain
 
