@@ -111,7 +111,7 @@ See:
 
 ### Transformation and data quality
 
-Databricks notebook exports cover delivery-domain datasets in the Silver layer. A shared PySpark transformation module publishes five Gold analytics tables, and a read-only SQL pack provides daily KPIs, order drill-through, payment analysis, driver performance, and restaurant feedback. Before publication, Gold inputs are checked for valid keys, timestamps, status values, numeric measures, and driver references. Gold outputs are checked for documented grain, KPI bounds, order-count reconciliation, and successful-payment reconciliation across order, daily, and payment-method datasets. Operational SQL reports for quality and reconciliation remain separate.
+Databricks notebook exports cover delivery-domain datasets in the Silver layer. A shared PySpark transformation module publishes five Gold analytics tables, and a read-only SQL pack provides daily KPIs, order drill-through, payment analysis, driver performance, and restaurant feedback. Before publication, Gold inputs are checked for valid keys, timestamps, status values, numeric measures, and driver references. Gold outputs are checked for documented grain, KPI bounds, order-count reconciliation, and successful-payment reconciliation across order, daily, and payment-method datasets. A separate run-level quality module records daily, driver, restaurant and payment-method metrics in `gold_quality_metrics`, compares them with prior non-anomalous observations, and flags conservative statistical deviations. These anomaly statuses are advisory; the existing hard validation and reconciliation gates still determine whether Gold can publish.
 
 ### Recovery and operational thinking
 
@@ -130,7 +130,7 @@ See the [recovery and rerun runbook](docs/RECOVERY_AND_RERUN_RUNBOOK.md) and [op
 | `linkedService/` | Linked-service configuration exports |
 | `factory/`, `routing/` | Data Factory factory settings and repository-owned API/CSV notebook dispatchers |
 | `notebooks/` | Databricks notebook exports for Silver and Gold transformations |
-| `src/gold/` | Reusable Spark transformations for Gold analytics |
+| `src/gold/` | Reusable Spark transformations and run-level quality/anomaly metrics for Gold analytics |
 | `reports/` | Business analytics SQL reporting pack |
 | `src/common/` | Shared Spark utilities |
 | `architecture/` | Architecture diagram and documentation |
@@ -246,6 +246,7 @@ The cloud resources used for the completed run were later decommissioned to cont
 
 - [Architecture and component responsibilities](architecture/architecture.md)
 - [Gold layer and business reporting](docs/GOLD_LAYER_AND_REPORTING.md)
+- [Gold quality metrics and anomaly monitoring](docs/GOLD_QUALITY_ANOMALY_MONITORING.md)
 - [Gold SQL reporting pack](reports/GOLD_ANALYTICS_REPORTING.sql)
 - [SQL incremental-load review](docs/SQL_INCREMENTAL_LOAD_REVIEW.md)
 - [Incremental source contract](docs/INCREMENTAL_SOURCE_CONTRACT.md)
