@@ -31,7 +31,7 @@ GitHub Actions run #830 passed the complete repository validation workflow on th
 | API incremental control | Tie-safe composite cursor and bounded pagination/checkpoint handoff | Included in current implementation; restored deployment reported error-free by owner |
 | Master orchestration | API, CSV, and SQL child pipelines gate Gold publication | End-to-end flow owner-confirmed |
 | Repository consistency | Canonical Databricks source exports and workspace importer checks | Repository-tested |
-| CI | JSON/notebook validation, Python tests, local PySpark tests, static ADF contracts | 135 tests passed in linked Actions run |
+| CI | JSON/notebook validation, Python tests, local PySpark tests, static ADF contracts | All workflow steps, including the complete repository test suite, passed in run #830 |
 
 ## 3. Acceptance evidence and documentation gap
 
