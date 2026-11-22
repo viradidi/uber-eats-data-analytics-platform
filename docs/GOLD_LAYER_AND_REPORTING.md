@@ -93,9 +93,9 @@ On the first deployment of this contract, the notebook imports all five existing
 
 The publication pointer is atomic for each query reading a stable Gold view. Consumers that issue multiple independent SQL statements across the exact moment of a publication switch can observe different publication IDs between statements; for a multi-query dashboard refresh that requires cross-query snapshot consistency, capture `gold_publication_state.active_publication_id` once and filter the backing version tables using that same ID.
 
-Failed run snapshots remain unpublished and do not alter the active views. A deliberate rollback can reactivate a previously successful publication by compare-and-swap updating the pointer, after verifying that all five version tables contain rows for the target publication ID. Do not delete inactive versions until the retention and recovery policy is approved.
+Failed run snapshots remain unpublished and do not alter the active views. A deliberate rollback can reactivate a previously successful publication by compare-and-swap updating the pointer, after verifying that all five version tables contain rows for the target publication ID. The manual [Gold publication retention notebook](GOLD_PUBLICATION_RETENTION.md) protects the active pointer, the legacy baseline, the newest ten successful releases by default, recent/in-flight runs, and any ID with incomplete history. Always review its dry-run report before confirmed cleanup.
 
-See [Gold atomic publication and recovery](GOLD_PUBLICATION_AND_RECOVERY.md) for the bootstrap, rollback and acceptance procedures.
+See [Gold atomic publication and recovery](GOLD_PUBLICATION_AND_RECOVERY.md) for the bootstrap, rollback and acceptance procedures, and [Gold publication retention and maintenance](GOLD_PUBLICATION_RETENTION.md) for version lifecycle and storage cleanup.
 
 ## Reporting
 
@@ -107,6 +107,6 @@ This repository does not include a deployed Power BI workspace or published dash
 
 All source records are synthetic demonstration data created for this portfolio project. They are not official Uber Eats data, do not represent actual customer or driver activity, and must not be used to make claims about Uber Eats' real business performance.
 
-Gold consumer outputs are full-refresh snapshots backed by append-only publication-version tables. The current project does not implement SCD Type 2 dimension history in Gold. Old publication versions are retained for rollback and audit; automated retention/compaction is not yet implemented. Order-level aggregations depend on the keys and event history available in Silver. Promotion attribution and zone-level fulfilment analysis require explicit foreign-key relationships in the source model before they can be built safely.
+Gold consumer outputs are full-refresh snapshots backed by append-only publication-version tables. The current project does not implement SCD Type 2 dimension history in Gold. A manual dry-run-first retention notebook can remove expired inactive publication versions; optional OPTIMIZE and VACUUM actions are disabled by default, and no recurring maintenance schedule is configured. Order-level aggregations depend on the keys and event history available in Silver. Promotion attribution and zone-level fulfilment analysis require explicit foreign-key relationships in the source model before they can be built safely.
 
 The local PySpark unit tests validate transformation behavior and quality gates on small synthetic DataFrames. Static tests inspect the ADF JSON dependency contract. Neither class of test executes the live Data Factory pipeline or a Databricks workspace job.
