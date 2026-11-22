@@ -28,7 +28,7 @@ class PortfolioStatusContractTests(unittest.TestCase):
         acceptance = (ROOT / "docs/DEPLOYMENT_ACCEPTANCE_RECORD.md").read_text(encoding="utf-8")
         self.assertIn("successfully deployed and executed end to end", acceptance.lower())
         self.assertIn("project-operator-confirmed", acceptance.lower())
-        self.assertIn("not yet been supplied", acceptance.lower())
+        self.assertIn("not supplied during the acceptance walkthrough", acceptance.lower())
         for relative_path in STATUS_FILES:
             with self.subTest(path=relative_path):
                 content = (ROOT / relative_path).read_text(encoding="utf-8").lower()
