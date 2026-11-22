@@ -131,7 +131,7 @@ See the [recovery and rerun runbook](docs/RECOVERY_AND_RERUN_RUNBOOK.md) and [op
 | `factory/`, `routing/` | Data Factory factory settings and repository-owned API/CSV notebook dispatchers |
 | `notebooks/` | Databricks notebook exports for Silver and Gold transformations |
 | `src/gold/` | Reusable Spark transformations and run-level quality/anomaly metrics for Gold analytics |
-| `reports/` | Business analytics SQL reporting pack |
+| `reports/` | Business analytics and Gold quality-monitoring SQL reports |
 | `src/common/` | Shared Spark utilities |
 | `architecture/` | Architecture diagram and documentation |
 | `docs/` | Source contracts, Gold definitions, runbooks, run-evidence guidance, reconciliation, and project handoff material |
@@ -248,6 +248,7 @@ The cloud resources used for the completed run were later decommissioned to cont
 - [Gold layer and business reporting](docs/GOLD_LAYER_AND_REPORTING.md)
 - [Gold quality metrics and anomaly monitoring](docs/GOLD_QUALITY_ANOMALY_MONITORING.md)
 - [Gold SQL reporting pack](reports/GOLD_ANALYTICS_REPORTING.sql)
+- [Gold quality and anomaly monitoring queries](reports/GOLD_QUALITY_MONITORING.sql)
 - [SQL incremental-load review](docs/SQL_INCREMENTAL_LOAD_REVIEW.md)
 - [Incremental source contract](docs/INCREMENTAL_SOURCE_CONTRACT.md)
 - [Checkpoint concurrency contract](docs/CHECKPOINT_CONCURRENCY_CONTRACT.md)
