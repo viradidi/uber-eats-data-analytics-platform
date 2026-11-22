@@ -58,3 +58,12 @@ The completed run validates the configured source contract and execution path. I
 > Deployed and successfully executed an Azure-based multi-source data engineering platform integrating API, CSV and SQL ingestion through Azure Data Factory, ADLS Gen2 and Databricks/PySpark. Implemented Bronze, Silver and Gold processing, incremental SQL ingestion with checkpoint controls and replay validation, data-quality and reconciliation checks, operational audit records, and master-pipeline orchestration. The repository validation suite passed 135 tests.
 
 Do not claim a third-party audit, production certification, a production SLA or measured performance improvements without supporting measurements.
+
+
+## Restored-environment confirmation — 22 November 2026
+
+The project owner reconfirmed the restored Azure run and reported no runtime errors. The five Gold consumer views contained data; `gold_quality_metrics`, `gold_publication_history`, and `gold_run_audit` were populated as expected; the active publication pointer referenced the new publication; and the Gold retention maintenance dry run completed without deleting data.
+
+The latest main-branch CI workflow passed on commit `231c949fae467eaec902b359be9d7baf1f693aac`: [run #830](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45045827561).
+
+These latest runtime checks are project-owner confirmed. Exact Azure run IDs, timestamps, row counts, query outputs, and exported logs/screenshots have not yet been committed as evidence. The retention check was dry-run only; no cleanup deletion was performed.
