@@ -111,7 +111,7 @@ See:
 
 ### Transformation and data quality
 
-Databricks notebook exports cover delivery-domain datasets in the Silver layer. A shared PySpark transformation module publishes five Gold analytics tables, and a read-only SQL pack provides daily KPIs, order drill-through, payment analysis, driver performance, and restaurant feedback. Before publication, Gold inputs are checked for valid keys, timestamps, status values, numeric measures, and driver references. Gold outputs are checked for documented grain, KPI bounds, order-count reconciliation, and successful-payment reconciliation across order, daily, and payment-method datasets. A separate run-level quality module records daily, driver, restaurant and payment-method metrics in `gold_quality_metrics`, compares them with prior non-anomalous observations, and flags conservative statistical deviations. These anomaly statuses are advisory; the existing hard validation and reconciliation gates still determine whether Gold can publish.
+Databricks notebook exports cover delivery-domain datasets in the Silver layer. A shared PySpark transformation module publishes five Gold analytics tables, and a read-only SQL pack provides daily KPIs, order drill-through, payment analysis, driver performance, and restaurant feedback. Before publication, Gold inputs are checked for valid keys, timestamps, status values, numeric measures, and driver references. Gold outputs are checked for documented grain, KPI bounds, order-count reconciliation, and successful-payment reconciliation across order, daily, and payment-method datasets. A separate run-level quality module records daily, driver, restaurant and payment-method metrics in `gold_quality_metrics`, compares them with prior non-anomalous observations, and flags conservative statistical deviations. These anomaly statuses are advisory; the existing hard validation and reconciliation gates still determine whether Gold can publish. Gold business outputs are staged as append-only, run-versioned snapshots and exposed through stable views. A single compare-and-swap Delta pointer activates all five validated outputs together, preventing a failed run from leaving consumers with a mixed set of old and new tables.
 
 ### Recovery and operational thinking
 
@@ -130,8 +130,8 @@ See the [recovery and rerun runbook](docs/RECOVERY_AND_RERUN_RUNBOOK.md) and [op
 | `linkedService/` | Linked-service configuration exports |
 | `factory/`, `routing/` | Data Factory factory settings and repository-owned API/CSV notebook dispatchers |
 | `notebooks/` | Databricks notebook exports for Silver and Gold transformations |
-| `src/gold/` | Reusable Spark transformations and run-level quality/anomaly metrics for Gold analytics |
-| `reports/` | Business analytics and Gold quality-monitoring SQL reports |
+| `src/gold/` | Reusable Spark transformations, run-level quality metrics and versioned publication primitives for Gold analytics |
+| `reports/` | Business analytics, Gold quality monitoring and publication/recovery SQL reports |
 | `src/common/` | Shared Spark utilities |
 | `architecture/` | Architecture diagram and documentation |
 | `docs/` | Source contracts, Gold definitions, runbooks, run-evidence guidance, reconciliation, and project handoff material |
@@ -247,8 +247,10 @@ The cloud resources used for the completed run were later decommissioned to cont
 - [Architecture and component responsibilities](architecture/architecture.md)
 - [Gold layer and business reporting](docs/GOLD_LAYER_AND_REPORTING.md)
 - [Gold quality metrics and anomaly monitoring](docs/GOLD_QUALITY_ANOMALY_MONITORING.md)
+- [Gold atomic publication and recovery](docs/GOLD_PUBLICATION_AND_RECOVERY.md)
 - [Gold SQL reporting pack](reports/GOLD_ANALYTICS_REPORTING.sql)
 - [Gold quality and anomaly monitoring queries](reports/GOLD_QUALITY_MONITORING.sql)
+- [Gold publication operations queries](reports/GOLD_PUBLICATION_OPERATIONS.sql)
 - [SQL incremental-load review](docs/SQL_INCREMENTAL_LOAD_REVIEW.md)
 - [Incremental source contract](docs/INCREMENTAL_SOURCE_CONTRACT.md)
 - [Checkpoint concurrency contract](docs/CHECKPOINT_CONCURRENCY_CONTRACT.md)
