@@ -153,9 +153,15 @@ def _ensure_publication_views(gold_frames):
     _ensure_empty_delta_table(state_table, publication_state_schema())
     _ensure_empty_delta_table(event_table, publication_history_schema())
 
+    active_id = active_publication_id(spark, catalog, gold_schema)
     for output_name in GOLD_OUTPUT_NAMES:
         version_table = _raw_table_name(history_table_name(output_name))
         if not spark.catalog.tableExists(version_table):
+            if active_id is not None:
+                raise RuntimeError(
+                    f"GOLD_PUBLICATION_VERSION_MISSING: active publication {active_id} "
+                    f"has no backing table {version_table}."
+                )
             empty_version = (
                 gold_frames[output_name]
                 .withColumn("_publication_id", F.lit(None).cast("string"))
@@ -170,7 +176,6 @@ def _ensure_publication_views(gold_frames):
                     f"{version_table} schema mismatch; expected {expected_columns}, found {actual_columns}"
                 )
 
-    active_id = active_publication_id(spark, catalog, gold_schema)
     existing_types = {name: _table_type(name) for name in GOLD_OUTPUT_NAMES}
     existing_names = {name for name, object_type in existing_types.items() if object_type}
     physical_names = {
@@ -288,6 +293,7 @@ source_tables = {
 }
 
 output_counts = {}
+publication_committed = False
 try:
     silver_frames = {
         key: spark.table(f"{catalog}.{silver_schema}.{table_name}")
@@ -373,14 +379,18 @@ try:
             expected_previous_publication_id=expected_previous_publication_id,
             pipeline_run_id=pipeline_run_id,
         ))
+        publication_committed = True
     except Exception:
         # A concurrent MERGE may commit before Spark surfaces an optimistic
         # concurrency error; inspect the pointer before classifying the run.
-        if active_publication_id(spark, catalog, gold_schema) != run_id:
+        if active_publication_id(spark, catalog, gold_schema) == run_id:
+            publication_committed = True
+        else:
             raise
 
     active_id_after_merge = active_publication_id(spark, catalog, gold_schema)
     if active_id_after_merge != run_id:
+        publication_committed = False
         raise RuntimeError(
             "GOLD_PUBLICATION_CONFLICT: active pointer changed after this run "
             "captured its expected predecessor; staged snapshots remain unpublished."
@@ -442,21 +452,44 @@ try:
     if post_commit_warnings:
         print("gold.publish.warnings=" + json.dumps(post_commit_warnings))
 except Exception as exc:
-    # Never roll back or overwrite the active pointer in this failure path.
-    # Partial version rows are invisible through stable Gold views and can be
-    # inspected/cleaned after the incident is understood.
-    try:
-        _append_publication_event(
-            run_id,
-            "FAILED_BEFORE_COMMIT",
-            previous_publication_id=locals().get("expected_previous_publication_id"),
-            output_counts=output_counts,
-            error_message=f"{type(exc).__name__}: {str(exc)}",
+    if publication_committed:
+        # The single pointer commit returned successfully but a later read or
+        # verification call failed. Preserve the published status; do not
+        # report this as a failed release or invite a blind retry.
+        warning = (
+            f"publication pointer commit succeeded; post-commit verification failed: "
+            f"{type(exc).__name__}: {str(exc)[:1000]}"
         )
-    except Exception as history_error:
-        print(f"gold.publication_history_error={type(history_error).__name__}: {str(history_error)[:500]}")
-    try:
-        write_audit("FAILED_BEFORE_COMMIT", output_counts, f"{type(exc).__name__}: {exc}")
-    except Exception as audit_error:
-        print(f"gold.audit_write_error={type(audit_error).__name__}: {str(audit_error)[:500]}")
-    raise
+        try:
+            write_audit("SUCCEEDED_WITH_WARNINGS", output_counts, warning)
+        except Exception as audit_error:
+            print(f"gold.audit_write_error={type(audit_error).__name__}: {str(audit_error)[:500]}")
+        try:
+            _append_publication_event(
+                run_id,
+                "PUBLISHED_WITH_WARNINGS",
+                previous_publication_id=locals().get("expected_previous_publication_id"),
+                output_counts=output_counts,
+                error_message=warning,
+            )
+        except Exception as history_error:
+            print(f"gold.publication_history_error={type(history_error).__name__}: {str(history_error)[:500]}")
+        print(f"gold.publish.status=SUCCEEDED_WITH_WARNINGS; run_id={run_id}; warning={warning}")
+    else:
+        # Never roll back or overwrite the active pointer in this failure
+        # path. Partial version rows are invisible through stable Gold views.
+        try:
+            _append_publication_event(
+                run_id,
+                "FAILED_BEFORE_COMMIT",
+                previous_publication_id=locals().get("expected_previous_publication_id"),
+                output_counts=output_counts,
+                error_message=f"{type(exc).__name__}: {str(exc)}",
+            )
+        except Exception as history_error:
+            print(f"gold.publication_history_error={type(history_error).__name__}: {str(history_error)[:500]}")
+        try:
+            write_audit("FAILED_BEFORE_COMMIT", output_counts, f"{type(exc).__name__}: {exc}")
+        except Exception as audit_error:
+            print(f"gold.audit_write_error={type(audit_error).__name__}: {str(audit_error)[:500]}")
+        raise
