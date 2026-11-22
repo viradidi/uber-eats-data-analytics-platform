@@ -1,11 +1,16 @@
-from fastapi import FastAPI, Query, HTTPException, Depends
+from fastapi import FastAPI, Query, HTTPException, Depends, Request
+from fastapi.responses import JSONResponse
 from fastapi.security import APIKeyHeader
 from typing import Optional
 from datetime import datetime, timezone
 import json
+import logging
 import os
 import random
+import re
 import tempfile
+import time
+import uuid
 
 
 # =========================================================
@@ -24,8 +29,62 @@ DATA_DIR = os.path.join(BASE_DIR, "data")
 app = FastAPI(
     title="Uber Eats Mock API",
     description="Mock REST API for Uber Eats Data Engineering Project",
-    version="2.1"
+    version="2.2"
 )
+
+api_logger = logging.getLogger("ubereats.api")
+_REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
+
+
+@app.middleware("http")
+async def request_observability(request: Request, call_next):
+    """Emit one safe JSON event per request and propagate a correlation ID."""
+    supplied_id = request.headers.get("X-Request-ID", "")
+    request_id = (
+        supplied_id
+        if _REQUEST_ID_PATTERN.fullmatch(supplied_id)
+        else uuid.uuid4().hex
+    )
+    request.state.request_id = request_id
+    started_at = time.perf_counter()
+    path = request.scope.get("path", "")
+
+    try:
+        response = await call_next(request)
+    except Exception as exc:
+        duration_ms = round((time.perf_counter() - started_at) * 1000, 3)
+        api_logger.error(json.dumps({
+            "event": "http_request",
+            "request_id": request_id,
+            "method": request.method,
+            "path": path,
+            "status_code": 500,
+            "duration_ms": duration_ms,
+            "outcome": "unhandled_exception",
+            "error_type": type(exc).__name__,
+        }, separators=(",", ":")))
+        response = JSONResponse(
+            status_code=500,
+            content={
+                "detail": "Internal server error",
+                "request_id": request_id,
+            },
+            headers={"X-Request-ID": request_id},
+        )
+        return response
+
+    duration_ms = round((time.perf_counter() - started_at) * 1000, 3)
+    response.headers["X-Request-ID"] = request_id
+    api_logger.info(json.dumps({
+        "event": "http_request",
+        "request_id": request_id,
+        "method": request.method,
+        "path": path,
+        "status_code": response.status_code,
+        "duration_ms": duration_ms,
+        "outcome": "completed",
+    }, separators=(",", ":")))
+    return response
 
 
 # =========================================================
@@ -262,6 +321,51 @@ def process_data(
 
 
 # =========================================================
+# SERVICE HEALTH
+# =========================================================
+
+HEALTH_SOURCE_FILES = {
+    "payments": "payments.json",
+    "deliveries": "deliveries.json",
+    "ratings": "ratings.json",
+    "order_status": "order_status.json",
+}
+
+
+@app.get("/health/live", tags=["Health"])
+def health_liveness():
+    """Confirm that the API process can respond to requests."""
+    return {"status": "alive"}
+
+
+@app.get("/health/ready", tags=["Health"])
+def health_readiness():
+    """Check authentication configuration and local source-fixture integrity."""
+    checks = {
+        "api_key_configured": "ok" if API_KEY else "not_configured",
+    }
+
+    for source_name, file_name in HEALTH_SOURCE_FILES.items():
+        try:
+            load_json_file(file_name)
+            checks[source_name] = "ok"
+        except HTTPException:
+            # Return a bounded status rather than an internal path or exception.
+            checks[source_name] = "unavailable_or_invalid"
+
+    ready = all(status == "ok" for status in checks.values())
+    response = JSONResponse(
+        status_code=200 if ready else 503,
+        content={
+            "status": "ready" if ready else "not_ready",
+            "checks": checks,
+        },
+    )
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+# =========================================================
 # HOME ENDPOINT
 # =========================================================
 
@@ -270,8 +374,10 @@ def home():
 
     return {
         "message": "Uber Eats Mock API is running",
-        "version": "2.1",
+        "version": "2.2",
         "endpoints": [
+            "/health/live",
+            "/health/ready",
             "/payments",
             "/deliveries",
             "/ratings",
