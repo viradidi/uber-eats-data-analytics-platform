@@ -52,7 +52,7 @@ The deployment operator confirms that the restored Azure deployment of the lates
 
 The retention result is a dry-run acceptance only. Destructive retention deletes, `OPTIMIZE`, and `VACUUM` were not confirmed as executed and remain separately controlled maintenance actions.
 
-These results are project-operator-confirmed. Exact Azure resource identifiers, ADF/Databricks run IDs and URLs, timestamps, row counts, notebook output exports, and captured notebook output exports have not yet been supplied to the repository. They are intentionally not fabricated; add sanitized evidence when available using [Run Evidence and Retention](RUN_EVIDENCE_RETENTION.md).
+These results are project-operator-confirmed and are retained in the dated [Azure owner-attestation record](run-evidence/2026-11-22-restored-azure-owner-attestation.md). Exact Azure resource identifiers, ADF/Databricks run IDs and URLs, timestamps, row counts, and raw notebook output exports were not supplied during the acceptance walkthrough. They are intentionally not fabricated; add sanitized originals when available using [Run Evidence and Retention](RUN_EVIDENCE_RETENTION.md).
 
 ## Technical boundaries
 
