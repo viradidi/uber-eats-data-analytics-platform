@@ -209,7 +209,11 @@ uvicorn main:app --host 127.0.0.1 --port 10000
 
 The interactive API documentation is available at `http://127.0.0.1:10000/docs`.
 
-Authenticated endpoints require the `X-API-Key` header. The application includes `/payments`, `/deliveries`, `/ratings`, `/order-status`, `/watermarks`, and `/payments/generate-test-data`. The test-data endpoint modifies the local payments JSON fixture and is intended for controlled demonstrations, not concurrent production writes.
+Authenticated data endpoints require the `X-API-Key` header. The API also exposes two unauthenticated service probes: `GET /health/live` confirms that the process responds, while `GET /health/ready` checks that the API key is configured and all four JSON source fixtures are readable arrays of objects. Readiness returns HTTP 503 when a required dependency is unavailable or invalid; its response reports bounded check names and statuses without disclosing filesystem paths or secrets.
+
+Every HTTP response carries an `X-Request-ID`. A valid caller-supplied ID (1–128 characters using letters, digits, dot, underscore, colon or hyphen) is propagated; otherwise the API generates a UUID. The API emits one-line JSON request events with the correlation ID, method, path, status code, duration and outcome. Query strings, request headers, API keys, and request bodies are deliberately excluded from these logs. Unhandled exceptions return a sanitized 500 response containing the correlation ID.
+
+The data endpoints are `/payments`, `/deliveries`, `/ratings`, `/order-status`, `/watermarks`, and `/payments/generate-test-data`. The test-data endpoint changes the local payments JSON fixture for controlled ingestion demonstrations; it is not a production payment service.
 
 ## Run automated tests
 
