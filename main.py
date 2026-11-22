@@ -154,7 +154,14 @@ def _cursor_value_key(value):
             return (0, numeric_value)
     except (InvalidOperation, ValueError):
         pass
-    return (1, text)
+
+    suffix_start = len(text)
+    while suffix_start > 0 and text[suffix_start - 1].isdigit():
+        suffix_start -= 1
+    prefix, numeric_suffix = text[:suffix_start], text[suffix_start:]
+    if prefix.isalpha() and numeric_suffix:
+        return (1, prefix.casefold(), Decimal(numeric_suffix))
+    return (2, text)
 
 
 def get_max_timestamp(file_name, timestamp_column):
