@@ -2,9 +2,9 @@
 
 ## End-to-end execution status
 
-The Uber Eats Data Engineering Platform was successfully deployed and executed end to end in Azure. The completed scope includes API, CSV and SQL ingestion; Bronze/Silver processing; repository-owned SQL Silver processing; incremental replay validation; Gold publication; and reconciliation. See the [Azure deployment and acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md).
+The project owner confirms that the restored Azure deployment of the latest enhancement set ran without runtime errors. The Gold pipeline completed, all five stable Gold views contain data, Gold quality metrics and publication history were persisted, the run audit was recorded, and the active-publication pointer advanced. The Gold retention notebook also completed a successful `dry_run=true` review without deleting data. See the [Azure deployment and acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md).
 
-The latest repository validation is [GitHub Actions run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338), with 135 tests passing on commit `034a19d5d62a94bb75e510f03e214f59590bf54a`. CI validates repository behavior and synthetic/local tests; it does not substitute for the completed Azure execution.
+The latest repository validation is [GitHub Actions run #830](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45045827561), successful on `main` commit `231c949fae467eaec902b359be9d7baf1f693aac`. CI validates repository behavior and synthetic/local tests; it does not substitute for live Azure execution.
 
 ## What the repository preserves
 
@@ -27,6 +27,6 @@ The latest repository validation is [GitHub Actions run #779](https://github.com
 
 ## Operational boundaries
 
-The Azure resources used for the completed run were later decommissioned to control cost. The repository provides deployment and recovery guidance for a future environment, but it does not claim continuous hosting, a production SLA, independent certification or universal exactly-once/CDC guarantees.
+The earlier Azure resources were decommissioned to control cost and the environment was subsequently restored for the latest owner-confirmed acceptance. This is not a claim of continuous hosting, a production SLA, independent certification or universal exactly-once/CDC guarantees. Exact runtime run IDs, timestamps, row counts and exported evidence have not yet been committed; add sanitized artifacts when available.
 
 Keep secrets, credentials, connection strings, personal data and sensitive infrastructure values out of source control.
