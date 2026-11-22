@@ -55,7 +55,7 @@ If no legacy Gold tables exist, empty version tables and stable views are create
 
 If the legacy set is partial, or stable views exist without a publication pointer, the notebook fails closed. It does not rename or discard the remaining objects. If a process stops after the baseline pointer is committed but before every view is created, the next run completes the remaining view replacements using the already-committed baseline.
 
-This is a one-time schema migration and requires Unity Catalog privileges to create Delta tables/views and rename existing tables.
+This is a one-time schema migration and requires Unity Catalog privileges to create Delta tables/views and rename existing tables. Run the first bootstrap with only one Gold publisher active; regular post-bootstrap publishes are protected by the pointer compare-and-swap, but the initial physical-table conversion is an administrative cutover rather than a concurrent migration protocol.
 
 ## Rollback procedure
 
