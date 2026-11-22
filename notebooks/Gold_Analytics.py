@@ -271,12 +271,17 @@ def _ensure_publication_views(gold_frames):
                 f"has no backing table {version_table}."
             )
 
-        spark.sql(build_publication_view_sql(
-            catalog,
-            gold_schema,
-            output_name,
-            gold_frames[output_name].columns,
-        ))
+        should_replace_view = object_type != "VIEW"
+        if object_type == "VIEW":
+            current_columns = spark.table(stable_table).columns
+            should_replace_view = current_columns != gold_frames[output_name].columns
+        if should_replace_view:
+            spark.sql(build_publication_view_sql(
+                catalog,
+                gold_schema,
+                output_name,
+                gold_frames[output_name].columns,
+            ))
 
     return active_publication_id(spark, catalog, gold_schema)
 
@@ -442,8 +447,9 @@ try:
             f"publication history append failed: {type(history_error).__name__}: {str(history_error)[:500]}"
         )
 
+    final_publish_status = "SUCCEEDED_WITH_WARNINGS" if post_commit_warnings else "SUCCEEDED"
     print(
-        "gold.publish.status=SUCCEEDED; "
+        f"gold.publish.status={final_publish_status}; "
         f"pipeline_run_id={pipeline_run_id}; run_id={run_id}; "
         f"previous_publication_id={expected_previous_publication_id}; "
         f"quality_metrics={quality_metric_count}; quality_anomalies={quality_anomaly_count}; "
