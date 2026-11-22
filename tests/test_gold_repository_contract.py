@@ -45,6 +45,35 @@ class GoldRepositoryContractTests(unittest.TestCase):
         report_sql = quality_report.read_text(encoding="utf-8")
         self.assertIn("status = 'ANOMALY'", report_sql)
         self.assertIn("ROW_NUMBER() OVER", report_sql)
+        self.assertTrue((ROOT / "src" / "gold" / "publication.py").is_file())
+        self.assertTrue((ROOT / "docs" / "GOLD_PUBLICATION_AND_RECOVERY.md").is_file())
+        publication_report = ROOT / "reports" / "GOLD_PUBLICATION_OPERATIONS.sql"
+        self.assertTrue(publication_report.is_file())
+        self.assertIn("gold_publication_state", publication_report.read_text(encoding="utf-8"))
+
+    def test_gold_publication_stages_all_outputs_before_atomic_pointer_switch(self):
+        source = (ROOT / "notebooks" / "Gold_Analytics.py").read_text(encoding="utf-8")
+        publication_module = (ROOT / "src" / "gold" / "publication.py").read_text(encoding="utf-8")
+
+        self.assertIn("GOLD_OUTPUT_NAMES", source)
+        self.assertIn("history_table_name(output_name)", source)
+        self.assertIn('mode("append")', source)
+        self.assertIn("GOLD_PUBLICATION_STAGE_COUNT_MISMATCH", source)
+        self.assertIn("build_activation_merge_sql", source)
+        self.assertIn("active_publication_id(spark, catalog, gold_schema)", source)
+        self.assertIn("ALTER TABLE", source)
+        self.assertIn("__legacy_", source)
+        self.assertIn("target.active_publication_id <=> source.expected_previous_publication_id", publication_module)
+        self.assertIn("CREATE OR REPLACE VIEW", publication_module)
+        self.assertNotIn('target_name = f"{catalog}.{gold_schema}.{output_name}"', source)
+
+        staged_event = source.index('"SNAPSHOTS_STAGED"', source.index("output_counts[output_name]"))
+        activation = source.index("spark.sql(build_activation_merge_sql", staged_event)
+        self.assertLess(staged_event, activation)
+
+        self.assertIn("FAILED_BEFORE_COMMIT", source)
+        self.assertIn("SUCCEEDED_WITH_WARNINGS", source)
+
 
     def test_gold_outputs_and_synthetic_scope_are_documented(self):
         guide = (ROOT / "docs" / "GOLD_LAYER_AND_REPORTING.md").read_text(encoding="utf-8")
