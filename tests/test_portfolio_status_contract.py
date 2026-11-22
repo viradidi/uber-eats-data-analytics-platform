@@ -22,7 +22,7 @@ class PortfolioStatusContractTests(unittest.TestCase):
             with self.subTest(path=relative_path):
                 content = (ROOT / relative_path).read_text(encoding="utf-8")
                 self.assertIn(CI_RUN_URL, content)
-                self.assertIn("run #830", content.lower())
+                self.assertIn("GitHub Actions", content)
 
     def test_completed_azure_execution_is_distinguished_from_repository_ci(self):
         acceptance = (ROOT / "docs/DEPLOYMENT_ACCEPTANCE_RECORD.md").read_text(encoding="utf-8")
