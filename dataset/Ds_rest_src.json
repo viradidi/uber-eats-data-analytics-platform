@@ -16,13 +16,21 @@
       "p_watermark_id": {
         "type": "string",
         "defaultValue": ""
+      },
+      "p_upper_watermark": {
+        "type": "string",
+        "defaultValue": ""
+      },
+      "p_upper_watermark_id": {
+        "type": "string",
+        "defaultValue": ""
       }
     },
     "annotations": [],
     "type": "RestResource",
     "typeProperties": {
       "relativeUrl": {
-        "value": "@if(or(empty(dataset().p_watermark), empty(dataset().p_watermark_id)), concat(dataset().p_rel_url, '?page_size=100'), concat(dataset().p_rel_url, '?page_size=100&updated_after=', uriComponent(dataset().p_watermark), '&updated_after_id=', uriComponent(dataset().p_watermark_id)))",
+        "value": "@if(or(empty(dataset().p_upper_watermark), empty(dataset().p_upper_watermark_id)), concat(dataset().p_rel_url, '?page_size=100'), concat(dataset().p_rel_url, '?page_size=100&updated_until=', uriComponent(dataset().p_upper_watermark), '&updated_until_id=', uriComponent(dataset().p_upper_watermark_id), if(and(not(empty(dataset().p_watermark)), not(empty(dataset().p_watermark_id))), concat('&updated_after=', uriComponent(dataset().p_watermark), '&updated_after_id=', uriComponent(dataset().p_watermark_id)), '')))",
         "type": "Expression"
       }
     },
