@@ -85,7 +85,7 @@ Before deploying the master pipeline, import the Gold notebook into the Databric
 
 ## Reporting
 
-The read-only query pack in reports/GOLD_ANALYTICS_REPORTING.sql contains daily KPI, order-state, payment-method, driver-performance, restaurant-feedback, and order drill-through queries. These result sets can be connected to a BI tool after deployment.
+The read-only query pack in reports/GOLD_ANALYTICS_REPORTING.sql contains daily KPI, order-state, payment-method, driver-performance, restaurant-feedback, and order drill-through queries. The companion reports/GOLD_QUALITY_MONITORING.sql provides recent anomaly detail, daily quality-status trends, and the latest metric status per business dimension. These result sets can be connected to a BI tool after deployment.
 
 This repository does not include a deployed Power BI workspace or published dashboard. The reporting SQL and documented Gold table contracts provide the serving interface for a future dashboard without pretending that one already exists.
 
