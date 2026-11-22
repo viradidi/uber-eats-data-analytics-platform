@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from fastapi import FastAPI, Query, HTTPException, Depends, Header
 from fastapi.security import APIKeyHeader
-from typing import Optional
+from typing import Annotated, Optional
 from datetime import datetime, timezone
 import errno
 import json
@@ -514,10 +514,11 @@ _PAYMENTS_THREAD_LOCK = threading.Lock()
 
 
 @contextmanager
-def _payments_write_lock():
+def _payments_write_lock(lock_directory=None):
     """Serialize payment fixture writes across threads and local processes."""
-    os.makedirs(DATA_DIR, exist_ok=True)
-    lock_path = _data_file_path(".payments.lock")
+    lock_directory = lock_directory or DATA_DIR
+    os.makedirs(lock_directory, exist_ok=True)
+    lock_path = os.path.join(lock_directory, ".payments.lock")
 
     with _PAYMENTS_THREAD_LOCK:
         with open(lock_path, "a+b") as lock_file:
@@ -596,9 +597,9 @@ def _write_json_atomically(file_path, data):
         raise
 
 
-def _load_payment_idempotency_ledger():
+def _load_payment_idempotency_ledger(ledger_path=None):
     """Load the local request-key journal; an absent journal is empty state."""
-    ledger_path = _data_file_path("payments.idempotency.json")
+    ledger_path = ledger_path or _data_file_path("payments.idempotency.json")
     try:
         with open(ledger_path, "r", encoding="utf-8") as file:
             ledger = json.load(file)
@@ -638,14 +639,16 @@ def _load_payment_idempotency_ledger():
 )
 def generate_payment_test_data(
     api_key: str = Depends(verify_api_key),
-    idempotency_key: Optional[str] = Header(
-        None,
-        alias="Idempotency-Key",
-        description=(
-            "Optional client-generated key (1–255 characters). Reusing the "
-            "same key returns the original generated payment."
+    idempotency_key: Annotated[
+        Optional[str],
+        Header(
+            alias="Idempotency-Key",
+            description=(
+                "Optional client-generated key (1–255 characters). Reusing the "
+                "same key returns the original generated payment."
+            ),
         ),
-    ),
+    ] = None,
 ):
     request_key = idempotency_key.strip() if idempotency_key is not None else None
     if request_key == "":
@@ -660,11 +663,13 @@ def generate_payment_test_data(
         )
 
     payment_path = _data_file_path("payments.json")
+    payment_directory = os.path.dirname(os.path.abspath(payment_path))
+    ledger_path = os.path.join(payment_directory, "payments.idempotency.json")
 
     try:
-        with _payments_write_lock():
+        with _payments_write_lock(payment_directory):
             data = load_json_file("payments.json")
-            ledger = _load_payment_idempotency_ledger()
+            ledger = _load_payment_idempotency_ledger(ledger_path)
 
             if request_key is not None and request_key in ledger:
                 original_payment = ledger[request_key]
@@ -725,10 +730,7 @@ def generate_payment_test_data(
                 # before the payments file is replaced, a retry can complete
                 # the append using this exact original payment record.
                 ledger[request_key] = new_payment
-                _write_json_atomically(
-                    _data_file_path("payments.idempotency.json"),
-                    ledger,
-                )
+                _write_json_atomically(ledger_path, ledger)
 
             data.append(new_payment)
             _write_json_atomically(payment_path, data)
