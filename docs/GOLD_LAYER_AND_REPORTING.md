@@ -37,7 +37,7 @@ Deliveries with a null driver_id remain available in order-level and daily order
 
 ## Gold quality and publication gates
 
-The shared build_gold_outputs transformation validates its inputs and outputs before the notebook starts overwriting any Gold target. A failed check raises an exception and prevents Gold publication from beginning.
+The shared build_gold_outputs transformation validates its inputs and outputs before the notebook stages any Gold target. A failed check raises an exception and prevents Gold publication from beginning.
 
 Input gates include:
 
@@ -77,11 +77,25 @@ Anomaly findings are **advisory** and do not reject or mutate Gold outputs. The 
 
 ## Publish and orchestration behavior
 
-notebooks/Gold_Analytics.py and its Databricks notebook export use the shared transformation module in src/gold/transformations.py. Each Gold output is published as a full-refresh Delta table using overwrite with schema replacement. The run-level `gold_quality_metrics` table is append-only and stores one row per observed metric/dimension/run. The Gold audit record is appended after publication and includes output row counts, quality metric count, anomaly count, and the parent ADF pipeline run ID when supplied.
+notebooks/Gold_Analytics.py and its Databricks notebook export use the shared transformation module in src/gold/transformations.py. Each run writes the five validated business outputs into append-only, run-versioned Delta tables (`<gold_output>__versions`). It verifies the staged row count for every dataset before changing the single row in `gold_publication_state`. Stable consumer views (`gold_order_360`, `gold_daily_order_performance`, `gold_payment_method_performance`, `gold_restaurant_feedback`, and `gold_driver_performance`) all resolve through that one active publication ID. The state-table MERGE uses a compare-and-swap predicate against the pointer observed at the start of the run, so a stale concurrent publisher cannot overwrite a newer publication. The previous active pointer remains visible if any staging or pre-commit check fails.
+
+The append-only `gold_publication_history` records staging, publish, bootstrap and failure events. On first rollout, all five legacy physical Gold tables are copied into one baseline publication before they are renamed to preserved `__legacy_*` names and replaced by stable views. A partial legacy table set is rejected rather than migrated unsafely. The run-level `gold_quality_metrics` table remains append-only and stores one row per observed metric/dimension/run. Quality and audit sidecars are written after the pointer commit; their failures are surfaced as warnings and do not misreport an already-published Gold version as rolled back. See [Gold atomic publication and recovery](GOLD_PUBLICATION_AND_RECOVERY.md).
 
 The exported ADF master pipeline, pipeline/uber_eats_master.json, runs the API, CSV, and SQL ingestion pipelines concurrently, waits for all three to finish successfully, and only then invokes the Gold notebook. If an ingestion branch fails, the Gold publication activity is not eligible to start.
 
 Before deploying the master pipeline, import the Gold notebook into the Databricks workspace at /Shared/UberEats/Gold_Analytics, make the src.gold module available to the notebook (for example through the repository checkout or a workspace deployment package), and review the Databricks linked service, catalog, schema, storage access, and cluster/runtime configuration. The JSON export is a deployment artifact, not proof of a live ADF run.
+
+## Atomic publication and recovery
+
+The five stable Gold business names are views backed by five append-only version tables. A publication run stages its complete output set under one run ID, verifies each staged row count, then changes one active-publication pointer using a compare-and-swap Delta MERGE. The stable views read that pointer, so failed staging does not expose a partially updated set. Concurrent publishers that captured an old pointer cannot overwrite a newer successful publication.
+
+On the first deployment of this contract, the notebook imports all five existing physical Gold tables into a baseline version before replacing them with stable views. Original physical tables are preserved with unique `__legacy_*` names. If the old table set is incomplete, bootstrap fails closed and leaves the original objects untouched.
+
+The publication pointer is atomic for each query reading a stable Gold view. Consumers that issue multiple independent SQL statements across the exact moment of a publication switch can observe different publication IDs between statements; for a multi-query dashboard refresh that requires cross-query snapshot consistency, capture `gold_publication_state.active_publication_id` once and filter the backing version tables using that same ID.
+
+Failed run snapshots remain unpublished and do not alter the active views. A deliberate rollback can reactivate a previously successful publication by compare-and-swap updating the pointer, after verifying that all five version tables contain rows for the target publication ID. Do not delete inactive versions until the retention and recovery policy is approved.
+
+See [Gold atomic publication and recovery](GOLD_PUBLICATION_AND_RECOVERY.md) for the bootstrap, rollback and acceptance procedures.
 
 ## Reporting
 
@@ -93,6 +107,6 @@ This repository does not include a deployed Power BI workspace or published dash
 
 All source records are synthetic demonstration data created for this portfolio project. They are not official Uber Eats data, do not represent actual customer or driver activity, and must not be used to make claims about Uber Eats' real business performance.
 
-Gold outputs are full-refresh snapshots. The current project does not implement a historical snapshot strategy or SCD Type 2 dimension history in Gold. Order-level aggregations depend on the keys and event history available in Silver. Promotion attribution and zone-level fulfilment analysis require explicit foreign-key relationships in the source model before they can be built safely.
+Gold consumer outputs are full-refresh snapshots backed by append-only publication-version tables. The current project does not implement SCD Type 2 dimension history in Gold. Old publication versions are retained for rollback and audit; automated retention/compaction is not yet implemented. Order-level aggregations depend on the keys and event history available in Silver. Promotion attribution and zone-level fulfilment analysis require explicit foreign-key relationships in the source model before they can be built safely.
 
 The local PySpark unit tests validate transformation behavior and quality gates on small synthetic DataFrames. Static tests inspect the ADF JSON dependency contract. Neither class of test executes the live Data Factory pipeline or a Databricks workspace job.
