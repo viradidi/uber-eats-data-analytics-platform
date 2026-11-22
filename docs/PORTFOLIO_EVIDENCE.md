@@ -2,9 +2,9 @@
 
 ## Project status
 
-The Uber Eats Data Engineering Platform was successfully deployed and executed end to end in Azure. The completed workflow includes API, CSV and SQL ingestion; Bronze/Silver processing; repository-owned SQL Silver processing; incremental replay validation; Gold publication; and reconciliation. The five Gold outputs are listed in the [Azure deployment and acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md).
+The Uber Eats Data Engineering Platform was successfully deployed and executed end to end in Azure. For the restored latest enhancement deployment, the project operator confirmed error-free component execution, populated five stable Gold views, persisted quality metrics/publication history/run audit, an updated active-publication pointer, and a successful non-destructive retention dry run. See the [Azure deployment and acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md).
 
-The latest repository CI run is [GitHub Actions run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338), with 135 tests passing on commit `034a19d5d62a94bb75e510f03e214f59590bf54a`. CI validates repository code and local/synthetic tests; the Azure deployment and end-to-end execution were completed separately.
+The latest repository CI is [GitHub Actions run #830](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45045827561), with all workflow steps passing on `main` commit `231c949fae467eaec902b359be9d7baf1f693aac`. CI validates repository code and local/synthetic tests; the Azure deployment and end-to-end execution were completed separately. Historical baseline: [run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) passed 135 tests on 5 November 2026.
 
 ## What a reviewer can inspect
 
@@ -30,9 +30,9 @@ The latest repository CI run is [GitHub Actions run #779](https://github.com/vir
 
 ## Validation interpretation
 
-The repository's automated tests validate code, configuration contracts and local/synthetic behavior. They do not provision or execute Azure Data Factory and Databricks services. The completed Azure workflow was separately deployed and executed end to end.
+The repository's automated tests validate code, configuration contracts and local/synthetic behavior. They do not provision or execute Azure Data Factory and Databricks services. The restored Azure workflow was separately deployed and executed end to end; the detailed runtime run exports have not yet been attached.
 
-The cloud resources used for the completed execution were later decommissioned to control cost. This does not change the project's completed status. It does mean the repository should be described as a completed implementation, not a continuously hosted service or a production SLA.
+Azure resources are not continuously hosted. Describe this as a completed implementation and owner-confirmed deployment, not a continuously hosted service or a production SLA.
 
 ## Senior-review discussion
 
