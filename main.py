@@ -197,14 +197,23 @@ def process_data(
     page_size,
     updated_after: Optional[str] = None,
     updated_after_id: Optional[str] = None,
+    updated_until: Optional[str] = None,
+    updated_until_id: Optional[str] = None,
     cursor_column: Optional[str] = None,
     request: Optional[Request] = None,
 ):
     data = load_json_file(file_name)
     if updated_after_id is not None and not updated_after:
         raise HTTPException(status_code=400, detail="updated_after_id requires updated_after.")
+    if (updated_until is None) != (updated_until_id is None):
+        raise HTTPException(
+            status_code=400,
+            detail="updated_until and updated_until_id must be supplied together.",
+        )
 
     filter_date = None
+    upper_date = None
+    upper_id_key = None
     filter_id_key = None
     if updated_after:
         filter_date = parse_timestamp(updated_after)
@@ -217,6 +226,20 @@ def process_data(
                 filter_id_key = _cursor_value_key(updated_after_id)
             except ValueError:
                 raise HTTPException(status_code=400, detail="updated_after_id must be a non-empty string or number.")
+
+    if updated_until is not None:
+        if not cursor_column:
+            raise HTTPException(
+                status_code=400,
+                detail="A stable cursor column is not configured for this endpoint.",
+            )
+        upper_date = parse_timestamp(updated_until)
+        if upper_date is None:
+            raise HTTPException(status_code=400, detail="Invalid updated_until format. Use an ISO-8601 timestamp.")
+        try:
+            upper_id_key = _cursor_value_key(updated_until_id)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="updated_until_id must be a non-empty string or number.")
 
     if cursor_column:
         ordered_records = []
@@ -244,6 +267,11 @@ def process_data(
                     item for item in ordered_records
                     if item[0] > filter_date or (item[0] == filter_date and item[1] > filter_id_key)
                 ]
+        if upper_date is not None:
+            ordered_records = [
+                item for item in ordered_records
+                if item[0] < upper_date or (item[0] == upper_date and item[1] <= upper_id_key)
+            ]
         data = [item[2] for item in ordered_records]
     elif filter_date is not None:
         data = [
@@ -291,7 +319,7 @@ def home():
 
     return {
         "message": "Uber Eats Mock API is running",
-        "version": "2.1",
+        "version": "2.2",
         "endpoints": [
             "/payments",
             "/deliveries",
@@ -338,6 +366,16 @@ def get_payments(
         description="Stable source ID paired with updated_after"
     ),
 
+    updated_until: Optional[str] = Query(
+        None,
+        description="Inclusive upper timestamp captured before the ingestion copy"
+    ),
+
+    updated_until_id: Optional[str] = Query(
+        None,
+        description="Stable source ID paired with updated_until"
+    ),
+
     api_key: str = Depends(
         verify_api_key
     )
@@ -350,6 +388,8 @@ def get_payments(
         page_size=page_size,
         updated_after=updated_after,
         updated_after_id=updated_after_id,
+        updated_until=updated_until,
+        updated_until_id=updated_until_id,
         cursor_column="payment_id",
         request=request,
     )
@@ -390,6 +430,16 @@ def get_deliveries(
         description="Stable source ID paired with updated_after"
     ),
 
+    updated_until: Optional[str] = Query(
+        None,
+        description="Inclusive upper timestamp captured before the ingestion copy"
+    ),
+
+    updated_until_id: Optional[str] = Query(
+        None,
+        description="Stable source ID paired with updated_until"
+    ),
+
     api_key: str = Depends(
         verify_api_key
     )
@@ -402,6 +452,8 @@ def get_deliveries(
         page_size=page_size,
         updated_after=updated_after,
         updated_after_id=updated_after_id,
+        updated_until=updated_until,
+        updated_until_id=updated_until_id,
         cursor_column="delivery_id",
         request=request,
     )
@@ -442,6 +494,16 @@ def get_ratings(
         description="Stable source ID paired with updated_after"
     ),
 
+    updated_until: Optional[str] = Query(
+        None,
+        description="Inclusive upper timestamp captured before the ingestion copy"
+    ),
+
+    updated_until_id: Optional[str] = Query(
+        None,
+        description="Stable source ID paired with updated_until"
+    ),
+
     api_key: str = Depends(
         verify_api_key
     )
@@ -454,6 +516,8 @@ def get_ratings(
         page_size=page_size,
         updated_after=updated_after,
         updated_after_id=updated_after_id,
+        updated_until=updated_until,
+        updated_until_id=updated_until_id,
         cursor_column="rating_id",
         request=request,
     )
@@ -494,6 +558,16 @@ def get_order_status(
         description="Stable source ID paired with updated_after"
     ),
 
+    updated_until: Optional[str] = Query(
+        None,
+        description="Inclusive upper timestamp captured before the ingestion copy"
+    ),
+
+    updated_until_id: Optional[str] = Query(
+        None,
+        description="Stable source ID paired with updated_until"
+    ),
+
     api_key: str = Depends(
         verify_api_key
     )
@@ -506,6 +580,8 @@ def get_order_status(
         page_size=page_size,
         updated_after=updated_after,
         updated_after_id=updated_after_id,
+        updated_until=updated_until,
+        updated_until_id=updated_until_id,
         cursor_column="order_id",
         request=request,
     )
