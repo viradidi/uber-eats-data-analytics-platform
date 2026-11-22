@@ -2,11 +2,11 @@
 
 ## Project status
 
-**Completed — successfully deployed and executed end to end in Azure.**
+**Completed — latest enhancement deployment accepted in Azure on 22 November 2026 (project-operator confirmed).**
 
-The completed API/CSV/SQL platform, repository-owned SQL Silver path, Gold analytics layer and master ADF orchestration were deployed and run end to end. The workflow includes Bronze/Silver processing, incremental replay validation, Gold publication and reconciliation. The original Azure resources were later decommissioned to control ongoing costs; the repository preserves the implementation and redeployment assets.
+The API/CSV/SQL platform, repository-owned SQL Silver path, Gold analytics layer and master ADF orchestration were deployed and run end to end. For the restored latest enhancement deployment, the operator confirmed that components ran without reported errors, all five stable Gold views contained data, quality metrics/publication history/run audit were persisted, the active-publication pointer advanced, and the retention dry run completed without deleting data. Exact ADF/Databricks run IDs, timestamps, row counts and exported outputs have not yet been supplied; this record does not invent them.
 
-The latest repository validation is [GitHub Actions run #779 — 135 tests passed](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) on commit `034a19d5d62a94bb75e510f03e214f59590bf54a`. CI validates repository code and synthetic fixtures; the successful Azure deployment and end-to-end operation are separate parts of the completed project.
+The latest repository validation is [GitHub Actions run #830 — all workflow steps passed](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45045827561) on `main` commit `231c949fae467eaec902b359be9d7baf1f693aac`. CI validates repository code and local/synthetic fixtures; it does not execute live Azure services. Historical baseline: [run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) passed 135 tests on 5 November 2026.
 
 ## Delivered scope
 
@@ -43,9 +43,9 @@ Start with the [README](../README.md), then use:
 
 ## Validation scope
 
-- **Repository validation:** GitHub Actions run #779 passed 135 tests. The suite validates committed code, static resource contracts and local/synthetic scenarios.
+- **Repository validation:** GitHub Actions run #830 passed all workflow steps, including the complete repository test suite. The suite validates committed code, static resource contracts and local/synthetic scenarios.
 - **Azure execution:** the configured API, CSV and SQL ingestion workflow, Bronze/Silver processing, incremental replay, Gold publication, master orchestration and reconciliation were successfully executed end to end.
-- **Operational boundaries:** the cloud resources used for the completed run were later decommissioned. The project is not presented as a continuously hosted service, independent audit, production certification or production SLA.
+- **Operational boundaries:** Azure resources are not continuously hosted. The project is not presented as an independent audit, production certification or production SLA. The latest runtime outcome is operator-confirmed; detailed run exports remain to be attached.
 
 ## Engineering limitations to explain
 
@@ -58,4 +58,4 @@ Start with the [README](../README.md), then use:
 
 ## Safe portfolio description
 
-> Deployed and successfully executed an Azure-based multi-source data engineering platform integrating API, CSV and SQL ingestion through Azure Data Factory, ADLS Gen2 and Databricks/PySpark. Implemented Bronze, Silver and Gold processing, incremental SQL ingestion with checkpoint controls and replay validation, data-quality and reconciliation checks, operational audit records, and master-pipeline orchestration. The repository validation suite passed 135 tests.
+> Deployed and successfully executed an Azure-based multi-source data engineering platform integrating API, CSV and SQL ingestion through Azure Data Factory, ADLS Gen2 and Databricks/PySpark. Implemented Bronze, Silver and Gold processing, incremental SQL ingestion with checkpoint controls and replay validation, data-quality and reconciliation checks, operational audit records, and master-pipeline orchestration. The latest main-branch repository validation passed in GitHub Actions run #830.

@@ -4,9 +4,9 @@
 
 This document is retained as a repeatable deployment and acceptance procedure for recreating the platform in another Azure environment.
 
-**Current project status: deployment and end-to-end operation are complete, project-owner confirmed.** The successful deployed flow includes API, CSV, and SQL ingestion; Bronze/Silver processing; SQL Silver incremental replay; Gold publication; and reconciliation. The prior status that described Azure runtime acceptance as pending is superseded. See [DEPLOYMENT_ACCEPTANCE_RECORD.md](DEPLOYMENT_ACCEPTANCE_RECORD.md).
+**Current project status: the latest enhancement deployment has been restored and accepted by project-owner confirmation on 22 November 2026.** The owner reports that the restored Azure deployment ran without runtime errors. The Gold pipeline completed; all five stable Gold views contain data; `gold_quality_metrics`, `gold_publication_history`, and `gold_run_audit` were updated; the active-publication pointer advanced; and the retention notebook completed a successful `dry_run=true` review without deleting data. The repository CI for the same release also passed in [GitHub Actions run #830](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45045827561). See [DEPLOYMENT_ACCEPTANCE_RECORD.md](DEPLOYMENT_ACCEPTANCE_RECORD.md).
 
-The steps below are a reusable procedure for a future redeployment or a fresh environment, not a list of outstanding tasks for the accepted deployment. Exact run IDs, timestamps, metrics, and exported logs from the accepted run have not yet been attached to the repository.
+The steps below are a reusable procedure for a future redeployment or a fresh environment, not a list of outstanding tasks for the accepted deployment. Exact run IDs, timestamps, metrics, notebook outputs and exported logs from the latest acceptance have not yet been attached to the repository. Checkboxes in this runbook are reusable procedure steps; the acceptance record is the source of current project status.
 
 Do not recreate Azure resources only to make portfolio screenshots. Use a budgeted environment and keep secrets outside source control.
 
@@ -207,4 +207,4 @@ For a future deployment, use the following go/no-go criteria. The current deploy
 - [ ] Required recovery scenarios behave as expected.
 - [ ] Actual run evidence is retained and tied to the reviewed commit.
 
-Current project status: deployed and end-to-end operation verified, project-owner confirmed. Exact runtime evidence remains to be attached to [the acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md); do not treat this reusable checklist as an indication that the accepted deployment is still pending.
+Current project status: latest enhancement deployment restored and accepted by project-owner confirmation. The Gold pipeline, five stable views, quality metrics, publication history, run audit, active pointer, and non-destructive retention dry-run checks were confirmed. Exact runtime evidence remains to be attached to [the acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md); do not treat this reusable checklist as an indication that the accepted deployment is still pending.

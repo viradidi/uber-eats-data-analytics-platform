@@ -1,6 +1,8 @@
 # Project Completion and Evidence Checklist
 
-Use this checklist to track delivered artifacts and validation. **Current status: implementation, Azure deployment and end-to-end execution are complete.** The completed Azure workflow covers API, CSV and SQL ingestion; Bronze/Silver processing; incremental replay; Gold publication; and reconciliation. The latest repository CI passed 135 tests in [GitHub Actions run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) on commit `034a19d5d62a94bb75e510f03e214f59590bf54a`. See the [deployment acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md) for the completed scope and technical boundaries.
+Use this checklist to track delivered artifacts and validation. **Current status: implementation, latest Azure enhancement deployment and project-owner-confirmed runtime acceptance are complete.** The restored deployment ran without reported runtime errors; the Gold pipeline and all five stable views were verified; quality metrics, publication history, run audit and active pointer were updated; and the retention dry-run completed without deleting data. The latest repository CI passed all workflow steps, including the complete test suite, in [GitHub Actions run #830](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45045827561) on commit `231c949fae467eaec902b359be9d7baf1f693aac`. See the [deployment acceptance record](DEPLOYMENT_ACCEPTANCE_RECORD.md) for the evidence boundary and technical limitations.
+
+Historical repository CI baseline: [GitHub Actions run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338) passed 135 tests on 5 November 2026. The newer validation for the current enhancement release is run #830, linked above.
 
 ## Repository and documentation
 
@@ -142,9 +144,27 @@ A checked repository artifact means the relevant code or documentation is presen
 - [x] Add local Spark tests and static ADF dependency-contract tests to CI.
 - [x] Add Gold run-audit design and run-evidence retention guidance.
 - [x] Fix generated API test payments to populate both payment_timestamp and updated_at as required by the Payments Silver contract.
-- [x] Run the local PySpark tests in GitHub Actions and review the actual workflow result: [135 tests passed in run #779](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338).
+- [x] Run the complete repository validation workflow on the final enhancement merge: [GitHub Actions run #830 passed on main](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45045827561).
 - [x] Import Gold_Analytics into the target Databricks workspace and make src.gold available to the notebook (deployed end-to-end execution completed).
 - [x] Publish and run the master ADF pipeline in the deployed environment.
 - [x] Verify all five Gold tables, output counts, gold_run_audit rows and reconciliation results.
 
 The existing architecture SVG remains unchanged; the Gold extension is documented in the architecture text and the Gold layer guide. The repository contains reporting SQL, not a deployed Power BI dashboard.
+
+
+## Latest enhancement release — restored Azure acceptance (22 November 2026)
+
+- [x] Merge API payment-fixture locking/idempotency, health probes/request observability, and tie-safe composite API cursor/checkpoint improvements into `main`.
+- [x] Add Gold run-level quality metrics and advisory anomaly monitoring while retaining hard quality and reconciliation publication gates.
+- [x] Add version-backed Gold snapshots, stable consumer views, compare-and-swap active-publication pointer, publication history, and recovery operations.
+- [x] Add dry-run-first Gold retention planning with protections for active, legacy, in-flight, untracked and unknown publication versions.
+- [x] Confirm the restored Azure deployment ran without reported runtime errors (project-owner confirmed).
+- [x] Confirm the Gold pipeline completed and all five stable Gold views contain data (project-owner confirmed).
+- [x] Confirm the latest `gold_quality_metrics`, `gold_publication_history`, and `gold_run_audit` records were persisted and the active-publication pointer advanced (project-owner confirmed).
+- [x] Confirm the Gold retention notebook completed `dry_run=true`, identified cleanup candidates and deleted no data (project-owner confirmed).
+- [x] Pass the complete repository CI workflow on `main` commit `231c949fae467eaec902b359be9d7baf1f693aac` ([run #830](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45045827561)).
+Sanitized ADF/Databricks run IDs, timestamps, row counts, notebook outputs and retention dry-run output are evidence-curation follow-ups when available; do not invent missing evidence.
+
+Destructive retention deletion, `OPTIMIZE`, and `VACUUM` were not part of the confirmed dry-run. They are outside this acceptance scope and require separate approval if ever needed.
+
+The latest Azure runtime results above are project-owner-confirmed and retained in [the dated owner-attestation record](run-evidence/2026-11-22-restored-azure-owner-attestation.md). Original Azure-generated run exports remain a non-blocking evidence-curation follow-up; separately governed destructive maintenance is outside the accepted dry-run scope.
