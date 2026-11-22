@@ -16,6 +16,11 @@ from uuid import uuid4
 from pyspark.sql.types import StringType, StructField, StructType
 
 from src.gold.transformations import build_gold_outputs
+from src.gold.quality import (
+    build_gold_quality_observations,
+    evaluate_quality_anomalies,
+    quality_metrics_schema,
+)
 
 
 # COMMAND ----------
@@ -24,11 +29,26 @@ dbutils.widgets.text("catalog", "ubereats_databricks1", "Unity Catalog catalog")
 dbutils.widgets.text("silver_schema", "silver", "Silver schema")
 dbutils.widgets.text("gold_schema", "gold", "Gold schema")
 dbutils.widgets.text("pipeline_run_id", "manual", "Parent ADF pipeline run ID")
+dbutils.widgets.text("quality_min_history_runs", "5", "Prior runs required for anomaly detection")
+dbutils.widgets.text("quality_z_score_threshold", "3.0", "Anomaly standard-deviation threshold")
+dbutils.widgets.text("quality_relative_change_threshold", "0.50", "Minimum relative change for anomaly")
+dbutils.widgets.text("quality_absolute_floor", "0.05", "Minimum absolute deviation tolerance")
 
 catalog = dbutils.widgets.get("catalog")
 silver_schema = dbutils.widgets.get("silver_schema")
 gold_schema = dbutils.widgets.get("gold_schema")
 pipeline_run_id = dbutils.widgets.get("pipeline_run_id") or "manual"
+quality_min_history_runs = int(dbutils.widgets.get("quality_min_history_runs"))
+quality_z_score_threshold = float(dbutils.widgets.get("quality_z_score_threshold"))
+quality_relative_change_threshold = float(dbutils.widgets.get("quality_relative_change_threshold"))
+quality_absolute_floor = float(dbutils.widgets.get("quality_absolute_floor"))
+
+if quality_min_history_runs < 1:
+    raise ValueError("quality_min_history_runs must be at least 1.")
+if quality_z_score_threshold <= 0 or quality_relative_change_threshold <= 0:
+    raise ValueError("Quality anomaly thresholds must be greater than zero.")
+if quality_absolute_floor < 0:
+    raise ValueError("quality_absolute_floor must not be negative.")
 
 _IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 for label, value in (("catalog", catalog), ("silver_schema", silver_schema), ("gold_schema", gold_schema)):
@@ -87,6 +107,34 @@ try:
     }
     gold_frames = build_gold_outputs(silver_frames)
 
+    # Quality observations are measured from the same validated Gold frames
+    # that are about to be published. Historical anomalies are advisory signals;
+    # the hard correctness gates above remain the publication gate.
+    quality_metrics_table = f"{catalog}.{gold_schema}.gold_quality_metrics"
+    quality_observations = build_gold_quality_observations(
+        gold_frames,
+        run_id=run_id,
+        pipeline_run_id=pipeline_run_id,
+        recorded_at_utc=started_at,
+    )
+    if spark.catalog.tableExists(quality_metrics_table):
+        quality_history = spark.table(quality_metrics_table)
+    else:
+        quality_history = spark.createDataFrame([], quality_metrics_schema())
+
+    quality_results = evaluate_quality_anomalies(
+        quality_observations,
+        quality_history,
+        min_history_observations=quality_min_history_runs,
+        z_score_threshold=quality_z_score_threshold,
+        relative_change_threshold=quality_relative_change_threshold,
+        absolute_floor=quality_absolute_floor,
+    ).localCheckpoint(eager=True)
+    quality_metric_count = int(quality_results.count())
+    quality_anomaly_count = int(
+        quality_results.filter("status = 'ANOMALY'").count()
+    )
+
     for output_name, output_frame in gold_frames.items():
         target_name = f"{catalog}.{gold_schema}.{output_name}"
         (
@@ -98,10 +146,20 @@ try:
         )
         output_counts[output_name] = int(spark.table(target_name).count())
 
+    (
+        quality_results.write
+        .format("delta")
+        .mode("append")
+        .saveAsTable(quality_metrics_table)
+    )
+    output_counts["gold_quality_metrics"] = quality_metric_count
+    output_counts["quality_anomalies"] = quality_anomaly_count
+
     write_audit("SUCCEEDED", output_counts)
     print(
         "gold.publish.status=SUCCEEDED; "
         f"pipeline_run_id={pipeline_run_id}; run_id={run_id}; "
+        f"quality_metrics={quality_metric_count}; quality_anomalies={quality_anomaly_count}; "
         f"outputs={json.dumps(output_counts, sort_keys=True)}"
     )
 except Exception as exc:
