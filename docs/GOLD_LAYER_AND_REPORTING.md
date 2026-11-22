@@ -18,6 +18,7 @@ The Gold notebook reads the existing Silver tables in the configured catalog and
 | gold_restaurant_feedback | One row per restaurant represented in customer ratings | Rating volume, average score, and five-star share |
 | gold_driver_performance | One row per assigned driver represented in delivery records | Delivery records, distinct orders, completed/cancelled records, duration, and completion rate |
 | gold_run_audit | One row per Gold notebook execution | Parent ADF run correlation, output counts, status, and timestamps |
+| gold_quality_metrics | One row per metric and business dimension per Gold run | Daily/driver/restaurant/payment-method trends, historical baseline, deviation score, and advisory anomaly status |
 
 The current Gold build uses deliveries, payments, order-status events, ratings, and drivers. Promotions and delivery zones remain in Silver but are not joined into order-level metrics: the current order/delivery records do not expose reliable promo_id or zone_id relationships. Adding a guessed join would create misleading attribution.
 
@@ -36,7 +37,7 @@ Deliveries with a null driver_id remain available in order-level and daily order
 
 ## Gold quality and publication gates
 
-The shared build_gold_outputs transformation validates its inputs and outputs before the notebook starts overwriting any Gold target. A failed check raises an exception and prevents Gold publication from beginning.
+The shared build_gold_outputs transformation validates its inputs and outputs before the notebook stages any Gold target. A failed check raises an exception and prevents Gold publication from beginning.
 
 Input gates include:
 
@@ -59,17 +60,46 @@ Output gates include:
 
 The checks intentionally reject defects rather than silently deduplicating or choosing an arbitrary parent dimension. If a source contract evolves, its accepted values and tests must be updated with that contract. The transformation does not claim to validate every possible business rule or replace source-system reconciliation.
 
+## Run-level quality metrics and anomaly monitoring
+
+The Gold notebook records quantitative observations in `gold_quality_metrics` after the hard input/output gates have passed. The metrics cover daily order volume, successful payment amount, delivery duration, customer rating, delivery/cancellation/paid-order rates, payment-method failure rate, driver delivery volume/completion/duration, and restaurant average rating.
+
+Each observation is keyed by metric name and business dimension (for example, order date, driver ID, restaurant ID, or payment date plus payment method). The table retains the current value, historical mean and population standard deviation, number of prior baseline observations, relative deviation, z-score, run IDs, and status.
+
+The default detector requires five prior non-anomalous observations for the same metric/dimension. It flags a change only when the absolute deviation exceeds both the configured standard-deviation tolerance (default 3.0) and the relative-change tolerance (default 50% of the baseline, with a 0.05 absolute floor). Prior `ANOMALY` observations are excluded from future baselines; `NORMAL` and `INSUFFICIENT_HISTORY` observations are eligible.
+
+Statuses are:
+- `INSUFFICIENT_HISTORY`: fewer than the configured number of prior observations; no anomaly claim is made.
+- `NORMAL`: enough baseline history exists and the metric is within tolerance.
+- `ANOMALY`: enough baseline history exists and the metric exceeds both tolerances.
+
+Anomaly findings are **advisory** and do not reject or mutate Gold outputs. The established hard validations and cross-table reconciliations remain the publication gate. The first five comparable runs therefore build the baseline rather than generating false alerts. Thresholds are configurable through Gold notebook widgets. See [Gold quality metrics and anomaly monitoring](GOLD_QUALITY_ANOMALY_MONITORING.md) for metric grain, calculation, interpretation, and test scope.
+
 ## Publish and orchestration behavior
 
-notebooks/Gold_Analytics.py and its Databricks notebook export use the shared transformation module in src/gold/transformations.py. Each Gold output is published as a full-refresh Delta table using overwrite with schema replacement. The Gold audit record is appended after publication and includes the output row counts plus the parent ADF pipeline run ID when supplied.
+notebooks/Gold_Analytics.py and its Databricks notebook export use the shared transformation module in src/gold/transformations.py. Each run writes the five validated business outputs into append-only, run-versioned Delta tables (`<gold_output>__versions`). It verifies the staged row count for every dataset before changing the single row in `gold_publication_state`. Stable consumer views (`gold_order_360`, `gold_daily_order_performance`, `gold_payment_method_performance`, `gold_restaurant_feedback`, and `gold_driver_performance`) all resolve through that one active publication ID. The state-table MERGE uses a compare-and-swap predicate against the pointer observed at the start of the run, so a stale concurrent publisher cannot overwrite a newer publication. The previous active pointer remains visible if any staging or pre-commit check fails.
+
+The append-only `gold_publication_history` records staging, publish, bootstrap and failure events. On first rollout, all five legacy physical Gold tables are copied into one baseline publication before they are renamed to preserved `__legacy_*` names and replaced by stable views. A partial legacy table set is rejected rather than migrated unsafely. The run-level `gold_quality_metrics` table remains append-only and stores one row per observed metric/dimension/run. Quality and audit sidecars are written after the pointer commit; their failures are surfaced as warnings and do not misreport an already-published Gold version as rolled back. See [Gold atomic publication and recovery](GOLD_PUBLICATION_AND_RECOVERY.md).
 
 The exported ADF master pipeline, pipeline/uber_eats_master.json, runs the API, CSV, and SQL ingestion pipelines concurrently, waits for all three to finish successfully, and only then invokes the Gold notebook. If an ingestion branch fails, the Gold publication activity is not eligible to start.
 
 Before deploying the master pipeline, import the Gold notebook into the Databricks workspace at /Shared/UberEats/Gold_Analytics, make the src.gold module available to the notebook (for example through the repository checkout or a workspace deployment package), and review the Databricks linked service, catalog, schema, storage access, and cluster/runtime configuration. The JSON export is a deployment artifact, not proof of a live ADF run.
 
+## Atomic publication and recovery
+
+The five stable Gold business names are views backed by five append-only version tables. A publication run stages its complete output set under one run ID, verifies each staged row count, then changes one active-publication pointer using a compare-and-swap Delta MERGE. The stable views read that pointer, so failed staging does not expose a partially updated set. Concurrent publishers that captured an old pointer cannot overwrite a newer successful publication.
+
+On the first deployment of this contract, the notebook imports all five existing physical Gold tables into a baseline version before replacing them with stable views. Original physical tables are preserved with unique `__legacy_*` names. If the old table set is incomplete, bootstrap fails closed and leaves the original objects untouched. Run the first bootstrap with only one Gold publisher active; regular publishes are protected by compare-and-swap, but the initial physical-table conversion is a serialized administrative cutover. Re-apply and verify consumer `SELECT` grants on the newly created stable views as part of the cutover.
+
+The publication pointer is atomic for each query reading a stable Gold view. Consumers that issue multiple independent SQL statements across the exact moment of a publication switch can observe different publication IDs between statements; for a multi-query dashboard refresh that requires cross-query snapshot consistency, capture `gold_publication_state.active_publication_id` once and filter the backing version tables using that same ID.
+
+Failed run snapshots remain unpublished and do not alter the active views. A deliberate rollback can reactivate a previously successful publication by compare-and-swap updating the pointer, after verifying that all five version tables contain rows for the target publication ID. The manual [Gold publication retention notebook](GOLD_PUBLICATION_RETENTION.md) protects the active pointer, the legacy baseline, the newest ten successful releases by default, recent/in-flight runs, and any ID with incomplete history. Always review its dry-run report before confirmed cleanup.
+
+See [Gold atomic publication and recovery](GOLD_PUBLICATION_AND_RECOVERY.md) for the bootstrap, rollback and acceptance procedures, and [Gold publication retention and maintenance](GOLD_PUBLICATION_RETENTION.md) for version lifecycle and storage cleanup.
+
 ## Reporting
 
-The read-only query pack in reports/GOLD_ANALYTICS_REPORTING.sql contains daily KPI, order-state, payment-method, driver-performance, restaurant-feedback, and order drill-through queries. These result sets can be connected to a BI tool after deployment.
+The read-only query pack in reports/GOLD_ANALYTICS_REPORTING.sql contains daily KPI, order-state, payment-method, driver-performance, restaurant-feedback, and order drill-through queries. The companion reports/GOLD_QUALITY_MONITORING.sql provides recent anomaly detail, daily quality-status trends, and the latest metric status per business dimension. These result sets can be connected to a BI tool after deployment.
 
 This repository does not include a deployed Power BI workspace or published dashboard. The reporting SQL and documented Gold table contracts provide the serving interface for a future dashboard without pretending that one already exists.
 
@@ -77,6 +107,6 @@ This repository does not include a deployed Power BI workspace or published dash
 
 All source records are synthetic demonstration data created for this portfolio project. They are not official Uber Eats data, do not represent actual customer or driver activity, and must not be used to make claims about Uber Eats' real business performance.
 
-Gold outputs are full-refresh snapshots. The current project does not implement a historical snapshot strategy or SCD Type 2 dimension history in Gold. Order-level aggregations depend on the keys and event history available in Silver. Promotion attribution and zone-level fulfilment analysis require explicit foreign-key relationships in the source model before they can be built safely.
+Gold consumer outputs are full-refresh snapshots backed by append-only publication-version tables. The current project does not implement SCD Type 2 dimension history in Gold. A manual dry-run-first retention notebook can remove expired inactive publication versions; optional OPTIMIZE and VACUUM actions are disabled by default, and no recurring maintenance schedule is configured. Order-level aggregations depend on the keys and event history available in Silver. Promotion attribution and zone-level fulfilment analysis require explicit foreign-key relationships in the source model before they can be built safely.
 
 The local PySpark unit tests validate transformation behavior and quality gates on small synthetic DataFrames. Static tests inspect the ADF JSON dependency contract. Neither class of test executes the live Data Factory pipeline or a Databricks workspace job.
