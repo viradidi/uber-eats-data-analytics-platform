@@ -45,7 +45,7 @@ The pointer MERGE is the publication commit point. It is one atomic Delta transa
 | Pointer commit succeeds; quality/audit sidecar fails | Gold stays published; notebook records/prints a monitoring warning rather than claiming rollback |
 | Process stops after pointer commit | New Gold publication remains active; audit/history may need manual review |
 
-Inactive partial snapshots are retained for investigation. No cleanup is performed automatically, because deleting versions without a retention/recovery policy could remove rollback evidence.
+Inactive partial snapshots are retained for investigation until they meet the explicit [Gold publication retention policy](GOLD_PUBLICATION_RETENTION.md). The manual maintenance notebook defaults to dry-run, preserves in-flight/unknown/untracked data and never removes the active pointer or legacy baseline.
 
 ## First-deployment bootstrap
 
