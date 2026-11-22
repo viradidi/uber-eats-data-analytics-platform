@@ -129,7 +129,7 @@ See the [recovery and rerun runbook](docs/RECOVERY_AND_RERUN_RUNBOOK.md) and [op
 | `dataset/` | Dataset definitions |
 | `linkedService/` | Linked-service configuration exports |
 | `factory/`, `routing/` | Data Factory factory settings and repository-owned API/CSV notebook dispatchers |
-| `notebooks/` | Databricks notebook exports for Silver and Gold transformations |
+| `notebooks/` | Databricks notebooks for Silver/Gold transformations and manual Gold publication maintenance |
 | `src/gold/` | Reusable Spark transformations, run-level quality metrics and versioned publication primitives for Gold analytics |
 | `reports/` | Business analytics, Gold quality monitoring and publication/recovery SQL reports |
 | `src/common/` | Shared Spark utilities |
@@ -248,6 +248,7 @@ The cloud resources used for the completed run were later decommissioned to cont
 - [Gold layer and business reporting](docs/GOLD_LAYER_AND_REPORTING.md)
 - [Gold quality metrics and anomaly monitoring](docs/GOLD_QUALITY_ANOMALY_MONITORING.md)
 - [Gold atomic publication and recovery](docs/GOLD_PUBLICATION_AND_RECOVERY.md)
+- [Gold publication retention and maintenance](docs/GOLD_PUBLICATION_RETENTION.md)
 - [Gold SQL reporting pack](reports/GOLD_ANALYTICS_REPORTING.sql)
 - [Gold quality and anomaly monitoring queries](reports/GOLD_QUALITY_MONITORING.sql)
 - [Gold publication operations queries](reports/GOLD_PUBLICATION_OPERATIONS.sql)
