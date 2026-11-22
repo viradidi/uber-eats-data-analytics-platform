@@ -95,6 +95,46 @@ class CompositeCursorTests(unittest.TestCase):
                 updated_after_id=query["updated_after_id"][0], cursor_column="rating_id")
         self.assertEqual([3,4], [x["rating_id"] for x in second["data"]])
 
+    def test_inclusive_upper_cursor_bounds_a_run_snapshot(self):
+        rows = [
+            {"payment_id": 1, "updated_at": "2026-11-01T12:00:00Z"},
+            {"payment_id": 2, "updated_at": "2026-11-01T12:00:00Z"},
+            {"payment_id": 3, "updated_at": "2026-11-01T12:00:01Z"},
+            {"payment_id": 4, "updated_at": "2026-11-01T12:00:02Z"},
+        ]
+        with patch.object(api, "load_json_file", return_value=rows):
+            result = api.process_data(
+                "payments.json", "updated_at", 1, 20,
+                updated_after="2026-11-01T12:00:00Z", updated_after_id="1",
+                updated_until="2026-11-01T12:00:01Z", updated_until_id="3",
+                cursor_column="payment_id",
+            )
+        self.assertEqual([2, 3], [row["payment_id"] for row in result["data"]])
+
+    def test_upper_cursor_pair_must_be_complete(self):
+        with patch.object(api, "load_json_file", return_value=[]):
+            with self.assertRaises(HTTPException) as raised:
+                api.process_data(
+                    "payments.json", "updated_at", 1, 10,
+                    updated_until="2026-11-01T12:00:00Z",
+                    cursor_column="payment_id",
+                )
+        self.assertEqual(400, raised.exception.status_code)
+
+    def test_next_url_preserves_upper_snapshot_bound(self):
+        rows = [{"rating_id": i, "updated_at": "2026-11-01T12:00:00Z"} for i in (1,2,3)]
+        request = RequestStub(
+            "https://api.example.test/ratings?page_size=1&updated_until=2026-11-01T13%3A00%3A00Z&updated_until_id=9"
+        )
+        with patch.object(api, "load_json_file", return_value=rows):
+            result = api.process_data(
+                "ratings.json", "updated_at", 1, 1, cursor_column="rating_id",
+                request=request, updated_until="2026-11-01T13:00:00Z", updated_until_id="9",
+            )
+        query = parse_qs(urlparse(result["pagination"]["next_url"]).query)
+        self.assertEqual(["2026-11-01T13:00:00Z"], query["updated_until"])
+        self.assertEqual(["9"], query["updated_until_id"])
+
     def test_max_cursor_uses_id_to_break_timestamp_ties(self):
         rows = [
             {"order_id": 2002, "status_timestamp": "2026-11-01T12:00:00Z"},
