@@ -167,4 +167,4 @@ Sanitized ADF/Databricks run IDs, timestamps, row counts, notebook outputs and r
 
 Destructive retention deletion, `OPTIMIZE`, and `VACUUM` were not part of the confirmed dry-run. They are outside this acceptance scope and require separate approval if ever needed.
 
-The latest Azure runtime results above are project-owner-confirmed. The remaining unchecked items are evidence curation and separately governed destructive maintenance, not blockers to the confirmed non-destructive acceptance.
+The latest Azure runtime results above are project-owner-confirmed and retained in [the dated owner-attestation record](run-evidence/2026-11-22-restored-azure-owner-attestation.md). Original Azure-generated run exports remain a non-blocking evidence-curation follow-up; separately governed destructive maintenance is outside the accepted dry-run scope.
