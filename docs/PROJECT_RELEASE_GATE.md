@@ -46,7 +46,7 @@ The completed run validates the configured source contract and execution path. I
 ## Validation and technical boundaries
 
 - **Repository implementation:** source code, ADF exports, notebooks, SQL scripts, tests, architecture and runbooks are versioned here.
-- **Repository CI:** the linked GitHub Actions run passed 135 tests. CI does not provision or execute live Azure Data Factory and Databricks services.
+- **Repository CI:** GitHub Actions run #830 passed all workflow steps, including the complete repository test suite. CI does not provision or execute live Azure Data Factory and Databricks services.
 - **Azure execution:** the configured multi-source workflow was successfully deployed and run end to end.
 - **Architecture rationale:** see [Architecture Decision Records](ARCHITECTURE_DECISIONS.md).
 - **Senior review:** see [Senior Engineering Readiness Review](SENIOR_ENGINEERING_READINESS.md).
