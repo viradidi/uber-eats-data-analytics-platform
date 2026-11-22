@@ -32,3 +32,7 @@ local.settings.json
 .idea/
 .DS_Store
 Thumbs.db
+
+# Runtime state created by the local payment test-data endpoint
+data/.payments.lock
+data/payments.idempotency.json
