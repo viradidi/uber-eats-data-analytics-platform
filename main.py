@@ -349,7 +349,7 @@ def health_readiness():
         try:
             load_json_file(file_name)
             checks[source_name] = "ok"
-        except HTTPException:
+        except (HTTPException, OSError, UnicodeError):
             # Return a bounded status rather than an internal path or exception.
             checks[source_name] = "unavailable_or_invalid"
 
