@@ -170,7 +170,11 @@ VALUES (
 
 def active_publication_id(spark, catalog: str, schema: str) -> str | None:
     """Read and validate the sole active Gold publication pointer."""
-    table = qualified_name(catalog, schema, "gold_publication_state")
+    table = ".".join((
+        validate_identifier(catalog, "catalog"),
+        validate_identifier(schema, "schema"),
+        "gold_publication_state",
+    ))
     if not spark.catalog.tableExists(table):
         return None
     rows = (
