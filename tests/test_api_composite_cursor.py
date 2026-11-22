@@ -40,6 +40,20 @@ class CompositeCursorTests(unittest.TestCase):
                 cursor_column="delivery_id")
         self.assertEqual([10, 100], [x["delivery_id"] for x in result["data"]])
 
+    def test_prefixed_numeric_ids_are_ordered_by_numeric_suffix(self):
+        rows = [
+            {"payment_id": "P10000", "updated_at": "2026-11-01T12:00:00Z"},
+            {"payment_id": "P9999", "updated_at": "2026-11-01T12:00:00Z"},
+            {"payment_id": "P10001", "updated_at": "2026-11-01T12:00:00Z"},
+        ]
+        with patch.object(api, "load_json_file", return_value=rows):
+            result = api.process_data(
+                "payments.json", "updated_at", 1, 10,
+                updated_after="2026-11-01T12:00:00Z",
+                updated_after_id="P9999", cursor_column="payment_id",
+            )
+        self.assertEqual(["P10000", "P10001"], [x["payment_id"] for x in result["data"]])
+
     def test_string_ids_are_ordered_lexicographically(self):
         rows = [
             {"payment_id": "P1010", "updated_at": "2026-11-01T12:00:00Z"},
