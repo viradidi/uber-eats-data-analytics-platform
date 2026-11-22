@@ -18,6 +18,7 @@ The Gold notebook reads the existing Silver tables in the configured catalog and
 | gold_restaurant_feedback | One row per restaurant represented in customer ratings | Rating volume, average score, and five-star share |
 | gold_driver_performance | One row per assigned driver represented in delivery records | Delivery records, distinct orders, completed/cancelled records, duration, and completion rate |
 | gold_run_audit | One row per Gold notebook execution | Parent ADF run correlation, output counts, status, and timestamps |
+| gold_quality_metrics | One row per metric and business dimension per Gold run | Daily/driver/restaurant/payment-method trends, historical baseline, deviation score, and advisory anomaly status |
 
 The current Gold build uses deliveries, payments, order-status events, ratings, and drivers. Promotions and delivery zones remain in Silver but are not joined into order-level metrics: the current order/delivery records do not expose reliable promo_id or zone_id relationships. Adding a guessed join would create misleading attribution.
 
@@ -59,9 +60,24 @@ Output gates include:
 
 The checks intentionally reject defects rather than silently deduplicating or choosing an arbitrary parent dimension. If a source contract evolves, its accepted values and tests must be updated with that contract. The transformation does not claim to validate every possible business rule or replace source-system reconciliation.
 
+## Run-level quality metrics and anomaly monitoring
+
+The Gold notebook records quantitative observations in `gold_quality_metrics` after the hard input/output gates have passed. The metrics cover daily order volume, successful payment amount, delivery duration, customer rating, delivery/cancellation/paid-order rates, payment-method failure rate, driver delivery volume/completion/duration, and restaurant average rating.
+
+Each observation is keyed by metric name and business dimension (for example, order date, driver ID, restaurant ID, or payment date plus payment method). The table retains the current value, historical mean and population standard deviation, number of prior baseline observations, relative deviation, z-score, run IDs, and status.
+
+The default detector requires five prior non-anomalous observations for the same metric/dimension. It flags a change only when the absolute deviation exceeds both the configured standard-deviation tolerance (default 3.0) and the relative-change tolerance (default 50% of the baseline, with a 0.05 absolute floor). Prior `ANOMALY` observations are excluded from future baselines; `NORMAL` and `INSUFFICIENT_HISTORY` observations are eligible.
+
+Statuses are:
+- `INSUFFICIENT_HISTORY`: fewer than the configured number of prior observations; no anomaly claim is made.
+- `NORMAL`: enough baseline history exists and the metric is within tolerance.
+- `ANOMALY`: enough baseline history exists and the metric exceeds both tolerances.
+
+Anomaly findings are **advisory** and do not reject or mutate Gold outputs. The established hard validations and cross-table reconciliations remain the publication gate. The first five comparable runs therefore build the baseline rather than generating false alerts. Thresholds are configurable through Gold notebook widgets. See [Gold quality metrics and anomaly monitoring](GOLD_QUALITY_ANOMALY_MONITORING.md) for metric grain, calculation, interpretation, and test scope.
+
 ## Publish and orchestration behavior
 
-notebooks/Gold_Analytics.py and its Databricks notebook export use the shared transformation module in src/gold/transformations.py. Each Gold output is published as a full-refresh Delta table using overwrite with schema replacement. The Gold audit record is appended after publication and includes the output row counts plus the parent ADF pipeline run ID when supplied.
+notebooks/Gold_Analytics.py and its Databricks notebook export use the shared transformation module in src/gold/transformations.py. Each Gold output is published as a full-refresh Delta table using overwrite with schema replacement. The run-level `gold_quality_metrics` table is append-only and stores one row per observed metric/dimension/run. The Gold audit record is appended after publication and includes output row counts, quality metric count, anomaly count, and the parent ADF pipeline run ID when supplied.
 
 The exported ADF master pipeline, pipeline/uber_eats_master.json, runs the API, CSV, and SQL ingestion pipelines concurrently, waits for all three to finish successfully, and only then invokes the Gold notebook. If an ingestion branch fails, the Gold publication activity is not eligible to start.
 
