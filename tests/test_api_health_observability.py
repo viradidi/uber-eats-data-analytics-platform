@@ -82,6 +82,22 @@ class ApiHealthProbeTests(unittest.TestCase):
         self.assertEqual("unavailable_or_invalid", payload["checks"]["payments"])
         self.assertNotIn("internal path", response.body.decode("utf-8"))
 
+    def test_readiness_returns_503_when_fixture_cannot_be_read(self):
+        def load_fixture(file_name):
+            if file_name == "ratings.json":
+                raise PermissionError("internal filesystem detail")
+            return []
+
+        with patch.object(api, "API_KEY", "configured-test-key"), patch.object(
+            api, "load_json_file", side_effect=load_fixture
+        ):
+            response = api.health_readiness()
+
+        payload = json.loads(response.body)
+        self.assertEqual(503, response.status_code)
+        self.assertEqual("unavailable_or_invalid", payload["checks"]["ratings"])
+        self.assertNotIn("filesystem detail", response.body.decode("utf-8"))
+
     def test_health_routes_are_public_and_discoverable(self):
         routes = {
             route.path: route
