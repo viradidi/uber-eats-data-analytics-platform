@@ -79,3 +79,24 @@ ORDER BY visibility, publication_id, output_name;
 --     target.active_publication_id = source.target_publication_id,
 --     target.updated_at_utc = current_timestamp(),
 --     target.pipeline_run_id = source.pipeline_run_id;
+
+
+-- 5) Retention-run audit: dry runs and executed cleanup outcomes.
+SELECT
+    recorded_at_utc,
+    retention_run_id,
+    dry_run,
+    retention_days,
+    keep_successful_publications,
+    active_publication_id,
+    candidate_publication_ids_json,
+    inventory_publication_count,
+    row_counts_json,
+    optimize_requested,
+    vacuum_requested,
+    vacuum_retention_hours,
+    status,
+    error_message
+FROM ubereats_databricks1.gold.gold_publication_retention_runs
+ORDER BY recorded_at_utc DESC
+LIMIT 100;
