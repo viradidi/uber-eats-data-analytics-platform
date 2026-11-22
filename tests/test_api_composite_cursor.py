@@ -161,14 +161,31 @@ class CompositeCursorTests(unittest.TestCase):
         params=dataset["properties"]["parameters"]
         self.assertIn("p_watermark",params)
         self.assertIn("p_watermark_id",params)
+        self.assertIn("p_upper_watermark",params)
+        self.assertIn("p_upper_watermark_id",params)
         relative=dataset["properties"]["typeProperties"]["relativeUrl"]["value"]
-        self.assertIn("dataset().p_watermark",relative)
-        self.assertIn("dataset().p_watermark_id",relative)
+        for token in ("dataset().p_watermark", "dataset().p_watermark_id",
+                      "dataset().p_upper_watermark", "dataset().p_upper_watermark_id",
+                      "uriComponent("):
+            self.assertIn(token, relative)
+
         pipeline=json.loads((ROOT/"pipeline/api_src_inital load.json").read_text(encoding="utf-8"))
         loop=next(a for a in pipeline["properties"]["activities"] if a["type"]=="ForEach")
-        copy=next(a for a in loop["typeProperties"]["activities"] if a["name"]=="Api_migration")
+        acts={a["name"]:a for a in loop["typeProperties"]["activities"]}
+        copy=acts["Api_migration"]
         self.assertEqual("$.pagination.next_url",copy["typeProperties"]["source"]["paginationRules"]["AbsoluteUrl"])
         self.assertIn("last_watermark_id",copy["inputs"][0]["parameters"]["p_watermark_id"]["value"])
+        self.assertIn("Web_Get_Api_Watermarks",copy["inputs"][0]["parameters"]["p_upper_watermark"]["value"])
+        self.assertIn("Web_Get_Api_Watermarks",copy["inputs"][0]["parameters"]["p_upper_watermark_id"]["value"])
+
+        # The snapshot high watermark must be captured before copy and persisted only after Silver succeeds.
+        self.assertEqual("Web_Get_Api_Watermarks",copy["dependsOn"][0]["activity"])
+        self.assertEqual("get_keyvalut_api _key",acts["Web_Get_Api_Watermarks"]["dependsOn"][0]["activity"])
+        self.assertEqual("Api_migration",acts["Job_api"]["dependsOn"][0]["activity"])
+        self.assertEqual("Job_api",acts["Script_update_api_control"]["dependsOn"][0]["activity"])
+        update_sql=acts["Script_update_api_control"]["typeProperties"]["scripts"][0]["text"]["value"]
+        self.assertIn(".output.cursor[item().endpoint_name].updated_at",update_sql)
+        self.assertIn(".output.cursor[item().endpoint_name].id",update_sql)
 
     def test_sql_migration_adds_nullable_id_without_resetting_rows(self):
         path=ROOT/"sql/migrations/20261122_add_api_composite_cursor.sql"
