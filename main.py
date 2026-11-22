@@ -1,11 +1,15 @@
-from fastapi import FastAPI, Query, HTTPException, Depends
+from contextlib import contextmanager
+from fastapi import FastAPI, Query, HTTPException, Depends, Header
 from fastapi.security import APIKeyHeader
-from typing import Optional
+from typing import Annotated, Optional
 from datetime import datetime, timezone
+import errno
 import json
 import os
 import random
 import tempfile
+import threading
+import time
 
 
 # =========================================================
@@ -504,8 +508,55 @@ def _next_payment_number(records):
     return highest + 1
 
 
+# The thread lock protects workers in this process. The OS-level lock below
+# also coordinates separate API processes sharing the same local data folder.
+_PAYMENTS_THREAD_LOCK = threading.Lock()
+
+
+@contextmanager
+def _payments_write_lock(lock_directory=None):
+    """Serialize payment fixture writes across threads and local processes."""
+    lock_directory = lock_directory or DATA_DIR
+    os.makedirs(lock_directory, exist_ok=True)
+    lock_path = os.path.join(lock_directory, ".payments.lock")
+
+    with _PAYMENTS_THREAD_LOCK:
+        with open(lock_path, "a+b") as lock_file:
+            if os.name == "nt":
+                import msvcrt
+
+                lock_file.seek(0, os.SEEK_END)
+                if lock_file.tell() == 0:
+                    lock_file.write(b"\0")
+                    lock_file.flush()
+
+                while True:
+                    lock_file.seek(0)
+                    try:
+                        msvcrt.locking(lock_file.fileno(), msvcrt.LK_NBLCK, 1)
+                        break
+                    except OSError as exc:
+                        if exc.errno not in (errno.EACCES, errno.EDEADLK):
+                            raise
+                        time.sleep(0.05)
+
+                try:
+                    yield
+                finally:
+                    lock_file.seek(0)
+                    msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                import fcntl
+
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+                try:
+                    yield
+                finally:
+                    fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+
+
 def _write_json_atomically(file_path, data):
-    """Write JSON to a sibling temporary file before replacing the target."""
+    """Persist JSON using a sibling temp file and atomic replacement."""
     directory = os.path.dirname(os.path.abspath(file_path))
     temporary_path = None
     try:
@@ -522,7 +573,21 @@ def _write_json_atomically(file_path, data):
             file.write("\n")
             file.flush()
             os.fsync(file.fileno())
+
         os.replace(temporary_path, file_path)
+
+        # Persist the directory entry on POSIX filesystems where directory
+        # fsync is supported. Atomic replace still protects readers if this
+        # optional durability step is unavailable.
+        if os.name != "nt":
+            try:
+                directory_fd = os.open(directory, os.O_RDONLY)
+                try:
+                    os.fsync(directory_fd)
+                finally:
+                    os.close(directory_fd)
+            except OSError:
+                pass
     except OSError:
         if temporary_path and os.path.exists(temporary_path):
             try:
@@ -532,69 +597,159 @@ def _write_json_atomically(file_path, data):
         raise
 
 
+def _load_payment_idempotency_ledger(ledger_path=None):
+    """Load the local request-key journal; an absent journal is empty state."""
+    ledger_path = ledger_path or _data_file_path("payments.idempotency.json")
+    try:
+        with open(ledger_path, "r", encoding="utf-8") as file:
+            ledger = json.load(file)
+    except FileNotFoundError:
+        return {}
+    except json.JSONDecodeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Payment idempotency state is invalid and requires recovery.",
+        )
+
+    if not isinstance(ledger, dict) or any(
+        not isinstance(key, str) or not isinstance(value, dict)
+        for key, value in ledger.items()
+    ):
+        raise HTTPException(
+            status_code=500,
+            detail="Payment idempotency state has an invalid structure.",
+        )
+    return ledger
+
+
 # =========================================================
 # TEST DATA GENERATOR
 # =========================================================
 #
 # POST /payments/generate-test-data
 #
-# This creates a new payment with the current UTC timestamp.
-# It lets us demonstrate incremental loading without
-# redeploying the API.
-#
+# Optional Idempotency-Key makes client retries replay-safe.
+# A local lock serializes cooperating API workers that share DATA_DIR.
 # =========================================================
+
 
 @app.post(
     "/payments/generate-test-data",
-    tags=["Test Data"]
+    tags=["Test Data"],
 )
 def generate_payment_test_data(
-    api_key: str = Depends(
-        verify_api_key
-    )
+    api_key: str = Depends(verify_api_key),
+    idempotency_key: Annotated[
+        Optional[str],
+        Header(
+            alias="Idempotency-Key",
+            description=(
+                "Optional client-generated key (1–255 characters). Reusing the "
+                "same key returns the original generated payment."
+            ),
+        ),
+    ] = None,
 ):
-
-    data = load_json_file("payments.json")
-
-    next_number = _next_payment_number(data)
-
-    event_timestamp = (
-        datetime.now(timezone.utc)
-        .isoformat()
-        .replace("+00:00", "Z")
-    )
-    new_payment = {
-        "payment_id": f"P{next_number}",
-        "order_id": next_number,
-        "amount": round(
-            random.uniform(10, 60),
-            2
-        ),
-        "payment_method": random.choice(
-            ["CARD", "UPI"]
-        ),
-        "payment_status": "COMPLETED",
-        "payment_timestamp": event_timestamp,
-        "updated_at": event_timestamp
-    }
-
-    data.append(new_payment)
-
-    file_path = _data_file_path("payments.json")
-
-    try:
-        _write_json_atomically(file_path, data)
-
-    except OSError as exc:
+    request_key = idempotency_key.strip() if idempotency_key is not None else None
+    if request_key == "":
         raise HTTPException(
-            status_code=500,
-            detail=f"Unable to write test data: {exc}"
+            status_code=400,
+            detail="Idempotency-Key must not be empty.",
+        )
+    if request_key is not None and len(request_key) > 255:
+        raise HTTPException(
+            status_code=400,
+            detail="Idempotency-Key must not exceed 255 characters.",
         )
 
-    return {
-        "message": "Test payment created",
-        "record": new_payment
-    }
+    payment_path = _data_file_path("payments.json")
+    payment_directory = os.path.dirname(os.path.abspath(payment_path))
+    ledger_path = os.path.join(payment_directory, "payments.idempotency.json")
+
+    try:
+        with _payments_write_lock(payment_directory):
+            data = load_json_file("payments.json")
+            ledger = _load_payment_idempotency_ledger(ledger_path)
+
+            if request_key is not None and request_key in ledger:
+                original_payment = ledger[request_key]
+                payment_id = original_payment.get("payment_id")
+                if not payment_id:
+                    raise HTTPException(
+                        status_code=500,
+                        detail="Stored payment idempotency record is invalid.",
+                    )
+
+                existing = next(
+                    (
+                        record
+                        for record in data
+                        if record.get("payment_id") == payment_id
+                    ),
+                    None,
+                )
+
+                if existing is None:
+                    # Recover a process interruption after the journal write
+                    # but before the payments fixture was atomically replaced.
+                    data.append(original_payment)
+                    _write_json_atomically(payment_path, data)
+                elif existing != original_payment:
+                    raise HTTPException(
+                        status_code=409,
+                        detail=(
+                            "The stored Idempotency-Key conflicts with the "
+                            "current payment fixture. Manual reconciliation is required."
+                        ),
+                    )
+
+                return {
+                    "message": "Payment already created for this Idempotency-Key",
+                    "record": original_payment,
+                    "replayed": True,
+                }
+
+            next_number = _next_payment_number(data)
+            event_timestamp = (
+                datetime.now(timezone.utc)
+                .isoformat()
+                .replace("+00:00", "Z")
+            )
+            new_payment = {
+                "payment_id": f"P{next_number}",
+                "order_id": next_number,
+                "amount": round(random.uniform(10, 60), 2),
+                "payment_method": random.choice(["CARD", "UPI"]),
+                "payment_status": "COMPLETED",
+                "payment_timestamp": event_timestamp,
+                "updated_at": event_timestamp,
+            }
+
+            if request_key is not None:
+                # Write the idempotency journal first. If the process stops
+                # before the payments file is replaced, a retry can complete
+                # the append using this exact original payment record.
+                ledger[request_key] = new_payment
+                _write_json_atomically(ledger_path, ledger)
+
+            data.append(new_payment)
+            _write_json_atomically(payment_path, data)
+
+            return {
+                "message": "Test payment created",
+                "record": new_payment,
+                "replayed": False,
+            }
+
+    except OSError:
+        # Do not return filesystem paths or low-level OS details to API clients.
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "Unable to persist the generated payment. "
+                "Retry using the same Idempotency-Key."
+            ),
+        )
 
 
 # =========================================================

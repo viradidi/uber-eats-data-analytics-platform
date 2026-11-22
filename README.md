@@ -209,7 +209,29 @@ uvicorn main:app --host 127.0.0.1 --port 10000
 
 The interactive API documentation is available at `http://127.0.0.1:10000/docs`.
 
-Authenticated endpoints require the `X-API-Key` header. The application includes `/payments`, `/deliveries`, `/ratings`, `/order-status`, `/watermarks`, and `/payments/generate-test-data`. The test-data endpoint modifies the local payments JSON fixture and is intended for controlled demonstrations, not concurrent production writes.
+Authenticated endpoints require the `X-API-Key` header. The application includes `/payments`, `/deliveries`, `/ratings`, `/order-status`, `/watermarks`, and `/payments/generate-test-data`.
+
+### Reliable payment test-data generation
+
+The payment generator now has explicit write-safety controls for local, multi-worker demonstrations:
+
+- **Thread and process coordination:** a process-local thread lock plus an operating-system file lock serializes cooperating API workers that share the same local data directory.
+- **Atomic fixture replacement:** generated JSON is written to a temporary sibling file, flushed, and atomically replaced so readers do not observe a partially written JSON document.
+- **Optional idempotency:** callers can send an `Idempotency-Key` header (1–255 characters). Repeating a request with the same key returns the original payment and does not append another record.
+- **Interrupted-write recovery:** the idempotency journal is persisted before the payment fixture. If the process stops between those writes, retrying with the same key repairs the missing payment append using the original generated record.
+- **Conflict detection:** if the journal's payment ID exists with different contents, the API returns HTTP 409 rather than silently overwriting data.
+
+Example:
+
+```bash
+curl -X POST "http://127.0.0.1:10000/payments/generate-test-data" \
+  -H "X-API-Key: $API_KEY" \
+  -H "Idempotency-Key: payment-demo-2026-0001"
+```
+
+Reuse the same idempotency key when retrying a request whose response was lost. Omitting the header intentionally creates a new payment on every successful request.
+
+The lock coordinates processes on one host that share the same local filesystem; it is not a distributed lock for multiple hosts or a substitute for database transactions. The JSON fixture and idempotency journal are local demonstration persistence, not a production payment store. The journal grows with distinct idempotency keys and should be replaced by a transactional datastore with an explicit retention policy for a production service.
 
 ## Run automated tests
 
