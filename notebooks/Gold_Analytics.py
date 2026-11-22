@@ -235,17 +235,38 @@ def _ensure_publication_views(gold_frames):
         active_id = active_publication_id(spark, catalog, gold_schema)
         if active_id != bootstrap_id:
             raise RuntimeError("GOLD_PUBLICATION_BOOTSTRAP_CONFLICT: legacy baseline pointer was not committed.")
-        _append_publication_event(
-            bootstrap_id,
-            "LEGACY_BASELINE_IMPORTED",
-            previous_publication_id=None,
-            output_counts=bootstrap_counts,
-        )
-
     elif active_id is None and view_names:
         raise RuntimeError(
             "GOLD_PUBLICATION_STATE_MISSING: stable Gold views exist without an active publication pointer."
         )
+
+    # Reconcile the bootstrap event if a previous process committed the
+    # baseline pointer but stopped before writing its lifecycle record.
+    if active_id and active_id.startswith("bootstrap-"):
+        bootstrap_event_exists = (
+            spark.table(event_table)
+            .filter(
+                (F.col("publication_id") == F.lit(active_id))
+                & (F.col("event_status") == F.lit("LEGACY_BASELINE_IMPORTED"))
+            )
+            .limit(1)
+            .count()
+        )
+        if not bootstrap_event_exists:
+            bootstrap_counts = {
+                output_name: int(
+                    spark.table(_raw_table_name(history_table_name(output_name)))
+                    .filter(F.col("_publication_id") == F.lit(active_id))
+                    .count()
+                )
+                for output_name in GOLD_OUTPUT_NAMES
+            }
+            _append_publication_event(
+                active_id,
+                "LEGACY_BASELINE_IMPORTED",
+                previous_publication_id=None,
+                output_counts=bootstrap_counts,
+            )
 
     # If migration was interrupted after the baseline pointer was committed,
     # complete the remaining table-to-view replacements on the next run.
