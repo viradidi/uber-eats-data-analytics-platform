@@ -40,3 +40,22 @@ CI validates repository code, exported resource contracts and local/synthetic te
 A successful end-to-end run validates the configured and tested source path. It does not remove the documented design limits of a strict lower watermark boundary, late-visible rows with equal/older cursor values, hard deletes without CDC/tombstones/soft deletes, or the absence of a null-checkpoint initial-load branch.
 
 The completed project is not represented as a continuously hosted service and does not claim a production SLA, independent certification or universal exactly-once/change-capture guarantees.
+
+
+## Restored-environment verification — 22 November 2026
+
+The project owner reports that the restored Azure components ran smoothly without errors. The following additional checks were explicitly confirmed during the acceptance walkthrough:
+
+| Check | Owner-reported result |
+|---|---|
+| Restored components / pipeline execution | Completed without reported errors |
+| Five Gold consumer views | All five contain data |
+| `gold_quality_metrics` | Latest-run quality metrics present |
+| `gold_publication_history` | Successful publication recorded |
+| `gold_run_audit` | Run audit recorded |
+| Active Gold publication pointer | References the newly published version |
+| Gold retention maintenance | Dry run completed successfully; no data was deleted |
+
+The latest main-branch CI validation also passed: [GitHub Actions run #830](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45045827561), on commit `231c949fae467eaec902b359be9d7baf1f693aac`.
+
+**Evidence qualification:** These restored-environment outcomes are recorded from the project owner's confirmation in the acceptance walkthrough. Exact Azure run IDs, timestamps, row counts, query outputs, and exported logs/screenshots were not supplied for attachment to this record. The record therefore does not fabricate those artifacts or claim independent inspection of the live Azure workspace. The retention result confirms a non-destructive dry run only; no deletion execution was performed or approved.
