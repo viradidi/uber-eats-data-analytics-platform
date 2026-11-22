@@ -133,7 +133,7 @@ def _append_publication_event(
         publication_id,
         pipeline_run_id,
         event_status,
-        datetime.now(timezone.utc).replace(tzinfo=None),
+        datetime.now(timezone.utc),
         previous_publication_id,
         json.dumps(output_counts or {}, sort_keys=True),
         error_message[:2000] if error_message else None,
