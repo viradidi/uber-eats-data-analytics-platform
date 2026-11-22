@@ -36,6 +36,8 @@ class ApiQueryContractTests(unittest.TestCase):
                 params = self._query_parameters(path)
                 self.assertIn("updated_after", params)
                 self.assertFalse(params["updated_after"].get("required", False))
+                self.assertIn("updated_after_id", params)
+                self.assertFalse(params["updated_after_id"].get("required", False))
 
 
 if __name__ == "__main__":
