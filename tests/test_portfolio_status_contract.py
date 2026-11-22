@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CI_RUN_URL = "https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/42021275338"
+CI_RUN_URL = "https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45045827561"
 STATUS_FILES = (
     "README.md",
     "docs/PROJECT_CHECKLIST.md",
@@ -17,18 +17,18 @@ STATUS_FILES = (
 
 
 class PortfolioStatusContractTests(unittest.TestCase):
-    def test_status_documents_point_to_the_latest_verified_135_test_ci_run(self):
+    def test_status_documents_point_to_the_latest_main_branch_ci_run(self):
         for relative_path in STATUS_FILES:
             with self.subTest(path=relative_path):
                 content = (ROOT / relative_path).read_text(encoding="utf-8")
                 self.assertIn(CI_RUN_URL, content)
-                self.assertIn("135 tests", content)
+                self.assertIn("run #830", content.lower())
 
     def test_completed_azure_execution_is_distinguished_from_repository_ci(self):
         acceptance = (ROOT / "docs/DEPLOYMENT_ACCEPTANCE_RECORD.md").read_text(encoding="utf-8")
         self.assertIn("successfully deployed and executed end to end", acceptance.lower())
-        self.assertNotIn("project owner", acceptance.lower())
-        self.assertNotIn("screenshots", acceptance.lower())
+        self.assertIn("project-operator-confirmed", acceptance.lower())
+        self.assertIn("not yet been supplied", acceptance.lower())
         for relative_path in STATUS_FILES:
             with self.subTest(path=relative_path):
                 content = (ROOT / relative_path).read_text(encoding="utf-8").lower()
