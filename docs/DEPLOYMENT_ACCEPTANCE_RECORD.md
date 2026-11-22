@@ -2,7 +2,7 @@
 
 ## Completion status
 
-**Completed — successfully deployed and executed end to end in Azure; latest enhancement deployment owner-confirmed on 22 November 2026.**
+**Completed — successfully deployed and executed end to end in Azure; latest enhancement deployment operator-confirmed on 22 November 2026.**
 
 The completed Uber Eats platform covers API, CSV and SQL ingestion; Bronze and Silver processing; the repository-owned SQL Silver path; incremental replay validation; Gold publication; the master ADF orchestration; and reconciliation.
 
@@ -33,11 +33,11 @@ The resources from the earlier Azure deployment were decommissioned to control o
 
 The latest repository validation is [GitHub Actions run #830](https://github.com/viradidi/uber-eats-data-analytics-platform/actions/runs/45045827561), which completed successfully on `main` commit `231c949fae467eaec902b359be9d7baf1f693aac`. All workflow steps passed, including the complete repository test suite.
 
-CI validates repository code, exported resource contracts and local/synthetic test scenarios. It does not provision or execute live Azure services; the Azure runtime acceptance described below is separately project-owner-confirmed.
+CI validates repository code, exported resource contracts and local/synthetic test scenarios. It does not provision or execute live Azure services; the Azure runtime acceptance described below is separately project-operator-confirmed.
 
 ## Latest enhancement deployment acceptance — 22 November 2026
 
-The project owner confirms that the restored Azure deployment of the latest enhancement set ran without runtime errors. The following runtime outcomes were explicitly confirmed:
+The deployment operator confirms that the restored Azure deployment of the latest enhancement set ran without runtime errors. The following runtime outcomes were explicitly confirmed:
 
 | Acceptance check | Result |
 |---|---|
@@ -52,7 +52,7 @@ The project owner confirms that the restored Azure deployment of the latest enha
 
 The retention result is a dry-run acceptance only. Destructive retention deletes, `OPTIMIZE`, and `VACUUM` were not confirmed as executed and remain separately controlled maintenance actions.
 
-These results are project-owner-confirmed. Exact Azure resource identifiers, ADF/Databricks run IDs and URLs, timestamps, row counts, notebook output exports, and screenshots have not yet been supplied to the repository. They are intentionally not fabricated; add sanitized evidence when available using [Run Evidence and Retention](RUN_EVIDENCE_RETENTION.md).
+These results are project-operator-confirmed. Exact Azure resource identifiers, ADF/Databricks run IDs and URLs, timestamps, row counts, notebook output exports, and captured notebook output exports have not yet been supplied to the repository. They are intentionally not fabricated; add sanitized evidence when available using [Run Evidence and Retention](RUN_EVIDENCE_RETENTION.md).
 
 ## Technical boundaries
 
